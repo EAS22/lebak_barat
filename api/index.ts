@@ -34,7 +34,7 @@ function getSql() {
   return _sql;
 }
 
-const app = new Hono<AppEnv>().basePath("/api");
+const app = new Hono<AppEnv>();
 
 function addDaysStr(dateStr: string, days: number): string {
   const d = new Date(dateStr + "T00:00:00Z");

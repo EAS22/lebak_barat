@@ -130,10 +130,6 @@ export default function CalendarStatus({
                 />
               ))}
             </div>
-          ) : bookings.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-500">
-              Belum ada booking di bulan ini
-            </div>
           ) : (
             <div className="grid grid-cols-7 gap-1">
               {Array.from({ length: firstDayOffset }).map((_, i) => (
@@ -171,6 +167,11 @@ export default function CalendarStatus({
           )}
 
           {/* Legend */}
+          {!loading && bookings.length === 0 && (
+            <p className="text-center text-xs text-slate-400 mt-2">
+              Belum ada booking di bulan ini
+            </p>
+          )}
           <div className="flex items-center justify-center gap-6 mt-6 text-xs text-slate-600">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-red-500" />

@@ -136,10 +136,6 @@ export default function CalendarAdmin({
             <div key={i} className="h-10 rounded-md bg-gray-100 animate-pulse" />
           ))}
         </div>
-      ) : bookings.length === 0 ? (
-        <div className="py-8 text-center text-sm text-gray-500">
-          Belum ada booking di bulan ini
-        </div>
       ) : (
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: firstDayOffset }).map((_, i) => (
@@ -179,6 +175,12 @@ export default function CalendarAdmin({
             );
           })}
         </div>
+      )}
+
+      {!loading && bookings.length === 0 && (
+        <p className="text-center text-xs text-gray-400 mt-2">
+          Belum ada booking di bulan ini
+        </p>
       )}
 
       <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-600">
