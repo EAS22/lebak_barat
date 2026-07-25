@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSettings, updateSettings, type SettingsRecord } from "@/lib/adminApi";
 import { Save, ExternalLink } from "lucide-react";
+import { formatDateTimeWIB } from "@/lib/utils";
 
 interface AuthUser {
   id: string;
@@ -40,9 +42,9 @@ export default function SettingsPage({ currentUser }: Props) {
           landingWaLabel: data.landing_wa_label || "",
           buperName: data.buper_name || "",
         });
-      } catch {
-        // silent
-      } finally {
+    } catch {
+      toast.error("Gagal memuat pengaturan");
+    } finally {
         setLoading(false);
       }
     }
@@ -61,9 +63,12 @@ export default function SettingsPage({ currentUser }: Props) {
       });
       setSettings(data);
       setSuccess(true);
+      toast.success("Pengaturan berhasil disimpan");
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Gagal menyimpan");
+      const msg = err instanceof Error ? err.message : "Gagal menyimpan";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -161,10 +166,7 @@ export default function SettingsPage({ currentUser }: Props) {
         <p className="text-xs text-gray-400">
           Terakhir diperbarui:{" "}
           {settings.updated_at
-            ? new Date(settings.updated_at).toLocaleString("id-ID", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })
+            ? formatDateTimeWIB(settings.updated_at)
             : "—"}
         </p>
       )}

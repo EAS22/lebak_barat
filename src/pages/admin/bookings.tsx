@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +73,7 @@ export default function BookingsPage() {
       setBookings(res.data);
       setTotal(res.total);
     } catch {
-      // silent
+      toast.error("Gagal memuat data booking");
     } finally {
       setLoading(false);
     }
@@ -113,8 +114,10 @@ export default function BookingsPage() {
     try {
       if (editingBooking) {
         await updateBooking(editingBooking.id, form as Parameters<typeof updateBooking>[1]);
+        toast.success("Booking berhasil diperbarui");
       } else {
         await createBooking(form as Parameters<typeof createBooking>[0]);
+        toast.success("Booking berhasil dibuat");
       }
       setFormOpen(false);
       await loadBookings();
@@ -125,6 +128,7 @@ export default function BookingsPage() {
       } else {
         setOverlapError(msg);
       }
+      toast.error(msg);
     } finally {
       setFormLoading(false);
     }
@@ -135,10 +139,11 @@ export default function BookingsPage() {
     setDeleteLoading(true);
     try {
       await deleteBooking(deleteId);
+      toast.success("Booking berhasil dihapus");
       setDeleteId(null);
       await loadBookings();
     } catch {
-      // silent
+      toast.error("Gagal menghapus booking");
     } finally {
       setDeleteLoading(false);
     }
@@ -155,8 +160,9 @@ export default function BookingsPage() {
       }
       if (statusFilter && statusFilter !== "all") params.status = statusFilter;
       await exportBookings(params as Parameters<typeof exportBookings>[0]);
+      toast.success("Export CSV berhasil diunduh");
     } catch {
-      // silent
+      toast.error("Gagal export CSV");
     }
   }
 

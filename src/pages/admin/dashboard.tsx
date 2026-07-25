@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ export default function Dashboard() {
       const res = await getBookings({ month: monthStr, limit: 100 });
       setBookings(res.data);
     } catch {
-      // silent
+      toast.error("Gagal memuat data booking");
     } finally {
       setLoading(false);
     }
@@ -62,6 +63,7 @@ export default function Dashboard() {
     setOverlapError(null);
     try {
       await createBooking(form as Parameters<typeof createBooking>[0]);
+      toast.success("Booking berhasil dibuat");
       setFormOpen(false);
       await loadBookings();
     } catch (err: unknown) {
@@ -71,6 +73,7 @@ export default function Dashboard() {
       } else {
         setOverlapError(msg);
       }
+      toast.error(msg);
     } finally {
       setFormLoading(false);
     }

@@ -136,6 +136,10 @@ export default function CalendarAdmin({
             <div key={i} className="h-10 rounded-md bg-gray-100 animate-pulse" />
           ))}
         </div>
+      ) : bookings.length === 0 ? (
+        <div className="py-8 text-center text-sm text-gray-500">
+          Belum ada booking di bulan ini
+        </div>
       ) : (
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: firstDayOffset }).map((_, i) => (

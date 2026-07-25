@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 import Landing from "@/pages/landing";
 import AdminLogin from "@/pages/admin/login";
 import AdminLayout from "@/pages/admin/layout";
@@ -30,6 +31,7 @@ function NotFound() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/admin/login" element={<AdminLogin />} />

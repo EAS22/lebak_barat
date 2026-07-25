@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,8 +36,7 @@ import {
   type UserRecord,
 } from "@/lib/adminApi";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { id as localeId } from "date-fns/locale";
+import { formatDateTimeWIB } from "@/lib/utils";
 
 interface AuthUser {
   id: string;
@@ -74,7 +74,7 @@ export default function UsersPage({ currentUser }: Props) {
       const data = await getUsers();
       setUsers(data);
     } catch {
-      // silent
+      toast.error("Gagal memuat data user");
     } finally {
       setLoading(false);
     }
@@ -137,6 +137,7 @@ export default function UsersPage({ currentUser }: Props) {
         });
       }
       setDialogOpen(false);
+      toast.success(editingUser ? "User berhasil diperbarui" : "User berhasil ditambahkan");
       await loadUsers();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menyimpan";
@@ -145,6 +146,7 @@ export default function UsersPage({ currentUser }: Props) {
       } else {
         setError(msg);
       }
+      toast.error(msg);
     } finally {
       setFormLoading(false);
     }
@@ -155,6 +157,7 @@ export default function UsersPage({ currentUser }: Props) {
     setDeleteLoading(true);
     try {
       await deleteUser(deleteId);
+      toast.success("User berhasil dihapus");
       setDeleteId(null);
       await loadUsers();
     } catch (err: unknown) {
@@ -242,7 +245,7 @@ export default function UsersPage({ currentUser }: Props) {
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">
                         {u.created_at
-                          ? format(new Date(u.created_at), "d MMM yyyy HH:mm", { locale: localeId }) + " WIB"
+                          ? formatDateTimeWIB(u.created_at)
                           : "—"}
                       </TableCell>
                       <TableCell className="text-right">
