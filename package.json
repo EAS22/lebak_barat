@@ -1,0 +1,46 @@
+{
+  "name": "buper-lebak-barat",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "seed": "tsx src/lib/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.1",
+    "hono": "^4.7.10",
+    "@neondatabase/serverless": "^1.0.1",
+    "drizzle-orm": "^0.44.2",
+    "bcryptjs": "^3.0.2",
+    "jose": "^6.0.11",
+    "zod": "^3.25.67",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.513.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "@vitejs/plugin-react": "^4.5.2",
+    "typescript": "^5.8.3",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/node": "^24.0.10",
+    "@types/bcryptjs": "^3.0.0",
+    "drizzle-kit": "^0.31.4",
+    "tailwindcss": "^4.1.11",
+    "@tailwindcss/postcss": "^4.1.11",
+    "postcss": "^8.5.6",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.29.0",
+    "dotenv": "^16.6.1",
+    "tsx": "^4.19.4"
+  }
+}

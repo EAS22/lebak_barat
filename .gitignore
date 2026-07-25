@@ -6,4 +6,7 @@ dist
 .superpowers
 *.log
 drizzle
+*.tsbuildinfo
+vite.config.d.ts
+drizzle.config.d.ts
 
