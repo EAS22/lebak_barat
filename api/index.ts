@@ -528,4 +528,8 @@ app.put("/api/settings", requireAuth, requireSuper, async (c) => {
   }
 });
 
+export const config = {
+  runtime: "edge",
+};
+
 export default handle(app);
