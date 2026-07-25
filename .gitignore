@@ -10,3 +10,4 @@ drizzle
 vite.config.d.ts
 drizzle.config.d.ts
 
+.env*
