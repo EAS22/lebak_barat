@@ -7,7 +7,7 @@ import {
   verifyPassword,
   signToken,
   verifyToken,
-} from "../src/lib/auth";
+} from "./_lib/auth.js";
 import {
   loginSchema,
   createUserSchema,
@@ -15,7 +15,7 @@ import {
   bookingSchema,
   bookingUpdateSchema,
   settingsSchema,
-} from "../src/lib/validation";
+} from "./_lib/validation.js";
 
 type AuthUser = { id: string; username: string; role: string };
 
