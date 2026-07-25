@@ -19,6 +19,9 @@ export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
               Desa Girimulya, Kecamatan Banjaran, Kabupaten Majalengka, Jawa
               Barat.
             </p>
+            <p className="mt-2 text-xs text-slate-500">
+              lebakbarat.girimulya.com
+            </p>
           </div>
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">
@@ -51,18 +54,29 @@ export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">
               Kontak
             </h4>
-            <a
-              href={waLink(waNumber, `Halo ${waLabel}`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm hover:text-white transition-colors"
-            >
-              WhatsApp: {waLabel}
-            </a>
+            <div className="space-y-2 text-sm">
+              <a
+                href={waLink(waNumber, `Halo ${waLabel}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block hover:text-white transition-colors"
+              >
+                WhatsApp: {waLabel}
+              </a>
+              <a href="mailto:lebakbarat@girimulya.com" className="block hover:text-white">
+                lebakbarat@girimulya.com
+              </a>
+              <a href="mailto:booking.lebakbarat@girimulya.com" className="block hover:text-white">
+                booking.lebakbarat@girimulya.com
+              </a>
+              <a href="mailto:dev.lebakbarat@girimulya.com" className="block text-xs text-slate-500 hover:text-white">
+                dev.lebakbarat@girimulya.com
+              </a>
+            </div>
           </div>
         </div>
         <div className="mt-10 pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
-          &copy; {year} {buperName}. All rights reserved.
+          &copy; {year} {buperName}. All rights reserved. | lebakbarat.girimulya.com
         </div>
       </div>
     </footer>

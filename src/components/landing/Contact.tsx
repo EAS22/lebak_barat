@@ -1,4 +1,4 @@
-import { MapPin, Clock, MessageCircle } from "lucide-react";
+import { MapPin, Clock, MessageCircle, Mail } from "lucide-react";
 import { waLink } from "@/lib/utils";
 
 interface ContactProps {
@@ -54,6 +54,32 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
                 <p className="text-sm text-slate-600">
                   Setiap hari, 08.00 – 17.00 WIB
                 </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Mail size={18} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-slate-900">Email</p>
+                <div className="text-sm text-slate-600 space-y-1">
+                  <p>
+                    <span className="font-medium">Umum:</span>{" "}
+                    <a href="mailto:lebakbarat@girimulya.com" className="text-emerald-600 hover:text-emerald-700">
+                      lebakbarat@girimulya.com
+                    </a>
+                  </p>
+                  <p>
+                    <span className="font-medium">Booking:</span>{" "}
+                    <a href="mailto:booking.lebakbarat@girimulya.com" className="text-emerald-600 hover:text-emerald-700">
+                      booking.lebakbarat@girimulya.com
+                    </a>
+                  </p>
+                  <p>
+                    <span className="font-medium">Developer:</span>{" "}
+                    <a href="mailto:dev.lebakbarat@girimulya.com" className="text-emerald-600 hover:text-emerald-700">
+                      dev.lebakbarat@girimulya.com
+                    </a>
+                  </p>
+                </div>
               </div>
             </div>
           </div>

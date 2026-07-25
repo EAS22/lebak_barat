@@ -116,18 +116,25 @@ npx drizzle-kit push
    - `lebakbarat.girimulya.com` → DNS CNAME to `cname.vercel-dns.com`
    - Add domain in Vercel Dashboard → Domains
 
+## Kontak Email Resmi
+
+- Umum: lebakbarat@girimulya.com
+- Booking: booking.lebakbarat@girimulya.com
+- Developer: dev.lebakbarat@girimulya.com
+- Domain: lebakbarat.girimulya.com
+
 ## Fasilitas Bumi Perkemahan
 
-1. Area perkemahan luas & teduh
-2. Toilet & kamar mandi bersih
-3. Mushola
-4. Aula / pendopo
-5. Area parkir kendaraan
-6. Air bersih (PDAM + sumur)
-7. Penerangan listrik
-8. Api unggun area
-9. Spot foto & selfie
-10. Akses jalan mobil
+1. Gedung serbaguna dengan 2 kamar multi fungsi
+2. Dapur umum
+3. Ruang logistik
+4. Toilet panitia
+5. Toilet MCK pria
+6. Toilet MCK wanita
+7. Mushola
+8. Tempat parkir khusus
+9. Area UMKM
+10. Area aman (1 akses masuk & keluar)
 
 ## Flow
 
