@@ -1,4 +1,4 @@
-import type { BookingInput, BookingUpdateInput } from "./validation";
+import type { BookingInput, BookingUpdateInput, CreateUserInput, UpdateUserInput, SettingsInput } from "./validation";
 
 export interface BookingRecord {
   id: string;
@@ -114,4 +114,91 @@ export async function exportBookings(params: { from?: string; to?: string; statu
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// ─── Users ──────────────────────────────────────────────────────
+
+export interface UserRecord {
+  id: string;
+  username: string;
+  role: "super_admin" | "booking_admin";
+  display_name: string;
+  wa_number: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export async function getUsers(): Promise<UserRecord[]> {
+  const res = await adminFetch("/api/users");
+  if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
+  return res.json();
+}
+
+export async function createUser(data: CreateUserInput): Promise<UserRecord> {
+  const res = await adminFetch("/api/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Create failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function updateUser(id: string, data: UpdateUserInput): Promise<UserRecord> {
+  const res = await adminFetch(`/api/users/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Update failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const res = await adminFetch(`/api/users/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Delete failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+}
+
+// ─── Settings ───────────────────────────────────────────────────
+
+export interface SettingsRecord {
+  id: number;
+  landing_wa_number: string;
+  landing_wa_label: string;
+  buper_name: string;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export async function getSettings(): Promise<SettingsRecord> {
+  const res = await adminFetch("/api/settings");
+  if (!res.ok) throw new Error(`Failed to fetch settings: ${res.status}`);
+  return res.json();
+}
+
+export async function updateSettings(data: SettingsInput): Promise<SettingsRecord> {
+  const res = await adminFetch("/api/settings", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Update failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+  return res.json();
 }

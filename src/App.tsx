@@ -4,6 +4,20 @@ import AdminLogin from "@/pages/admin/login";
 import AdminLayout from "@/pages/admin/layout";
 import Dashboard from "@/pages/admin/dashboard";
 import BookingsPage from "@/pages/admin/bookings";
+import UsersPage from "@/pages/admin/users";
+import SettingsPage from "@/pages/admin/settings";
+import { useOutletContext } from "react-router-dom";
+import type { AdminOutletContext } from "@/pages/admin/layout";
+
+function UsersRoute() {
+  const { user } = useOutletContext<AdminOutletContext>();
+  return <UsersPage currentUser={user} />;
+}
+
+function SettingsRoute() {
+  const { user } = useOutletContext<AdminOutletContext>();
+  return <SettingsPage currentUser={user} />;
+}
 
 function NotFound() {
   return (
@@ -22,8 +36,8 @@ export default function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="bookings" element={<BookingsPage />} />
-          <Route path="users" element={<div>Users placeholder</div>} />
-          <Route path="settings" element={<div>Settings placeholder</div>} />
+          <Route path="users" element={<UsersRoute />} />
+          <Route path="settings" element={<SettingsRoute />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

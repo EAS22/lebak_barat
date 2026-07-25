@@ -4,11 +4,13 @@ import { LayoutDashboard, CalendarDays, Users, Settings, LogOut, Menu, X } from 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   username: string;
   role: string;
 }
+
+export type AdminOutletContext = { user: AuthUser };
 
 const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -120,7 +122,7 @@ export default function AdminLayout() {
         </header>
 
         <main className="flex-1 p-4 lg:p-6 bg-gray-50">
-          <Outlet />
+          <Outlet context={{ user } satisfies AdminOutletContext} />
         </main>
       </div>
     </div>
