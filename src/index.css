@@ -4,4 +4,20 @@
   --color-primary: #059669;
   --color-primary-light: #34d399;
   --color-primary-dark: #047857;
+  --color-border: hsl(214.3 31.8% 91.4%);
+  --color-input: hsl(214.3 31.8% 91.4%);
+  --color-ring: hsl(222.2 84% 4.9%);
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222.2 84% 4.9%);
 }
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    @apply bg-white text-slate-900 antialiased;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
