@@ -10,6 +10,9 @@ import {
   Shield,
   type LucideIcon,
 } from "lucide-react";
+import type { CSSProperties } from "react";
+import { useReveal } from "@/hooks/useReveal";
+import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 
 interface Facility {
   title: string;
@@ -71,11 +74,14 @@ const facilities: Facility[] = [
 ];
 
 export default function Facilities() {
+  const grid = useReveal<HTMLDivElement>(0.05);
+
   return (
-    <section id="fasilitas" className="py-16 md:py-24 bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="fasilitas" className="relative py-16 md:py-24 bg-cream">
+      <TopoPattern />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+          <h2 className="text-3xl md:text-4xl font-bold text-brown">
             Fasilitas
           </h2>
           <p className="mt-3 text-slate-600">
@@ -83,16 +89,19 @@ export default function Facilities() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {facilities.map(({ title, desc, Icon }) => (
+        <div ref={grid.ref} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {facilities.map(({ title, desc, Icon }, i) => (
             <div
               key={title}
-              className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow"
+              className={`bg-white rounded-2xl border-2 border-dashed border-amber-300 p-6 transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
+                grid.visible ? "is-visible" : ""
+              }`}
+              style={{ "--delay": `${i * 0.08}s` } as CSSProperties}
             >
-              <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
                 <Icon size={24} />
               </div>
-              <h3 className="font-semibold text-slate-900">{title}</h3>
+              <h3 className="font-semibold text-brown">{title}</h3>
               <p className="mt-1 text-sm text-slate-500">{desc}</p>
             </div>
           ))}

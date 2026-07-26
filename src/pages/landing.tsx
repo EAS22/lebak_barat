@@ -7,6 +7,8 @@ import CalendarStatus from "@/components/landing/CalendarStatus";
 import Facilities from "@/components/landing/Facilities";
 import Contact from "@/components/landing/Contact";
 import Footer from "@/components/landing/Footer";
+import PineDivider from "@/components/landing/ornaments/PineDivider";
+import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 
 const DEFAULT_SETTINGS: PublicSettings = {
   landing_wa_number: "6280000000000",
@@ -39,14 +41,26 @@ export default function Landing() {
         waLabel={settings.landing_wa_label}
       />
       <About />
+      <div className="bg-cream">
+        <PineDivider color="#ffffff" />
+      </div>
       <CalendarStatus
         waNumber={settings.landing_wa_number}
       />
+      <div className="bg-white">
+        <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
+      </div>
       <Facilities />
+      <div className="bg-cream">
+        <PineDivider color="#ffffff" />
+      </div>
       <Contact
         waNumber={settings.landing_wa_number}
         waLabel={settings.landing_wa_label}
       />
+      <div className="bg-white">
+        <PineDivider color="#14301c" />
+      </div>
       <Footer
         buperName={settings.buper_name}
         waNumber={settings.landing_wa_number}

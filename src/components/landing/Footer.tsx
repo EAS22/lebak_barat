@@ -1,4 +1,5 @@
 import { waLink } from "@/lib/utils";
+import Stars from "@/components/landing/ornaments/Stars";
 
 interface FooterProps {
   buperName: string;
@@ -6,20 +7,40 @@ interface FooterProps {
   waLabel: string;
 }
 
+function GlowTent() {
+  return (
+    <svg width="36" height="30" viewBox="0 0 36 30" aria-hidden="true">
+      <circle cx="18" cy="18" r="12" fill="#FBC02D" opacity="0.25" />
+      <polygon
+        points="4,27 18,6 32,27"
+        fill="#FBC02D"
+        stroke="#3E2723"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <polygon points="18,13 13,27 23,27" fill="#3E2723" />
+    </svg>
+  );
+}
+
 export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-900 text-slate-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="relative overflow-hidden bg-[#14301c] text-slate-300">
+      <Stars />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid sm:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-bold text-white">{buperName}</h3>
+            <div className="flex items-center gap-2">
+              <GlowTent />
+              <h3 className="text-lg font-bold text-white">{buperName}</h3>
+            </div>
             <p className="mt-2 text-sm leading-relaxed">
               Desa Girimulya, Kecamatan Banjaran, Kabupaten Majalengka, Jawa
               Barat.
             </p>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-emerald-200/60">
               lebakbarat.girimulya.com
             </p>
           </div>
@@ -69,13 +90,13 @@ export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
               <a href="mailto:booking.lebakbarat@girimulya.com" className="block hover:text-white">
                 booking.lebakbarat@girimulya.com
               </a>
-              <a href="mailto:dev.lebakbarat@girimulya.com" className="block text-xs text-slate-500 hover:text-white">
+              <a href="mailto:dev.lebakbarat@girimulya.com" className="block text-xs text-emerald-200/60 hover:text-white">
                 dev.lebakbarat@girimulya.com
               </a>
             </div>
           </div>
         </div>
-        <div className="mt-10 pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
+        <div className="mt-10 pt-6 border-t border-emerald-900 text-center text-xs text-emerald-200/60">
           &copy; {year} {buperName}. All rights reserved. | lebakbarat.girimulya.com
         </div>
       </div>

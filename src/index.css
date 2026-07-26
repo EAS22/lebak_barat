@@ -9,6 +9,11 @@
   --color-ring: hsl(222.2 84% 4.9%);
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(222.2 84% 4.9%);
+  --color-scout: #2E7D32;
+  --color-tent: #FBC02D;
+  --color-campfire: #FF7043;
+  --color-cream: #FFF8E1;
+  --color-brown: #3E2723;
 }
 
 @layer base {
@@ -18,6 +23,72 @@
   body {
     @apply bg-white text-slate-900 antialiased;
     font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(-1deg); opacity: 1; }
+  25% { transform: scale(1.06) rotate(1deg); opacity: 0.92; }
+  50% { transform: scale(0.97) rotate(-2deg); opacity: 0.97; }
+  75% { transform: scale(1.03) rotate(2deg); opacity: 0.9; }
+}
+@keyframes drift {
+  from { transform: translateX(-8%); }
+  to { transform: translateX(108%); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-soft {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.35); }
+  70% { box-shadow: 0 0 0 12px rgba(5, 150, 105, 0); }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.anim-flicker { animation: flicker 1.6s ease-in-out infinite; transform-origin: bottom center; }
+.anim-drift { animation: drift linear infinite; }
+.anim-floaty { animation: floaty 5s ease-in-out infinite; }
+.anim-twinkle { animation: twinkle 2.4s ease-in-out infinite; }
+.anim-spin-slow { animation: spin-slow 24s linear infinite; }
+.anim-pulse-soft { animation: pulse-soft 2.4s ease-out infinite; }
+.anim-fade-slide { animation: fadeSlide 0.3s ease; }
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition-delay: var(--delay, 0s);
+}
+.reveal.reveal-left { transform: translateX(-32px); }
+.reveal.reveal-right { transform: translateX(32px); }
+.reveal.is-visible { opacity: 1; transform: translate(0, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-flicker,
+  .anim-drift,
+  .anim-floaty,
+  .anim-twinkle,
+  .anim-spin-slow,
+  .anim-pulse-soft,
+  .anim-fade-slide {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 

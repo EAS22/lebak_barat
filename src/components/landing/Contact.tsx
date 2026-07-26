@@ -1,5 +1,7 @@
 import { MapPin, Clock, MessageCircle, Mail } from "lucide-react";
 import { waLink } from "@/lib/utils";
+import { useReveal } from "@/hooks/useReveal";
+import CampfireFlame from "@/components/landing/ornaments/CampfireFlame";
 
 interface ContactProps {
   waNumber: string;
@@ -7,14 +9,15 @@ interface ContactProps {
 }
 
 export default function Contact({ waNumber, waLabel }: ContactProps) {
+  const card = useReveal<HTMLDivElement>();
   const mapUrl =
     "https://maps.google.com/?q=Desa+Girimulya+Banjaran+Majalengka";
 
   return (
-    <section id="kontak" className="py-16 md:py-24">
+    <section id="kontak" className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+          <h2 className="text-3xl md:text-4xl font-bold text-brown">
             Kontak & Lokasi
           </h2>
           <p className="mt-3 text-slate-600">
@@ -22,7 +25,15 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
           </p>
         </div>
 
-        <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
+        <div
+          ref={card.ref}
+          className={`max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center reveal ${
+            card.visible ? "is-visible" : ""
+          }`}
+        >
+          <div className="flex justify-center mb-4">
+            <CampfireFlame size={56} />
+          </div>
           <a
             href={waLink(
               waNumber,
@@ -30,7 +41,7 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors anim-pulse-soft"
           >
             <MessageCircle size={20} />
             Hubungi via WhatsApp
