@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 
 interface NavbarProps {
@@ -90,6 +91,14 @@ export default function Navbar({ buperName }: NavbarProps) {
             >
               Booking via WA
             </button>
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:border-emerald-600 hover:text-emerald-700 transition-colors"
+              title="Login Admin"
+            >
+              <LogIn size={16} />
+              Login
+            </Link>
           </div>
 
           <button
@@ -126,6 +135,14 @@ export default function Navbar({ buperName }: NavbarProps) {
             >
               Booking via WA
             </button>
+            <Link
+              to="/admin/login"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:border-emerald-600 hover:text-emerald-700"
+            >
+              <LogIn size={16} />
+              Login Admin
+            </Link>
           </div>
         </div>
       )}

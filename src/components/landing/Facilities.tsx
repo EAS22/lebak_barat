@@ -83,20 +83,25 @@ export default function Facilities() {
           </p>
         </div>
 
-        <div ref={grid.ref} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          ref={grid.ref}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
+        >
           {facilities.map(({ title, desc, Icon }, i) => (
             <div
               key={title}
-              className={`bg-white rounded-2xl border-2 border-dashed border-amber-300 p-6 transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
+              className={`group bg-white rounded-xl border-2 border-dashed border-amber-300 p-4 text-center transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg hover:border-emerald-400 reveal ${
                 grid.visible ? "is-visible" : ""
               }`}
-              style={{ "--delay": `${i * 0.08}s` } as CSSProperties}
+              style={{ "--delay": `${i * 0.06}s` } as CSSProperties}
             >
-              <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                <Icon size={24} />
+              <div className="w-11 h-11 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 transition-all group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110">
+                <Icon size={20} />
               </div>
-              <h3 className="font-semibold text-brown">{title}</h3>
-              <p className="mt-1 text-sm text-slate-500">{desc}</p>
+              <h3 className="font-semibold text-brown text-sm leading-tight">
+                {title}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 leading-snug">{desc}</p>
             </div>
           ))}
         </div>

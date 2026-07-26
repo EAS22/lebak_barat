@@ -3,7 +3,7 @@ import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 import CampfireFlame from "@/components/landing/ornaments/CampfireFlame";
 
-const MAP_URL = "https://maps.app.goo.gl/bCfshVizUoBmrqDm8";
+const MAP_URL = "https://maps.app.goo.gl/K9xTHjgc4boF3YQu5";
 const MAP_COORDS = "-6.943210, 108.325651";
 
 export default function Contact() {

@@ -21,6 +21,20 @@ export default function Landing() {
   const [settings, setSettings] = useState<PublicSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    if (window.location.hash) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search
+      );
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     fetchPublicSettings().then(setSettings);
   }, []);
 
