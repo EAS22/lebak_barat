@@ -127,7 +127,7 @@ app.get("/api/public/bookings/year", async (c) => {
     }
     const yearStart = `${year}-01-01`;
     const yearEnd = `${year}-12-31`;
-    const rows = await sql`SELECT id, school_name, start_date, end_date FROM bookings WHERE status = 'final' AND start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
+    const rows = await sql`SELECT id, school_name, start_date, end_date, status FROM bookings WHERE status IN ('final','negosiasi') AND start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
     return c.json(rows);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -147,7 +147,7 @@ app.get("/api/public/bookings", async (c) => {
     const lastDay = new Date(y!, m!, 0).getUTCDate();
     const monthEnd = `${month}-${String(lastDay).padStart(2, "0")}`;
 
-    const rows = await sql`SELECT id, start_date, end_date FROM bookings WHERE status = 'final' AND NOT (end_date < ${monthStart} OR start_date > ${monthEnd}) ORDER BY start_date`;
+    const rows = await sql`SELECT id, start_date, end_date, status FROM bookings WHERE status IN ('final','negosiasi') AND NOT (end_date < ${monthStart} OR start_date > ${monthEnd}) ORDER BY start_date`;
     return c.json(rows);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";

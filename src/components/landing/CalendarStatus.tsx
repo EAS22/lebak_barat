@@ -146,8 +146,14 @@ function YearBookingList({ year }: { year: number }) {
                     {fmtRange(b.start_date, b.end_date)}
                   </span>
                 </span>
-                <span className="flex-shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                  Fix
+                <span
+                  className={`flex-shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                    b.status === "final"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {b.status === "final" ? "Final" : "Negosiasi"}
                 </span>
               </li>
             );
@@ -193,27 +199,38 @@ export default function CalendarStatus() {
 
   const firstDayOffset = mondayIndex(daysInMonth[0]!);
 
-  const isBooked = useCallback(
-    (date: Date): boolean => {
-      return bookings.some((b) => {
+  const dayStatus = useCallback(
+    (date: Date): "final" | "negosiasi" | null => {
+      let found: "final" | "negosiasi" | null = null;
+      for (const b of bookings) {
         const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
         const end = new Date(b.end_date.slice(0, 10) + "T00:00:00");
-        return isWithinInterval(date, { start, end });
-      });
+        if (isWithinInterval(date, { start, end })) {
+          if (b.status === "final") return "final";
+          if (b.status === "negosiasi") found = "negosiasi";
+        }
+      }
+      return found;
     },
     [bookings]
   );
 
   const today = startOfDay(new Date());
 
-  const bookedCount = useMemo(
-    () => daysInMonth.filter((d) => isBooked(d)).length,
-    [daysInMonth, isBooked]
+  const finalCount = useMemo(
+    () => daysInMonth.filter((d) => dayStatus(d) === "final").length,
+    [daysInMonth, dayStatus]
+  );
+  const negoCount = useMemo(
+    () => daysInMonth.filter((d) => dayStatus(d) === "negosiasi").length,
+    [daysInMonth, dayStatus]
   );
   const availableCount = useMemo(
     () =>
-      daysInMonth.filter((d) => !isBooked(d) && !isBefore(d, today)).length,
-    [daysInMonth, isBooked, today]
+      daysInMonth.filter(
+        (d) => dayStatus(d) !== "final" && !isBefore(d, today)
+      ).length,
+    [daysInMonth, dayStatus, today]
   );
 
   const waMessage = `Halo Admin Bumi Perkemahan Lebak Barat, saya ingin cek ketersediaan tanggal di bulan ${format(
@@ -235,7 +252,9 @@ export default function CalendarStatus() {
           </h2>
           <p className="mt-3 text-slate-600 max-w-xl mx-auto">
             Tanggal <span className="font-semibold text-red-600">merah</span>{" "}
-            sudah terisi, tanggal{" "}
+            sudah terisi (final), tanggal{" "}
+            <span className="font-semibold text-amber-500">kuning</span> masih
+            dalam negosiasi, dan tanggal{" "}
             <span className="font-semibold text-emerald-600">hijau</span> masih
             tersedia. Amankan tanggalmu sebelum keduluan sekolah lain!
           </p>
@@ -273,21 +292,29 @@ export default function CalendarStatus() {
               </div>
 
               {/* Ringkasan bulan */}
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-center">
+              <div className="grid grid-cols-3 gap-2.5 mb-5">
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-2 py-2 text-center">
                   <div className="text-lg font-bold text-emerald-700">
                     {loading ? "..." : availableCount}
                   </div>
-                  <div className="text-xs font-medium text-emerald-700">
-                    Hari Tersedia
+                  <div className="text-[11px] font-medium text-emerald-700">
+                    Tersedia
                   </div>
                 </div>
-                <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-center">
-                  <div className="text-lg font-bold text-red-600">
-                    {loading ? "..." : bookedCount}
+                <div className="rounded-xl bg-amber-50 border border-amber-200 px-2 py-2 text-center">
+                  <div className="text-lg font-bold text-amber-600">
+                    {loading ? "..." : negoCount}
                   </div>
-                  <div className="text-xs font-medium text-red-600">
-                    Hari Terisi
+                  <div className="text-[11px] font-medium text-amber-600">
+                    Negosiasi
+                  </div>
+                </div>
+                <div className="rounded-xl bg-red-50 border border-red-200 px-2 py-2 text-center">
+                  <div className="text-lg font-bold text-red-600">
+                    {loading ? "..." : finalCount}
+                  </div>
+                  <div className="text-[11px] font-medium text-red-600">
+                    Terisi Final
                   </div>
                 </div>
               </div>
@@ -323,7 +350,7 @@ export default function CalendarStatus() {
                     <div key={`empty-${i}`} />
                   ))}
                   {daysInMonth.map((day) => {
-                    const booked = isBooked(day);
+                    const status = dayStatus(day);
                     const past =
                       isBefore(day, today) && !isSameDay(day, today);
                     const isToday = isSameDay(day, today);
@@ -333,11 +360,13 @@ export default function CalendarStatus() {
                         className={`
                           relative h-11 flex flex-col items-center justify-center rounded-xl cursor-default transition-transform hover:scale-105
                           ${
-                            booked
+                            status === "final"
                               ? "bg-red-500 text-white font-bold group shadow-sm"
-                              : past
-                                ? "bg-slate-50 text-slate-300"
-                                : "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
+                              : status === "negosiasi"
+                                ? "bg-amber-400 text-brown font-bold group shadow-sm"
+                                : past
+                                  ? "bg-slate-50 text-slate-300"
+                                  : "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
                           }
                           ${isToday ? "ring-2 ring-amber-400 ring-offset-1" : ""}
                         `}
@@ -345,15 +374,22 @@ export default function CalendarStatus() {
                         <span className="text-sm leading-none">
                           {day.getDate()}
                         </span>
-                        {booked && (
+                        {status === "final" && (
                           <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">
                             Penuh
                           </span>
                         )}
-                        {booked && (
+                        {status === "negosiasi" && (
+                          <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">
+                            Nego
+                          </span>
+                        )}
+                        {status && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-10">
                             <div className="bg-brown text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-lg">
-                              Sudah Terbooking
+                              {status === "final"
+                                ? "Sudah Terbooking (Final)"
+                                : "Dalam Negosiasi"}
                             </div>
                           </div>
                         )}
@@ -364,14 +400,18 @@ export default function CalendarStatus() {
               )}
 
               {/* Legend */}
-              <div className="flex items-center justify-center flex-wrap gap-4 mt-5 text-xs font-medium text-slate-700">
+              <div className="flex items-center justify-center flex-wrap gap-3.5 mt-5 text-xs font-medium text-slate-700">
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md bg-emerald-50 border border-emerald-300" />
                   Tersedia
                 </div>
                 <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-md bg-amber-400" />
+                  Negosiasi
+                </div>
+                <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md bg-red-500" />
-                  Terisi
+                  Final
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md border-2 border-amber-400" />
