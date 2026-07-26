@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
-import { handle } from "hono/vercel";
+import { handle } from "@hono/node-server/vercel";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import {
   hashPassword,
@@ -528,4 +528,4 @@ app.put("/api/settings", requireAuth, requireSuper, async (c) => {
   }
 });
 
-export default app.fetch;
+export default handle(app);
