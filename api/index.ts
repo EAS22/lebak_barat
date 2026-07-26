@@ -528,4 +528,10 @@ app.put("/api/settings", requireAuth, requireSuper, async (c) => {
   }
 });
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default handle(app);
