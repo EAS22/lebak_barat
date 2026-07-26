@@ -25,6 +25,14 @@ export function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+export function dateOnly(s: string): string {
+  return s.slice(0, 10);
+}
+
+export function parseDateOnly(s: string): Date {
+  return new Date(s.slice(0, 10) + "T00:00:00");
+}
+
 export function waLink(num: string, text: string) {
   const clean = num.replace(/\D/g, "");
   return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;

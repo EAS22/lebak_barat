@@ -1,18 +1,26 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, Eye, EyeOff, LogIn, UserRound, KeyRound } from "lucide-react";
+import { useAuth, type AuthUser } from "@/lib/authContext";
 import CloudsSun from "@/components/landing/ornaments/CloudsSun";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { user, loading: authLoading, login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/admin", { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -35,6 +43,8 @@ export default function AdminLogin() {
         return;
       }
 
+      const userData = (await res.json()) as AuthUser;
+      login(userData);
       toast.success("Login berhasil");
       navigate("/admin");
     } catch {

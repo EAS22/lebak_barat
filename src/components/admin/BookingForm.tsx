@@ -47,8 +47,8 @@ function fromRecord(r: BookingRecord): FormData {
     participantCount: r.participant_count,
     picName: r.pic_name,
     picWa: r.pic_wa,
-    startDate: r.start_date,
-    price: r.price,
+    startDate: r.start_date.slice(0, 10),
+    price: r.price != null ? Number(r.price) : null,
     status: r.status,
     keterangan: r.keterangan ?? "",
   };

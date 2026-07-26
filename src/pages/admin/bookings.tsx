@@ -37,7 +37,7 @@ import {
   exportBookings,
   type BookingRecord,
 } from "@/lib/adminApi";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, parseDateOnly } from "@/lib/utils";
 import { Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -253,9 +253,9 @@ export default function BookingsPage() {
                       <TableCell>{b.pic_name}</TableCell>
                       <TableCell className="text-xs">{b.pic_wa}</TableCell>
                       <TableCell className="text-sm">
-                        {format(new Date(b.start_date + "T00:00:00"), "d MMM yyyy", { locale: localeId })}
+                        {format(parseDateOnly(b.start_date), "d MMM yyyy", { locale: localeId })}
                         {" — "}
-                        {format(new Date(b.end_date + "T00:00:00"), "d MMM yyyy", { locale: localeId })}
+                        {format(parseDateOnly(b.end_date), "d MMM yyyy", { locale: localeId })}
                       </TableCell>
                       <TableCell>{b.price != null ? formatIDR(b.price) : "—"}</TableCell>
                       <TableCell>

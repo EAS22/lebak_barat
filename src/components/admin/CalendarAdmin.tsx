@@ -82,8 +82,8 @@ export default function CalendarAdmin({
   const getBookingsForDay = useCallback(
     (date: Date): BookingRecord[] => {
       return bookings.filter((b) => {
-        const start = new Date(b.start_date + "T00:00:00");
-        const end = new Date(b.end_date + "T00:00:00");
+        const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
+        const end = new Date(b.end_date.slice(0, 10) + "T00:00:00");
         return isWithinInterval(date, { start, end });
       });
     },

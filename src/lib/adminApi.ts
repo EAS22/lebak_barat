@@ -44,6 +44,16 @@ export async function adminFetch(path: string, opts?: RequestInit) {
   });
 }
 
+function normalizeBooking(raw: Record<string, unknown>): BookingRecord {
+  const r = raw as unknown as BookingRecord;
+  return {
+    ...r,
+    start_date: String(r.start_date).slice(0, 10),
+    end_date: String(r.end_date).slice(0, 10),
+    price: r.price != null ? Number(r.price) : null,
+  };
+}
+
 export async function getBookings(params: BookingParams = {}): Promise<BookingsResponse> {
   const qs = new URLSearchParams();
   if (params.month) qs.set("month", params.month);
@@ -59,9 +69,14 @@ export async function getBookings(params: BookingParams = {}): Promise<BookingsR
   const json = await res.json();
 
   if (Array.isArray(json)) {
-    return { data: json as BookingRecord[], page: 1, limit: json.length, total: json.length };
+    const data = (json as Record<string, unknown>[]).map(normalizeBooking);
+    return { data, page: 1, limit: data.length, total: data.length };
   }
-  return json as BookingsResponse;
+  const resp = json as BookingsResponse;
+  return {
+    ...resp,
+    data: (resp.data as unknown as Record<string, unknown>[]).map(normalizeBooking),
+  };
 }
 
 export async function createBooking(data: BookingInput): Promise<BookingRecord> {

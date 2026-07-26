@@ -3,13 +3,9 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, CalendarDays, Users, Settings, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth, type AuthUser } from "@/lib/authContext";
 
-export interface AuthUser {
-  id: string;
-  username: string;
-  role: string;
-}
-
+export type { AuthUser };
 export type AdminOutletContext = { user: AuthUser };
 
 const navItems = [
@@ -21,26 +17,17 @@ const navItems = [
 
 export default function AdminLayout() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
-      .then(async (res) => {
-        if (res.status === 401) {
-          navigate("/admin/login");
-          return;
-        }
-        const data = (await res.json()) as AuthUser;
-        setUser(data);
-      })
-      .catch(() => navigate("/admin/login"))
-      .finally(() => setLoading(false));
-  }, [navigate]);
+    if (!loading && !user) {
+      navigate("/admin/login");
+    }
+  }, [loading, user, navigate]);
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    await logout();
     navigate("/admin/login");
   }
 

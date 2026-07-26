@@ -15,7 +15,7 @@ import {
 import CalendarAdmin from "@/components/admin/CalendarAdmin";
 import BookingForm from "@/components/admin/BookingForm";
 import { getBookings, createBooking, type BookingRecord } from "@/lib/adminApi";
-import { toISODate, addDays } from "@/lib/utils";
+import { toISODate, addDays, dateOnly, parseDateOnly } from "@/lib/utils";
 import { CheckCircle2, Clock, XCircle, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -52,7 +52,10 @@ export default function Dashboard() {
 
   const confirmedThisMonth = bookings.filter((b) => b.status === "confirmed").length;
   const upcomingWeek = bookings.filter(
-    (b) => b.status === "confirmed" && b.start_date >= todayStr && b.start_date <= weekLater
+    (b) =>
+      b.status === "confirmed" &&
+      dateOnly(b.start_date) >= todayStr &&
+      dateOnly(b.start_date) <= weekLater
   ).length;
   const cancelledCount = bookings.filter((b) => b.status === "cancelled").length;
 
@@ -147,7 +150,7 @@ export default function Dashboard() {
                     <TableRow key={b.id}>
                       <TableCell className="font-medium">{b.school_name}</TableCell>
                       <TableCell className="text-sm">
-                        {format(new Date(b.start_date + "T00:00:00"), "d MMM", { locale: localeId })}
+                        {format(parseDateOnly(b.start_date), "d MMM", { locale: localeId })}
                       </TableCell>
                       <TableCell>
                         <Badge variant={b.status === "confirmed" ? "default" : "secondary"}>
