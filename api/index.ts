@@ -94,6 +94,17 @@ app.get("/api/public/settings", async (c) => {
   }
 });
 
+app.get("/api/public/contacts", async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT display_name, wa_number FROM users WHERE role = 'booking_admin' AND is_active = true AND wa_number IS NOT NULL AND wa_number != '' ORDER BY created_at`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 app.get("/api/public/bookings", async (c) => {
   try {
     const sql = getSql();

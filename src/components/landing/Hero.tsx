@@ -65,7 +65,6 @@ export default function Hero({ waNumber, waLabel }: HeroProps) {
             <div className="mb-4">
               <ScoutBadge
                 icon={<Tent size={22} />}
-                label="3H2M"
                 size={56}
                 colorClass="text-emerald-700"
               />
@@ -76,8 +75,8 @@ export default function Hero({ waNumber, waLabel }: HeroProps) {
             </h1>
             <p className="mt-4 text-lg text-slate-700 leading-relaxed">
               Terletak di Desa Girimulya, Kecamatan Banjaran, Kabupaten
-              Majalengka. Paket 3 Hari 2 Malam dengan fasilitas lengkap untuk
-              kegiatan outbound, kemah, dan gathering.
+              Majalengka. Fasilitas lengkap untuk kegiatan kemah, school camp,
+              dan gathering.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <a
@@ -109,21 +108,21 @@ export default function Hero({ waNumber, waLabel }: HeroProps) {
             <div className="mt-12 grid grid-cols-3 gap-6">
               <div>
                 <div className="text-2xl md:text-3xl font-bold text-brown">
-                  <Counter target={10} />
+                  <Counter target={9} />
                 </div>
                 <div className="text-sm text-slate-600">Fasilitas</div>
+              </div>
+              <div>
+                <div className="text-2xl md:text-3xl font-bold text-brown">
+                  <Counter target={600} />
+                </div>
+                <div className="text-sm text-slate-600">Kapasitas Peserta</div>
               </div>
               <div>
                 <div className="text-2xl md:text-3xl font-bold text-brown">
                   <Counter target={1} />
                 </div>
                 <div className="text-sm text-slate-600">Akses Aman</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-brown">
-                  3H2M
-                </div>
-                <div className="text-sm text-slate-600">Hari 2 Malam</div>
               </div>
             </div>
           </div>

@@ -4,11 +4,11 @@ import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
 
 const advantages = [
-  "Lokasi strategis di kaki Gunung Ciremai",
-  "Kapasitas hingga 200 peserta",
-  "Paket lengkap 3 Hari 2 Malam",
+  "Lokasi strategis dengan suasana alam asri",
+  "Kapasitas maksimal 600 peserta",
   "Fasilitas gedung serbaguna & MCK",
   "Dapur umum dan ruang logistik",
+  "Area aman dengan 1 akses masuk & keluar",
   "Akses mudah dan parkir luas",
 ];
 
@@ -35,17 +35,17 @@ export default function About() {
               />
             </div>
             <p className="mt-4 text-slate-700 leading-relaxed">
-              Bumi Perkemahan Lebak Barat merupakan lokasi perkemahan dan
-              outbound yang terletak di Desa Girimulya, Kecamatan Banjaran,
-              Kabupaten Majalengka, Jawa Barat. Dengan suasana alam yang asri
-              dan fasilitas yang memadai, tempat ini cocok untuk kegiatan
-              kemah, outbound, gathering, dan berbagai aktivitas luar ruangan
+              Bumi Perkemahan Lebak Barat merupakan lokasi perkemahan yang
+              terletak di Desa Girimulya, Kecamatan Banjaran, Kabupaten
+              Majalengka, Jawa Barat. Dengan suasana alam yang asri dan
+              fasilitas yang memadai, tempat ini cocok untuk kegiatan kemah,
+              school camp, gathering, dan berbagai aktivitas luar ruangan
               lainnya.
             </p>
             <p className="mt-4 text-slate-700 leading-relaxed">
-              Kami menyediakan paket 3 Hari 2 Malam dengan harga terjangkau
-              dan fasilitas lengkap, termasuk gedung serbaguna, dapur umum,
-              toilet, mushola, dan ruang logistik.
+              Dengan kapasitas hingga 600 peserta, kami menyediakan fasilitas
+              lengkap termasuk gedung serbaguna, dapur umum, toilet, mushola,
+              dan ruang logistik dengan harga terjangkau.
             </p>
           </div>
           <div

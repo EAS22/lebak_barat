@@ -31,6 +31,23 @@ export async function fetchPublicBookings(
   }
 }
 
+export interface PublicContact {
+  display_name: string;
+  wa_number: string;
+}
+
+export async function fetchPublicContacts(): Promise<PublicContact[]> {
+  try {
+    const res = await fetch("/api/public/contacts");
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data as PublicContact[];
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchPublicSettings(): Promise<PublicSettings> {
   try {
     const res = await fetch("/api/public/settings");

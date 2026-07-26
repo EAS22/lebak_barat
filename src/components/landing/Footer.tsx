@@ -78,9 +78,6 @@ export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
               <a href="mailto:booking.lebakbarat@girimulya.com" className="block hover:text-white">
                 booking.lebakbarat@girimulya.com
               </a>
-              <a href="mailto:dev.lebakbarat@girimulya.com" className="block text-xs text-emerald-200/60 hover:text-white">
-                dev.lebakbarat@girimulya.com
-              </a>
             </div>
           </div>
         </div>

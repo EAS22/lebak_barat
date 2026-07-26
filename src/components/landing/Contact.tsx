@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { MapPin, Clock, MessageCircle, Mail } from "lucide-react";
 import { waLink } from "@/lib/utils";
 import { useReveal } from "@/hooks/useReveal";
+import { fetchPublicContacts, type PublicContact } from "@/lib/api";
 import CampfireFlame from "@/components/landing/ornaments/CampfireFlame";
 
 interface ContactProps {
@@ -8,10 +10,19 @@ interface ContactProps {
   waLabel: string;
 }
 
+const MAP_URL = "https://maps.app.goo.gl/bCfshVizUoBmrqDm8";
+const MAP_COORDS = "-6.943210, 108.325651";
+
 export default function Contact({ waNumber, waLabel }: ContactProps) {
   const card = useReveal<HTMLDivElement>();
-  const mapUrl =
-    "https://maps.google.com/?q=Desa+Girimulya+Banjaran+Majalengka";
+  const [contacts, setContacts] = useState<PublicContact[]>([]);
+
+  useEffect(() => {
+    fetchPublicContacts().then(setContacts);
+  }, []);
+
+  const waMessage =
+    "Halo, saya ingin bertanya tentang booking Bumi Perkemahan Lebak Barat.";
 
   return (
     <section id="kontak" className="py-16 md:py-24 bg-white">
@@ -21,7 +32,7 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
             Kontak & Lokasi
           </h2>
           <p className="mt-3 text-slate-600">
-            Hubungi kami untuk informasi lebih lanjut.
+            Hubungi admin booking kami untuk informasi lebih lanjut.
           </p>
         </div>
 
@@ -34,18 +45,33 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
           <div className="flex justify-center mb-4">
             <CampfireFlame size={56} />
           </div>
-          <a
-            href={waLink(
-              waNumber,
-              `Halo ${waLabel}, saya ingin bertanya tentang booking Bumi Perkemahan Lebak Barat.`
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors anim-pulse-soft"
-          >
-            <MessageCircle size={20} />
-            Hubungi via WhatsApp
-          </a>
+
+          {contacts.length > 0 ? (
+            <div className="space-y-3">
+              {contacts.map((admin) => (
+                <a
+                  key={admin.wa_number}
+                  href={waLink(admin.wa_number, waMessage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"
+                >
+                  <MessageCircle size={20} />
+                  <span>WhatsApp — {admin.display_name}</span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <a
+              href={waLink(waNumber, `Halo ${waLabel}, ${waMessage}`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors anim-pulse-soft"
+            >
+              <MessageCircle size={20} />
+              Hubungi via WhatsApp
+            </a>
+          )}
 
           <div className="mt-8 space-y-4 text-left">
             <div className="flex items-start gap-3">
@@ -55,6 +81,9 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
                 <p className="text-sm text-slate-600">
                   Desa Girimulya, Kecamatan Banjaran, Kabupaten Majalengka,
                   Jawa Barat
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Koordinat: {MAP_COORDS}
                 </p>
               </div>
             </div>
@@ -84,19 +113,13 @@ export default function Contact({ waNumber, waLabel }: ContactProps) {
                       booking.lebakbarat@girimulya.com
                     </a>
                   </p>
-                  <p>
-                    <span className="font-medium">Developer:</span>{" "}
-                    <a href="mailto:dev.lebakbarat@girimulya.com" className="text-emerald-600 hover:text-emerald-700">
-                      dev.lebakbarat@girimulya.com
-                    </a>
-                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           <a
-            href={mapUrl}
+            href={MAP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"

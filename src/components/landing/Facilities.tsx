@@ -7,7 +7,6 @@ import {
   Heart,
   Car,
   Store,
-  Shield,
   type LucideIcon,
 } from "lucide-react";
 import type { CSSProperties } from "react";
@@ -65,11 +64,6 @@ const facilities: Facility[] = [
     title: "Kantin / Warung",
     desc: "Warung makan dan minuman ringan.",
     Icon: Store,
-  },
-  {
-    title: "Pos Keamanan",
-    desc: "Keamanan 24 jam di lokasi.",
-    Icon: Shield,
   },
 ];
 
