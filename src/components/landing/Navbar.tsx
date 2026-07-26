@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import { waLink } from "@/lib/utils";
+import { useWaBooking } from "@/components/landing/WaBookingModal";
 
 interface NavbarProps {
   buperName: string;
-  waNumber: string;
-  waLabel: string;
 }
 
 const links = [
@@ -25,9 +23,10 @@ function BrandLogo() {
   );
 }
 
-export default function Navbar({ buperName, waNumber, waLabel }: NavbarProps) {
+export default function Navbar({ buperName }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { openWaModal } = useWaBooking();
 
   useEffect(() => {
     function onScroll() {
@@ -82,14 +81,15 @@ export default function Navbar({ buperName, waNumber, waLabel }: NavbarProps) {
                 {l.label}
               </a>
             ))}
-            <a
-              href={waLink(waNumber, `Halo ${waLabel}, saya ingin bertanya tentang booking.`)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() =>
+                openWaModal("Halo, saya ingin bertanya tentang booking.")
+              }
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
             >
               Booking via WA
-            </a>
+            </button>
           </div>
 
           <button
@@ -116,14 +116,16 @@ export default function Navbar({ buperName, waNumber, waLabel }: NavbarProps) {
                 {l.label}
               </a>
             ))}
-            <a
-              href={waLink(waNumber, `Halo ${waLabel}, saya ingin bertanya tentang booking.`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                openWaModal("Halo, saya ingin bertanya tentang booking.");
+              }}
+              className="block w-full text-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
             >
               Booking via WA
-            </a>
+            </button>
           </div>
         </div>
       )}

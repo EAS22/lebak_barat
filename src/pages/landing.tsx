@@ -9,6 +9,7 @@ import Contact from "@/components/landing/Contact";
 import Footer from "@/components/landing/Footer";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
+import { WaBookingProvider } from "@/components/landing/WaBookingModal";
 
 const DEFAULT_SETTINGS: PublicSettings = {
   landing_wa_number: "6280000000000",
@@ -30,42 +31,31 @@ export default function Landing() {
   }, [settings.buper_name]);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <Navbar
-        buperName={settings.buper_name}
-        waNumber={settings.landing_wa_number}
-        waLabel={settings.landing_wa_label}
-      />
-      <Hero
-        waNumber={settings.landing_wa_number}
-        waLabel={settings.landing_wa_label}
-      />
-      <About />
-      <div className="bg-cream">
-        <PineDivider color="#ffffff" />
+    <WaBookingProvider
+      fallbackNumber={settings.landing_wa_number}
+      fallbackLabel={settings.landing_wa_label}
+    >
+      <div className="min-h-screen bg-white text-slate-900">
+        <Navbar buperName={settings.buper_name} />
+        <Hero />
+        <About />
+        <div className="bg-cream">
+          <PineDivider color="#ffffff" />
+        </div>
+        <CalendarStatus />
+        <div className="bg-white">
+          <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
+        </div>
+        <Facilities />
+        <div className="bg-cream">
+          <PineDivider color="#ffffff" />
+        </div>
+        <Contact />
+        <div className="bg-white">
+          <PineDivider color="#14301c" />
+        </div>
+        <Footer buperName={settings.buper_name} />
       </div>
-      <CalendarStatus
-        waNumber={settings.landing_wa_number}
-      />
-      <div className="bg-white">
-        <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
-      </div>
-      <Facilities />
-      <div className="bg-cream">
-        <PineDivider color="#ffffff" />
-      </div>
-      <Contact
-        waNumber={settings.landing_wa_number}
-        waLabel={settings.landing_wa_label}
-      />
-      <div className="bg-white">
-        <PineDivider color="#14301c" />
-      </div>
-      <Footer
-        buperName={settings.buper_name}
-        waNumber={settings.landing_wa_number}
-        waLabel={settings.landing_wa_label}
-      />
-    </div>
+    </WaBookingProvider>
   );
 }

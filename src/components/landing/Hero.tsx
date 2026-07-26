@@ -1,16 +1,11 @@
 import { useState, useEffect } from "react";
 import { CalendarDays, Phone, Tent } from "lucide-react";
-import { waLink } from "@/lib/utils";
 import { useReveal } from "@/hooks/useReveal";
+import { useWaBooking } from "@/components/landing/WaBookingModal";
 import CloudsSun from "@/components/landing/ornaments/CloudsSun";
 import TentIllustration from "@/components/landing/ornaments/TentIllustration";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
-
-interface HeroProps {
-  waNumber: string;
-  waLabel: string;
-}
 
 function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const { ref, visible } = useReveal<HTMLSpanElement>();
@@ -43,8 +38,9 @@ function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   );
 }
 
-export default function Hero({ waNumber, waLabel }: HeroProps) {
+export default function Hero() {
   const [offsetX, setOffsetX] = useState(0);
+  const { openWaModal } = useWaBooking();
 
   function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -92,18 +88,18 @@ export default function Hero({ waNumber, waLabel }: HeroProps) {
                 <CalendarDays size={18} />
                 Lihat Kalender
               </a>
-              <a
-                href={waLink(
-                  waNumber,
-                  `Halo ${waLabel}, saya ingin bertanya tentang ketersediaan jadwal.`
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() =>
+                  openWaModal(
+                    "Halo, saya ingin bertanya tentang ketersediaan jadwal."
+                  )
+                }
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-brown bg-tent rounded-lg hover:bg-amber-400 transition-colors"
               >
                 <Phone size={18} />
                 Booking via WhatsApp
-              </a>
+              </button>
             </div>
             <div className="mt-12 grid grid-cols-3 gap-6">
               <div>

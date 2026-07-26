@@ -105,6 +105,23 @@ app.get("/api/public/contacts", async (c) => {
   }
 });
 
+app.get("/api/public/bookings/year", async (c) => {
+  try {
+    const sql = getSql();
+    const year = c.req.query("year");
+    if (!year || !/^\d{4}$/.test(year)) {
+      return c.json({ error: "Parameter year harus format YYYY" }, 400);
+    }
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
+    const rows = await sql`SELECT id, school_name, start_date, end_date FROM bookings WHERE status = 'confirmed' AND start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 app.get("/api/public/bookings", async (c) => {
   try {
     const sql = getSql();

@@ -36,6 +36,27 @@ export interface PublicContact {
   wa_number: string;
 }
 
+export interface PublicYearBooking {
+  id: string;
+  school_name: string;
+  start_date: string;
+  end_date: string;
+}
+
+export async function fetchPublicYearBookings(
+  year: number
+): Promise<PublicYearBooking[]> {
+  try {
+    const res = await fetch(`/api/public/bookings/year?year=${year}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data as PublicYearBooking[];
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchPublicContacts(): Promise<PublicContact[]> {
   try {
     const res = await fetch("/api/public/contacts");

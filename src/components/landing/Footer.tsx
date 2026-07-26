@@ -1,13 +1,12 @@
-import { waLink } from "@/lib/utils";
 import Stars from "@/components/landing/ornaments/Stars";
+import { useWaBooking } from "@/components/landing/WaBookingModal";
 
 interface FooterProps {
   buperName: string;
-  waNumber: string;
-  waLabel: string;
 }
 
-export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
+export default function Footer({ buperName }: FooterProps) {
+  const { openWaModal } = useWaBooking();
   const year = new Date().getFullYear();
 
   return (
@@ -64,14 +63,13 @@ export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
               Kontak
             </h4>
             <div className="space-y-2 text-sm">
-              <a
-                href={waLink(waNumber, `Halo ${waLabel}`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block hover:text-white transition-colors"
+              <button
+                type="button"
+                onClick={() => openWaModal("Halo, saya ingin bertanya tentang booking.")}
+                className="block hover:text-white transition-colors text-left"
               >
-                WhatsApp: {waLabel}
-              </a>
+                WhatsApp: Admin Booking
+              </button>
               <a href="mailto:lebakbarat@girimulya.com" className="block hover:text-white">
                 lebakbarat@girimulya.com
               </a>
