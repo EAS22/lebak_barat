@@ -3,6 +3,7 @@ import { fetchPublicSettings, type PublicSettings } from "@/lib/api";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import About from "@/components/landing/About";
+import History from "@/components/landing/History";
 import CalendarStatus from "@/components/landing/CalendarStatus";
 import Facilities from "@/components/landing/Facilities";
 import Contact from "@/components/landing/Contact";
@@ -53,6 +54,13 @@ export default function Landing() {
         <Navbar buperName={settings.buper_name} />
         <Hero />
         <About />
+        <div className="bg-cream">
+          <PineDivider color="#ffffff" />
+        </div>
+        <div className="bg-white">
+          <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
+        </div>
+        <History />
         <div className="bg-cream">
           <PineDivider color="#ffffff" />
         </div>

@@ -8,6 +8,7 @@ interface NavbarProps {
 
 const links = [
   { href: "#tentang", label: "Tentang" },
+  { href: "#profil", label: "Profil" },
   { href: "#kalender", label: "Kalender" },
   { href: "#fasilitas", label: "Fasilitas" },
   { href: "#kontak", label: "Kontak" },

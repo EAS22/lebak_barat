@@ -42,6 +42,11 @@ export default function Footer({ buperName }: FooterProps) {
                 </a>
               </li>
               <li>
+                <a href="#profil" className="hover:text-white transition-colors">
+                  Profil & Sejarah
+                </a>
+              </li>
+              <li>
                 <a href="#kalender" className="hover:text-white transition-colors">
                   Kalender
                 </a>
