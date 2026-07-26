@@ -127,8 +127,13 @@ export default function Hero({ waNumber, waLabel }: HeroProps) {
               </div>
             </div>
           </div>
-          <div className="hidden md:block">
-            <TentIllustration className="anim-floaty" />
+          <div className="hidden md:flex flex-col items-center gap-6">
+            <img
+              src="/images/logo.png"
+              alt="Logo Bumi Perkemahan Lebak Barat"
+              className="w-64 lg:w-80 h-auto anim-floaty drop-shadow-xl"
+            />
+            <TentIllustration className="w-56 lg:w-72" />
           </div>
         </div>
       </div>

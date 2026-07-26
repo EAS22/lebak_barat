@@ -7,22 +7,6 @@ interface FooterProps {
   waLabel: string;
 }
 
-function GlowTent() {
-  return (
-    <svg width="36" height="30" viewBox="0 0 36 30" aria-hidden="true">
-      <circle cx="18" cy="18" r="12" fill="#FBC02D" opacity="0.25" />
-      <polygon
-        points="4,27 18,6 32,27"
-        fill="#FBC02D"
-        stroke="#3E2723"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <polygon points="18,13 13,27 23,27" fill="#3E2723" />
-    </svg>
-  );
-}
-
 export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
   const year = new Date().getFullYear();
 
@@ -32,8 +16,12 @@ export default function Footer({ buperName, waNumber, waLabel }: FooterProps) {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid sm:grid-cols-3 gap-8">
           <div>
-            <div className="flex items-center gap-2">
-              <GlowTent />
+            <div className="flex items-center gap-3">
+              <img
+                src="/images/logo.png"
+                alt="Logo Bumi Perkemahan Lebak Barat"
+                className="h-14 w-auto drop-shadow-[0_0_12px_rgba(251,192,45,0.35)]"
+              />
               <h3 className="text-lg font-bold text-white">{buperName}</h3>
             </div>
             <p className="mt-2 text-sm leading-relaxed">

@@ -15,18 +15,13 @@ const links = [
   { href: "#kontak", label: "Kontak" },
 ];
 
-function TentLogo() {
+function BrandLogo() {
   return (
-    <svg width="28" height="24" viewBox="0 0 28 24" aria-hidden="true">
-      <polygon
-        points="2,22 14,3 26,22"
-        fill="#FBC02D"
-        stroke="#3E2723"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <polygon points="14,10 10,22 18,22" fill="#3E2723" />
-    </svg>
+    <img
+      src="/images/logo.png"
+      alt="Logo Bumi Perkemahan Lebak Barat"
+      className="h-10 w-auto drop-shadow-sm"
+    />
   );
 }
 
@@ -72,7 +67,7 @@ export default function Navbar({ buperName, waNumber, waLabel }: NavbarProps) {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
-            <TentLogo />
+            <BrandLogo />
             <span className="truncate">{buperName || "Buper Lebak Barat"}</span>
           </a>
 
