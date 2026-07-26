@@ -62,8 +62,21 @@ export default function History() {
                 />
               </div>
             </div>
+            <div className="mt-4 rounded-2xl overflow-hidden shadow-lg border-2 border-dashed border-amber-300 bg-white p-2">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src="https://www.youtube.com/embed/vD2wR4GNyCQ?si=_fmfGiHz5WTqC-lq"
+                  title="Dokumentasi Bumi Perkemahan Lebak Barat"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
             <p className="mt-3 text-center text-xs text-slate-500">
-              Video profil Bumi Perkemahan Lebak Barat
+              Video profil &amp; dokumentasi Bumi Perkemahan Lebak Barat
             </p>
           </div>
 

@@ -90,7 +90,7 @@ export default function AdminLayout() {
   const initials = initialsOf(user);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen overflow-hidden flex">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -100,7 +100,8 @@ export default function AdminLayout() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex flex-col h-full shrink-0 transition-all duration-300",
+          "lg:static lg:z-auto lg:translate-x-0",
           "bg-gradient-to-b from-[#14301c] to-[#1b3a24] text-emerald-100",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "w-64 lg:w-[68px]" : "w-64"
@@ -195,18 +196,8 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <div
-        className={cn(
-          "flex-1 flex flex-col min-w-0 transition-all duration-300",
-          collapsed ? "lg:ml-[68px]" : "lg:ml-64"
-        )}
-      >
-        <header
-          className={cn(
-            "fixed top-0 right-0 left-0 z-30 flex items-center justify-between h-16 px-4 border-b bg-white lg:px-6 transition-all duration-300",
-            collapsed ? "lg:left-[68px]" : "lg:left-64"
-          )}
-        >
+      <div className="flex-1 flex flex-col min-w-0 h-full">
+        <header className="shrink-0 flex items-center justify-between h-16 px-4 border-b bg-white lg:px-6">
           <div className="flex items-center">
             <button className="lg:hidden mr-3" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
@@ -221,7 +212,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 bg-slate-50/80 mt-16">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50/80">
           <Outlet context={{ user } satisfies AdminOutletContext} />
         </main>
       </div>

@@ -107,7 +107,10 @@ export default function Facilities() {
   return (
     <section id="fasilitas" className="relative py-16 md:py-24 bg-cream">
       <TopoPattern />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div
+        ref={grid.ref}
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      >
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-brown">
             Fasilitas
@@ -131,7 +134,7 @@ export default function Facilities() {
             Data fasilitas belum tersedia.
           </p>
         ) : (
-          <div ref={grid.ref} className="space-y-10">
+          <div className="space-y-10">
             {utama.length > 0 && (
               <div>
                 <h3 className="text-lg font-bold text-brown mb-4 text-center md:text-left">
