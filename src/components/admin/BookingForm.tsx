@@ -21,10 +21,10 @@ interface FormData {
   schoolName: string;
   participantCount: number;
   picName: string;
-  picWa: string;
+  picWa: string | null;
   startDate: string;
   price: number | null;
-  status: "confirmed" | "cancelled";
+  status: "final" | "negosiasi" | "batal";
   keterangan: string;
 }
 
@@ -36,7 +36,7 @@ function emptyForm(): FormData {
     picWa: "",
     startDate: toISODate(new Date()),
     price: null,
-    status: "confirmed",
+    status: "negosiasi",
     keterangan: "",
   };
 }
@@ -46,7 +46,7 @@ function fromRecord(r: BookingRecord): FormData {
     schoolName: r.school_name,
     participantCount: r.participant_count,
     picName: r.pic_name,
-    picWa: r.pic_wa,
+    picWa: r.pic_wa ?? "",
     startDate: r.start_date.slice(0, 10),
     price: r.price != null ? Number(r.price) : null,
     status: r.status,
@@ -82,7 +82,10 @@ export default function BookingForm({
     if (form.schoolName.trim().length < 2) e.schoolName = "Wajib diisi (min 2)";
     if (form.participantCount < 1) e.participantCount = "Minimal 1";
     if (form.picName.trim().length < 2) e.picName = "Wajib diisi";
-    if (form.picWa.trim().length < 8) e.picWa = "Nomor WA tidak valid";
+    const wa = (form.picWa ?? "").trim();
+    if (form.status === "final" && wa.length < 8) {
+      e.picWa = "No. WhatsApp PIC wajib diisi untuk status Final";
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(form.startDate)) e.startDate = "Format YYYY-MM-DD";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -91,7 +94,8 @@ export default function BookingForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(form);
+    const wa = (form.picWa ?? "").trim();
+    await onSubmit({ ...form, picWa: wa === "" ? null : wa });
   }
 
   const endDate = form.startDate ? toISODate(addDays(new Date(form.startDate + "T00:00:00"), 2)) : "";
@@ -162,10 +166,11 @@ export default function BookingForm({
             <Label htmlFor="picWa">No. WhatsApp PIC</Label>
             <Input
               id="picWa"
-              value={form.picWa}
+              value={form.picWa ?? ""}
               onChange={(e) => set("picWa", e.target.value)}
               placeholder="6281234567890"
             />
+            <p className="text-xs text-gray-500">Wajib diisi jika status Final</p>
             {errors.picWa && <p className="text-xs text-red-600">{errors.picWa}</p>}
           </div>
 
@@ -190,13 +195,14 @@ export default function BookingForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="status">Status</Label>
-            <Select value={form.status} onValueChange={(v) => set("status", v as "confirmed" | "cancelled")}>
+            <Select value={form.status} onValueChange={(v) => set("status", v as "final" | "negosiasi" | "batal")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="final">Final</SelectItem>
+                <SelectItem value="negosiasi">Negosiasi</SelectItem>
+                <SelectItem value="batal">Batal</SelectItem>
               </SelectContent>
             </Select>
           </div>

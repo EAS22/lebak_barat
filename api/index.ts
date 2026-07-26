@@ -14,6 +14,8 @@ import {
   bookingSchema,
   bookingUpdateSchema,
   settingsSchema,
+  facilitySchema,
+  facilityUpdateSchema,
 } from "./_lib/validation.js";
 
 type AuthUser = { id: string; username: string; role: string };
@@ -75,6 +77,17 @@ async function requireSuper(
 
 // ─── Public ──────────────────────────────────────────────────────
 
+app.get("/api/public/facilities", async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT id, name, category, sort_order FROM facilities WHERE is_active = true ORDER BY sort_order, created_at`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 app.get("/api/public/settings", async (c) => {
   try {
     const sql = getSql();
@@ -114,7 +127,7 @@ app.get("/api/public/bookings/year", async (c) => {
     }
     const yearStart = `${year}-01-01`;
     const yearEnd = `${year}-12-31`;
-    const rows = await sql`SELECT id, school_name, start_date, end_date FROM bookings WHERE status = 'confirmed' AND start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
+    const rows = await sql`SELECT id, school_name, start_date, end_date FROM bookings WHERE status = 'final' AND start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
     return c.json(rows);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -134,7 +147,7 @@ app.get("/api/public/bookings", async (c) => {
     const lastDay = new Date(y!, m!, 0).getUTCDate();
     const monthEnd = `${month}-${String(lastDay).padStart(2, "0")}`;
 
-    const rows = await sql`SELECT id, start_date, end_date FROM bookings WHERE status = 'confirmed' AND NOT (end_date < ${monthStart} OR start_date > ${monthEnd}) ORDER BY start_date`;
+    const rows = await sql`SELECT id, start_date, end_date FROM bookings WHERE status = 'final' AND NOT (end_date < ${monthStart} OR start_date > ${monthEnd}) ORDER BY start_date`;
     return c.json(rows);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -265,12 +278,12 @@ app.post("/api/bookings", requireAuth, async (c) => {
     if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
     const d = parsed.data;
     const endDate = addDaysStr(d.startDate, 2);
-    const status = d.status ?? "confirmed";
+    const status = d.status ?? "negosiasi";
 
-    if (status === "confirmed") {
-      const overlap = await sql`SELECT id FROM bookings WHERE status = 'confirmed' AND NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
+    if (status === "final") {
+      const overlap = await sql`SELECT id FROM bookings WHERE status = 'final' AND NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
       if (overlap.length > 0) {
-        return c.json({ error: "Tanggal bentrok dengan booking confirmed lain" }, 409);
+        return c.json({ error: "Tanggal bentrok dengan booking final lain" }, 409);
       }
     }
 
@@ -302,13 +315,18 @@ app.put("/api/bookings/:id", requireAuth, async (c) => {
 
     const newStatus = d.status ?? (cur.status as string);
 
-    if (
-      newStatus === "confirmed" &&
-      (d.status === "confirmed" || d.startDate)
-    ) {
-      const overlap = await sql`SELECT id FROM bookings WHERE id != ${id} AND status = 'confirmed' AND NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
+    if (newStatus === "final") {
+      const effectivePicWa =
+        d.picWa !== undefined ? d.picWa : (cur.pic_wa as string | null);
+      if (!effectivePicWa || effectivePicWa.length < 8) {
+        return c.json(
+          { error: "No. WhatsApp PIC wajib diisi untuk status Final" },
+          400
+        );
+      }
+      const overlap = await sql`SELECT id FROM bookings WHERE id != ${id} AND status = 'final' AND NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
       if (overlap.length > 0) {
-        return c.json({ error: "Tanggal bentrok dengan booking confirmed lain" }, 409);
+        return c.json({ error: "Tanggal bentrok dengan booking final lain" }, 409);
       }
     }
 
@@ -518,6 +536,88 @@ app.delete("/api/users/:id", requireAuth, requireSuper, async (c) => {
     }
 
     await sql`DELETE FROM users WHERE id = ${id}`;
+    return c.json({ ok: true });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+// ─── Settings ────────────────────────────────────────────────────
+
+// ─── Facilities (super_admin) ────────────────────────────────────
+
+app.get("/api/facilities", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT * FROM facilities ORDER BY sort_order, created_at`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.post("/api/facilities", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const body = await c.req.json();
+    const parsed = facilitySchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+    const d = parsed.data;
+    let sortOrder = d.sortOrder;
+    if (sortOrder === undefined) {
+      const maxRows = await sql`SELECT COALESCE(MAX(sort_order),0)::int AS mx FROM facilities`;
+      sortOrder = ((maxRows[0] as { mx: number }).mx ?? 0) + 1;
+    }
+    const rows = await sql`INSERT INTO facilities (name, category, sort_order, is_active) VALUES (${d.name}, ${d.category}, ${sortOrder}, ${d.isActive ?? true}) RETURNING *`;
+    return c.json(rows[0], 201);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.patch("/api/facilities/:id", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const parsed = facilityUpdateSchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+    const d = parsed.data;
+
+    const sets: string[] = [];
+    const vals: unknown[] = [];
+    if (d.name !== undefined) { vals.push(d.name); sets.push(`name = $${vals.length}`); }
+    if (d.category !== undefined) { vals.push(d.category); sets.push(`category = $${vals.length}`); }
+    if (d.sortOrder !== undefined) { vals.push(d.sortOrder); sets.push(`sort_order = $${vals.length}`); }
+    if (d.isActive !== undefined) { vals.push(d.isActive); sets.push(`is_active = $${vals.length}`); }
+
+    if (sets.length === 0) {
+      const rows = await sql`SELECT * FROM facilities WHERE id = ${id}`;
+      return c.json(rows[0]);
+    }
+
+    sets.push(`updated_at = now()`);
+    vals.push(id);
+    const rows = await sql.query(
+      `UPDATE facilities SET ${sets.join(", ")} WHERE id = $${vals.length} RETURNING *`,
+      vals
+    );
+    if (!rows[0]) return c.json({ error: "Fasilitas tidak ditemukan" }, 404);
+    return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.delete("/api/facilities/:id", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    await sql`DELETE FROM facilities WHERE id = ${id}`;
     return c.json({ ok: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";

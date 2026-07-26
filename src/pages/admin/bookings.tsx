@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -37,7 +36,8 @@ import {
   exportBookings,
   type BookingRecord,
 } from "@/lib/adminApi";
-import { formatIDR, parseDateOnly } from "@/lib/utils";
+import { formatIDR, parseDateOnly, cn } from "@/lib/utils";
+import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/bookingStatus";
 import { Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -103,7 +103,7 @@ export default function BookingsPage() {
     schoolName: string;
     participantCount: number;
     picName: string;
-    picWa: string;
+    picWa: string | null;
     startDate: string;
     price: number | null;
     status: string;
@@ -214,8 +214,9 @@ export default function BookingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="final">Final</SelectItem>
+                  <SelectItem value="negosiasi">Negosiasi</SelectItem>
+                  <SelectItem value="batal">Batal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -251,7 +252,7 @@ export default function BookingsPage() {
                       <TableCell className="font-medium">{b.school_name}</TableCell>
                       <TableCell>{b.participant_count}</TableCell>
                       <TableCell>{b.pic_name}</TableCell>
-                      <TableCell className="text-xs">{b.pic_wa}</TableCell>
+                      <TableCell className="text-xs">{b.pic_wa || "—"}</TableCell>
                       <TableCell className="text-sm">
                         {format(parseDateOnly(b.start_date), "d MMM yyyy", { locale: localeId })}
                         {" — "}
@@ -259,9 +260,14 @@ export default function BookingsPage() {
                       </TableCell>
                       <TableCell>{b.price != null ? formatIDR(b.price) : "—"}</TableCell>
                       <TableCell>
-                        <Badge variant={b.status === "confirmed" ? "default" : "secondary"}>
-                          {b.status}
-                        </Badge>
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
+                            STATUS_BADGE_CLASS[b.status]
+                          )}
+                        >
+                          {STATUS_LABEL[b.status]}
+                        </span>
                       </TableCell>
                       <TableCell className="max-w-[120px] truncate text-xs text-gray-500">
                         {b.keterangan || "—"}

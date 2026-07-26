@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -15,7 +14,8 @@ import {
 import CalendarAdmin from "@/components/admin/CalendarAdmin";
 import BookingForm from "@/components/admin/BookingForm";
 import { getBookings, createBooking, type BookingRecord } from "@/lib/adminApi";
-import { toISODate, addDays, dateOnly, parseDateOnly } from "@/lib/utils";
+import { parseDateOnly, cn } from "@/lib/utils";
+import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/bookingStatus";
 import { CheckCircle2, Clock, XCircle, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -46,22 +46,13 @@ export default function Dashboard() {
     loadBookings();
   }, [loadBookings]);
 
-  const now = new Date();
-  const todayStr = toISODate(now);
-  const weekLater = toISODate(addDays(now, 7));
-
-  const confirmedThisMonth = bookings.filter((b) => b.status === "confirmed").length;
-  const upcomingWeek = bookings.filter(
-    (b) =>
-      b.status === "confirmed" &&
-      dateOnly(b.start_date) >= todayStr &&
-      dateOnly(b.start_date) <= weekLater
-  ).length;
-  const cancelledCount = bookings.filter((b) => b.status === "cancelled").length;
+  const finalThisMonth = bookings.filter((b) => b.status === "final").length;
+  const negosiasiCount = bookings.filter((b) => b.status === "negosiasi").length;
+  const batalCount = bookings.filter((b) => b.status === "batal").length;
 
   const recentBookings = bookings.slice(0, 5);
 
-  async function handleCreate(form: { schoolName: string; participantCount: number; picName: string; picWa: string; startDate: string; price: number | null; status: string; keterangan: string }) {
+  async function handleCreate(form: { schoolName: string; participantCount: number; picName: string; picWa: string | null; startDate: string; price: number | null; status: string; keterangan: string }) {
     setFormLoading(true);
     setOverlapError(null);
     try {
@@ -95,29 +86,29 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Confirmed Bulan Ini</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Final Bulan Ini</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-emerald-600">{confirmedThisMonth}</div>
+            <div className="text-3xl font-bold text-emerald-600">{finalThisMonth}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Upcoming 7 Hari</CardTitle>
-            <Clock className="h-4 w-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium text-gray-600">Negosiasi</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{upcomingWeek}</div>
+            <div className="text-3xl font-bold text-amber-600">{negosiasiCount}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Cancelled</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Batal</CardTitle>
             <XCircle className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-500">{cancelledCount}</div>
+            <div className="text-3xl font-bold text-slate-500">{batalCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -153,9 +144,14 @@ export default function Dashboard() {
                         {format(parseDateOnly(b.start_date), "d MMM", { locale: localeId })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={b.status === "confirmed" ? "default" : "secondary"}>
-                          {b.status}
-                        </Badge>
+                        <span
+                          className={cn(
+                            "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
+                            STATUS_BADGE_CLASS[b.status]
+                          )}
+                        >
+                          {STATUS_LABEL[b.status]}
+                        </span>
                       </TableCell>
                     </TableRow>
                   ))}

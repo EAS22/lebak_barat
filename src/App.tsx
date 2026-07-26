@@ -8,12 +8,18 @@ import Dashboard from "@/pages/admin/dashboard";
 import BookingsPage from "@/pages/admin/bookings";
 import UsersPage from "@/pages/admin/users";
 import SettingsPage from "@/pages/admin/settings";
+import FacilitiesPage from "@/pages/admin/facilities";
 import { useOutletContext } from "react-router-dom";
 import type { AdminOutletContext } from "@/pages/admin/layout";
 
 function UsersRoute() {
   const { user } = useOutletContext<AdminOutletContext>();
   return <UsersPage currentUser={user} />;
+}
+
+function FacilitiesRoute() {
+  const { user } = useOutletContext<AdminOutletContext>();
+  return <FacilitiesPage currentUser={user} />;
 }
 
 function SettingsRoute() {
@@ -40,6 +46,7 @@ export default function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="bookings" element={<BookingsPage />} />
+            <Route path="facilities" element={<FacilitiesRoute />} />
             <Route path="users" element={<UsersRoute />} />
             <Route path="settings" element={<SettingsRoute />} />
           </Route>

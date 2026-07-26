@@ -69,6 +69,25 @@ export async function fetchPublicContacts(): Promise<PublicContact[]> {
   }
 }
 
+export interface PublicFacility {
+  id: string;
+  name: string;
+  category: "utama" | "opsional";
+  sort_order: number;
+}
+
+export async function fetchPublicFacilities(): Promise<PublicFacility[]> {
+  try {
+    const res = await fetch("/api/public/facilities");
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data as PublicFacility[];
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchPublicSettings(): Promise<PublicSettings> {
   try {
     const res = await fetch("/api/public/settings");

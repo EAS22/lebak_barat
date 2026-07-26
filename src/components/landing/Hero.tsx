@@ -104,7 +104,7 @@ export default function Hero() {
             <div className="mt-12 grid grid-cols-3 gap-6">
               <div>
                 <div className="text-2xl md:text-3xl font-bold text-brown">
-                  <Counter target={9} />
+                  <Counter target={20} suffix="+" />
                 </div>
                 <div className="text-sm text-slate-600">Fasilitas</div>
               </div>

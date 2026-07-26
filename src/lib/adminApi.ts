@@ -5,11 +5,11 @@ export interface BookingRecord {
   school_name: string;
   participant_count: number;
   pic_name: string;
-  pic_wa: string;
+  pic_wa: string | null;
   start_date: string;
   end_date: string;
   price: number | null;
-  status: "confirmed" | "cancelled";
+  status: "final" | "negosiasi" | "batal";
   keterangan: string | null;
   created_by: string | null;
   created_at: string;
@@ -179,6 +179,75 @@ export async function updateUser(id: string, data: UpdateUserInput): Promise<Use
 
 export async function deleteUser(id: string): Promise<void> {
   const res = await adminFetch(`/api/users/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Delete failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+}
+
+// ─── Facilities ─────────────────────────────────────────────────
+
+export interface FacilityRecord {
+  id: string;
+  name: string;
+  category: "utama" | "opsional";
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getFacilities(): Promise<FacilityRecord[]> {
+  const res = await adminFetch("/api/facilities");
+  if (!res.ok) throw new Error(`Failed to fetch facilities: ${res.status}`);
+  return res.json();
+}
+
+export async function createFacility(data: {
+  name: string;
+  category: "utama" | "opsional";
+  sortOrder?: number;
+  isActive?: boolean;
+}): Promise<FacilityRecord> {
+  const res = await adminFetch("/api/facilities", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Create failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function updateFacility(
+  id: string,
+  data: Partial<{
+    name: string;
+    category: "utama" | "opsional";
+    sortOrder: number;
+    isActive: boolean;
+  }>
+): Promise<FacilityRecord> {
+  const res = await adminFetch(`/api/facilities/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Update failed: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function deleteFacility(id: string): Promise<void> {
+  const res = await adminFetch(`/api/facilities/${id}`, { method: "DELETE" });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const err = new Error(body.error || `Delete failed: ${res.status}`);

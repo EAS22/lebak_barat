@@ -145,8 +145,9 @@ export default function CalendarAdmin({
             const dayBookings = getBookingsForDay(day);
             const hasBooking = dayBookings.length > 0;
             const first = dayBookings[0];
-            const isCancelled = first?.status === "cancelled";
-            const isConfirmed = first?.status === "confirmed";
+            const isBatal = first?.status === "batal";
+            const isFinal = first?.status === "final";
+            const isNegosiasi = first?.status === "negosiasi";
             const isToday = isSameDay(day, today);
             const isSelected = selected === format(day, "yyyy-MM-dd");
 
@@ -156,8 +157,9 @@ export default function CalendarAdmin({
                 onClick={() => hasBooking && first && onSelectBooking?.(first)}
                 className={`
                   relative h-10 flex items-center justify-center text-sm rounded-md
-                  ${hasBooking && isConfirmed ? "bg-emerald-500 text-white font-medium cursor-pointer group" : ""}
-                  ${hasBooking && isCancelled ? "bg-slate-300 text-slate-600 line-through cursor-pointer group" : ""}
+                  ${hasBooking && isFinal ? "bg-emerald-500 text-white font-medium cursor-pointer group" : ""}
+                  ${hasBooking && isNegosiasi ? "bg-amber-400 text-brown font-medium cursor-pointer group" : ""}
+                  ${hasBooking && isBatal ? "bg-slate-300 text-slate-600 line-through cursor-pointer group" : ""}
                   ${!hasBooking ? "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50" : ""}
                   ${isToday && !hasBooking ? "ring-2 ring-emerald-500 ring-offset-1" : ""}
                   ${isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""}
@@ -186,11 +188,15 @@ export default function CalendarAdmin({
       <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-600">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-emerald-500" />
-          Confirmed
+          Final
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-amber-400" />
+          Negosiasi
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-slate-300" />
-          Cancelled
+          Batal
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-white border border-gray-300" />

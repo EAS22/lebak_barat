@@ -13,19 +13,65 @@ export const createUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 export const updateUserSchema = createUserSchema.partial().extend({ password: z.string().min(6).optional() });
-export const bookingSchema = z.object({
-  schoolName: z.string().min(2).max(200),
-  participantCount: z.number().int().positive(),
-  picName: z.string().min(2).max(100),
-  picWa: z.string().min(8).max(20),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+
+export const bookingStatusValues = ["final", "negosiasi", "batal"] as const;
+
+export const bookingSchema = z
+  .object({
+    schoolName: z.string().min(2).max(200),
+    participantCount: z.number().int().positive(),
+    picName: z.string().min(2).max(100),
+    picWa: z
+      .string()
+      .max(20)
+      .optional()
+      .nullable()
+      .transform((v) => (v === "" ? null : v)),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    price: z.number().nonnegative().optional().nullable(),
+    keterangan: z.string().max(1000).optional().nullable(),
+    status: z.enum(bookingStatusValues).optional(),
+  })
+  .superRefine((data, ctx) => {
+    const status = data.status ?? "negosiasi";
+    if (status === "final" && (!data.picWa || data.picWa.length < 8)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["picWa"],
+        message: "No. WhatsApp PIC wajib diisi untuk status Final",
+      });
+    }
+  });
+
+export const bookingUpdateSchema = z.object({
+  schoolName: z.string().min(2).max(200).optional(),
+  participantCount: z.number().int().positive().optional(),
+  picName: z.string().min(2).max(100).optional(),
+  picWa: z
+    .string()
+    .max(20)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   price: z.number().nonnegative().optional().nullable(),
   keterangan: z.string().max(1000).optional().nullable(),
-  status: z.enum(["confirmed", "cancelled"]).optional(),
+  status: z.enum(bookingStatusValues).optional(),
 });
-export const bookingUpdateSchema = bookingSchema.partial();
+
 export const settingsSchema = z.object({
   landingWaNumber: z.string().min(8).max(20),
   landingWaLabel: z.string().max(100).optional(),
   buperName: z.string().max(100).optional(),
 });
+
+export const facilitySchema = z.object({
+  name: z.string().min(2).max(200),
+  category: z.enum(["utama", "opsional"]),
+  sortOrder: z.number().int().optional(),
+  isActive: z.boolean().optional(),
+});
+export const facilityUpdateSchema = facilitySchema.partial();
