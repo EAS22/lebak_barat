@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useWaBooking } from "@/components/landing/WaBookingModal";
 
 interface NavbarProps {
   buperName: string;
@@ -27,7 +26,6 @@ function BrandLogo() {
 export default function Navbar({ buperName }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { openWaModal } = useWaBooking();
 
   useEffect(() => {
     function onScroll() {
@@ -82,18 +80,9 @@ export default function Navbar({ buperName }: NavbarProps) {
                 {l.label}
               </a>
             ))}
-            <button
-              type="button"
-              onClick={() =>
-                openWaModal("Halo, saya ingin bertanya tentang booking.")
-              }
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
-            >
-              Booking via WA
-            </button>
             <Link
               to="/admin/login"
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:border-emerald-600 hover:text-emerald-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
               title="Login Admin"
             >
               <LogIn size={16} />
@@ -125,20 +114,10 @@ export default function Navbar({ buperName }: NavbarProps) {
                 {l.label}
               </a>
             ))}
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                openWaModal("Halo, saya ingin bertanya tentang booking.");
-              }}
-              className="block w-full text-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
-            >
-              Booking via WA
-            </button>
             <Link
               to="/admin/login"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:border-emerald-600 hover:text-emerald-700"
+              className="flex items-center justify-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
             >
               <LogIn size={16} />
               Login Admin

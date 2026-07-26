@@ -1,10 +1,37 @@
-import { MapPin, Clock, MessageCircle, Mail } from "lucide-react";
+import { MapPin, Clock, MessageCircle, Mail, Instagram, Youtube } from "lucide-react";
 import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 import CampfireFlame from "@/components/landing/ornaments/CampfireFlame";
 
 const MAP_URL = "https://maps.app.goo.gl/K9xTHjgc4boF3YQu5";
 const MAP_COORDS = "-6.943210, 108.325651";
+
+const SOCIALS = [
+  {
+    icon: Instagram,
+    label: "@lebakbaratedupark",
+    desc: "Buper Lebak Barat",
+    url: "https://instagram.com/lebakbaratedupark",
+  },
+  {
+    icon: Instagram,
+    label: "@girimulya.bjr",
+    desc: "Pemerintah Desa Girimulya",
+    url: "https://instagram.com/girimulya.bjr",
+  },
+  {
+    icon: Instagram,
+    label: "@bumdesgunungsembung",
+    desc: "Bumdes Gunung Sembung",
+    url: "https://instagram.com/bumdesgunungsembung",
+  },
+  {
+    icon: Youtube,
+    label: "Pemdes Girimulya",
+    desc: "YouTube",
+    url: "https://www.youtube.com/@pemdesgirimulya",
+  },
+];
 
 export default function Contact() {
   const card = useReveal<HTMLDivElement>();
@@ -87,6 +114,35 @@ export default function Contact() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-100 text-left">
+            <p className="font-medium text-slate-900 mb-3 text-center">
+              Ikuti Kami
+            </p>
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              {SOCIALS.map(({ icon: Icon, label, desc, url }) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-emerald-200 hover:shadow-sm transition-all group"
+                >
+                  <span className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Icon size={17} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-brown truncate">
+                      {label}
+                    </span>
+                    <span className="block text-xs text-slate-500 truncate">
+                      {desc}
+                    </span>
+                  </span>
+                </a>
+              ))}
             </div>
           </div>
 
