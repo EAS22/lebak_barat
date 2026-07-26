@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
-import { handle } from "@hono/node-server/vercel";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import {
   hashPassword,
@@ -528,10 +527,11 @@ app.put("/api/settings", requireAuth, requireSuper, async (c) => {
   }
 });
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+const handler = (request: Request) => app.fetch(request);
 
-export default handle(app);
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+export const OPTIONS = handler;
