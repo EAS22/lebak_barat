@@ -83,10 +83,11 @@ export default function Hero() {
                     .querySelector("#kalender")
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+                className="group relative inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-emerald-600 rounded-lg overflow-hidden transition-all duration-300 hover:bg-emerald-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-600/25"
               >
-                <CalendarDays size={18} />
-                Lihat Kalender
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out" />
+                <CalendarDays size={18} className="relative z-10 group-hover:rotate-6 transition-transform duration-300" />
+                <span className="relative z-10">Lihat Kalender</span>
               </a>
               <button
                 type="button"
@@ -95,10 +96,13 @@ export default function Hero() {
                     "Halo, saya ingin bertanya tentang ketersediaan jadwal."
                   )
                 }
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-brown bg-tent rounded-lg hover:bg-amber-400 transition-colors"
+                className="group relative inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-brown bg-tent rounded-lg overflow-hidden transition-all duration-300 hover:bg-amber-400 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-400/30 anim-pulse-soft"
               >
-                <Phone size={18} />
-                Booking via WhatsApp
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out" />
+                <span className="relative z-10 flex items-center gap-2">
+                  <Phone size={18} className="group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300" />
+                  Booking via WhatsApp
+                </span>
               </button>
             </div>
             <div className="mt-12 grid grid-cols-3 gap-6">
