@@ -76,13 +76,13 @@ export default function Contact() {
             </div>
 
             <div
-              className="relative flex-1 min-h-[360px] lg:min-h-0 group overflow-hidden rounded-xl bg-cream cursor-zoom-in border border-amber-200"
+              className="relative flex-1 min-h-[400px] lg:min-h-0 group overflow-hidden rounded-xl bg-white cursor-zoom-in border border-amber-200"
               onClick={() => setShowDenahFull(true)}
             >
               <img
                 src={DENAH_SRC}
                 alt="Denah Bumi Perkemahan Lebak Barat"
-                className="absolute inset-0 w-full h-full object-contain p-2 group-hover:scale-[1.02] transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
