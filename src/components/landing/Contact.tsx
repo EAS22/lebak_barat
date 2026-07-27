@@ -54,13 +54,13 @@ export default function Contact() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-start">
+        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto lg:items-stretch items-start">
           {/* Card Denah */}
           <div
             ref={denah.ref}
-            className={`bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-4 md:p-5 reveal ${denah.visible ? "is-visible" : ""}`}
+            className={`flex flex-col bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-4 md:p-5 reveal ${denah.visible ? "is-visible" : ""}`}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 shrink-0">
               <h3 className="flex items-center gap-2 text-base font-bold text-brown">
                 <MapPin size={18} className="text-emerald-600" />
                 Denah Buper Lebak Barat
@@ -76,41 +76,43 @@ export default function Contact() {
             </div>
 
             <div
-              className="relative group overflow-hidden rounded-xl bg-cream cursor-zoom-in border border-amber-200"
+              className="relative flex-1 min-h-[360px] lg:min-h-0 group overflow-hidden rounded-xl bg-cream cursor-zoom-in border border-amber-200"
               onClick={() => setShowDenahFull(true)}
             >
               <img
                 src={DENAH_SRC}
                 alt="Denah Bumi Perkemahan Lebak Barat"
-                className="w-full h-auto object-contain max-h-[420px] group-hover:scale-[1.02] transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-contain p-2 group-hover:scale-[1.02] transition-transform duration-500"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
               <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/60 text-white text-[11px] flex items-center gap-1">
                 <Maximize2 size={12} /> Klik untuk memperbesar
               </div>
             </div>
 
-            <a
-              href={MAP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"
-            >
-              <MapPin size={16} />
-              Buka di Google Maps
-            </a>
-            <p className="mt-2 text-center text-[11px] text-slate-400">
-              Koordinat: {MAP_COORDS}
-            </p>
+            <div className="shrink-0">
+              <a
+                href={MAP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"
+              >
+                <MapPin size={16} />
+                Buka di Google Maps
+              </a>
+              <p className="mt-2 text-center text-[11px] text-slate-400">
+                Koordinat: {MAP_COORDS}
+              </p>
+            </div>
           </div>
 
           {/* Card Kontak */}
           <div
             ref={card.ref}
-            className={`bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 sm:p-8 text-center reveal ${card.visible ? "is-visible" : ""}`}
+            className={`flex flex-col bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 sm:p-8 text-center reveal ${card.visible ? "is-visible" : ""}`}
           >
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4 shrink-0">
               <CampfireFlame size={56} />
             </div>
 
@@ -121,7 +123,7 @@ export default function Contact() {
                   "Halo, saya ingin bertanya tentang booking Bumi Perkemahan Lebak Barat."
                 )
               }
-              className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors anim-pulse-soft"
+              className="shrink-0 inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors anim-pulse-soft"
             >
               <MessageCircle size={20} />
               Hubungi via WhatsApp
