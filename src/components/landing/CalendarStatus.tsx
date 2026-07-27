@@ -15,7 +15,6 @@ import {
 } from "@/lib/api";
 import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
-import RopeBorder from "@/components/landing/ornaments/RopeBorder";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
 import {
   format,
@@ -64,7 +63,7 @@ function fmtRange(startStr: string, endStr: string): string {
   return `${format(start, "d MMM", { locale: id })} – ${format(end, "d MMM", { locale: id })}`;
 }
 
-function YearBookingList({ year }: { year: number }) {
+function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: (date: Date) => void }) {
   const [items, setItems] = useState<PublicYearBooking[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -83,8 +82,8 @@ function YearBookingList({ year }: { year: number }) {
   }, [year]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 h-full">
-      <div className="flex items-center gap-3 mb-1">
+    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 flex flex-col h-full">
+      <div className="flex items-center gap-3 mb-1 shrink-0">
         <ScoutBadge
           icon={<CalendarCheck size={18} />}
           size={44}
@@ -95,7 +94,7 @@ function YearBookingList({ year }: { year: number }) {
             Sudah Booking {year}
           </h3>
           <p className="text-xs text-slate-500">
-            Sekolah yang sudah mengamankan tanggalnya
+            Klik untuk lihat di kalender
           </p>
         </div>
       </div>
@@ -117,7 +116,7 @@ function YearBookingList({ year }: { year: number }) {
           </p>
         </div>
       ) : (
-        <ol className="mt-4 space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+        <ol className="mt-4 space-y-2.5 flex-1 overflow-y-auto pr-1 max-h-[320px] md:max-h-[560px] scroll-thin">
           {items.map((b) => {
             const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
             const monthIdx = start.getMonth();
@@ -125,7 +124,14 @@ function YearBookingList({ year }: { year: number }) {
             return (
               <li
                 key={b.id}
-                className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-sm hover:border-emerald-200 transition-all"
+                onClick={() => {
+                  if (onSelectDate) {
+                    onSelectDate(startOfMonth(start));
+                    const target = document.getElementById("kalender-grid");
+                    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-sm hover:border-emerald-300 cursor-pointer transition-all active:scale-[0.98]"
               >
                 <span
                   className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border font-bold ${colorCls}`}
@@ -264,9 +270,9 @@ export default function CalendarStatus() {
           {/* Kalender */}
           <div
             ref={wrap.ref}
+            id="kalender-grid"
             className={`reveal ${wrap.visible ? "is-visible" : ""}`}
           >
-            <RopeBorder className="mb-4" />
             <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -430,8 +436,7 @@ export default function CalendarStatus() {
             ref={listReveal.ref}
             className={`reveal reveal-right ${listReveal.visible ? "is-visible" : ""}`}
           >
-            <RopeBorder className="mb-4" />
-            <YearBookingList year={currentYear} />
+            <YearBookingList year={currentYear} onSelectDate={(d) => setCurrentMonth(d)} />
           </div>
         </div>
 
