@@ -91,6 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
+    const path = window.location.pathname;
+    const isAdminRoute = path.startsWith("/admin");
+    const hasCache = (() => {
+      try {
+        return !!localStorage.getItem(STORAGE_KEY);
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!isAdminRoute && !hasCache) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
     (async () => {
       try {
