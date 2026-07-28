@@ -38,34 +38,22 @@ export function WaBookingProvider({
   fallbackLabel: string;
 }) {
   const [contacts, setContacts] = useState<PublicContact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(true);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(DEFAULT_MESSAGE);
 
   useEffect(() => {
-    fetchPublicContacts().then(setContacts);
+    fetchPublicContacts()
+      .then(setContacts)
+      .finally(() => setLoadingContacts(false));
   }, []);
 
   const openWaModal = useCallback(
     (msg?: string) => {
-      const finalMsg = msg || DEFAULT_MESSAGE;
-      const list =
-        contacts.length > 0
-          ? contacts
-          : fallbackNumber
-            ? [{ display_name: fallbackLabel, wa_number: fallbackNumber }]
-            : [];
-      if (list.length === 1) {
-        window.open(
-          waLink(list[0]!.wa_number, finalMsg),
-          "_blank",
-          "noopener,noreferrer"
-        );
-        return;
-      }
-      setMessage(finalMsg);
+      setMessage(msg || DEFAULT_MESSAGE);
       setOpen(true);
     },
-    [contacts, fallbackNumber, fallbackLabel]
+    [fallbackNumber, fallbackLabel]
   );
 
   useEffect(() => {
@@ -124,7 +112,13 @@ export function WaBookingProvider({
             </p>
 
             <div className="mt-5 space-y-3 max-h-72 overflow-y-auto pr-1">
-              {displayList.length === 0 ? (
+              {loadingContacts ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="h-16 rounded-xl bg-slate-100 animate-pulse" />
+                  ))}
+                </div>
+              ) : displayList.length === 0 ? (
                 <p className="text-center text-sm text-slate-400 py-4">
                   Belum ada admin booking tersedia.
                 </p>
