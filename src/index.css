@@ -75,6 +75,11 @@
 .reveal.reveal-right { transform: translateX(32px); }
 .reveal.is-visible { opacity: 1; transform: translate(0, 0); }
 
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6ee7b7; }
+
 @media (prefers-reduced-motion: reduce) {
   .anim-flicker,
   .anim-drift,

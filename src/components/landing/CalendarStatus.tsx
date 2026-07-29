@@ -82,7 +82,7 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
   }, [year]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 flex flex-col h-full">
+    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 flex flex-col h-full min-h-0">
       <div className="flex items-center gap-3 mb-1 shrink-0">
         <ScoutBadge
           icon={<CalendarCheck size={18} />}
@@ -106,7 +106,7 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="mt-6 text-center py-8">
+        <div className="mt-6 flex-1 flex flex-col items-center justify-center text-center py-8">
           <Tent size={40} className="mx-auto text-emerald-300" />
           <p className="mt-3 text-sm font-semibold text-brown">
             Belum ada yang booking tahun {year}
@@ -116,7 +116,7 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
           </p>
         </div>
       ) : (
-        <ol className="mt-4 space-y-2.5 flex-1 overflow-y-auto pr-1 max-h-[320px] md:max-h-[560px] scroll-thin">
+        <ol className="mt-4 space-y-2.5 flex-1 overflow-y-auto pr-1 min-h-0 custom-scrollbar">
           {items.map((b) => {
             const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
             const monthIdx = start.getMonth();
@@ -266,14 +266,14 @@ export default function CalendarStatus() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-start">
+        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
           {/* Kalender */}
           <div
             ref={wrap.ref}
             id="kalender-grid"
-            className={`reveal ${wrap.visible ? "is-visible" : ""}`}
+            className={`flex flex-col reveal ${wrap.visible ? "is-visible" : ""}`}
           >
-            <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6">
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <button
@@ -434,7 +434,7 @@ export default function CalendarStatus() {
           {/* Daftar booking tahun berjalan */}
           <div
             ref={listReveal.ref}
-            className={`reveal reveal-right ${listReveal.visible ? "is-visible" : ""}`}
+            className={`flex flex-col reveal reveal-right ${listReveal.visible ? "is-visible" : ""}`}
           >
             <YearBookingList year={currentYear} onSelectDate={(d) => setCurrentMonth(d)} />
           </div>
