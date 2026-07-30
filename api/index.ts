@@ -280,10 +280,16 @@ app.post("/api/bookings", requireAuth, async (c) => {
     const endDate = addDaysStr(d.startDate, 2);
     const status = d.status ?? "negosiasi";
 
-    if (status === "final") {
-      const overlap = await sql`SELECT id FROM bookings WHERE status = 'final' AND NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
+    if (status === "final" || status === "negosiasi") {
+      const overlap = await sql`SELECT id, status, school_name FROM bookings WHERE status IN ('final','negosiasi') AND NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
       if (overlap.length > 0) {
-        return c.json({ error: "Tanggal bentrok dengan booking final lain" }, 409);
+        const existing = overlap[0] as { status: string; school_name: string };
+        return c.json(
+          {
+            error: `Tanggal bentrok dengan booking ${existing.status} lain (${existing.school_name}). 1 sesi 3 hari 2 malam tidak boleh tumpang tindih.`,
+          },
+          409
+        );
       }
     }
 
@@ -315,18 +321,26 @@ app.put("/api/bookings/:id", requireAuth, async (c) => {
 
     const newStatus = d.status ?? (cur.status as string);
 
-    if (newStatus === "final") {
-      const effectivePicWa =
-        d.picWa !== undefined ? d.picWa : (cur.pic_wa as string | null);
-      if (!effectivePicWa || effectivePicWa.length < 8) {
-        return c.json(
-          { error: "No. WhatsApp PIC wajib diisi untuk status Final" },
-          400
-        );
+    if (newStatus === "final" || newStatus === "negosiasi") {
+      if (newStatus === "final") {
+        const effectivePicWa =
+          d.picWa !== undefined ? d.picWa : (cur.pic_wa as string | null);
+        if (!effectivePicWa || effectivePicWa.length < 8) {
+          return c.json(
+            { error: "No. WhatsApp PIC wajib diisi untuk status Final" },
+            400
+          );
+        }
       }
-      const overlap = await sql`SELECT id FROM bookings WHERE id != ${id} AND status = 'final' AND NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
+      const overlap = await sql`SELECT id, status, school_name FROM bookings WHERE id != ${id} AND status IN ('final','negosiasi') AND NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
       if (overlap.length > 0) {
-        return c.json({ error: "Tanggal bentrok dengan booking final lain" }, 409);
+        const existing = overlap[0] as { status: string; school_name: string };
+        return c.json(
+          {
+            error: `Tanggal bentrok dengan booking ${existing.status} lain (${existing.school_name}). 1 sesi 3 hari 2 malam tidak boleh tumpang tindih.`,
+          },
+          409
+        );
       }
     }
 

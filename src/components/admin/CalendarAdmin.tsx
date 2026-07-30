@@ -79,6 +79,24 @@ export default function CalendarAdmin({
 
   const firstDayOffset = mondayIndex(daysInMonth[0]!);
 
+  const dayStatus = useCallback(
+    (date: Date): { status: "final" | "negosiasi" | "batal" | null; bookings: BookingRecord[] } => {
+      const found = bookings.filter((b) => {
+        const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
+        const end = new Date(b.end_date.slice(0, 10) + "T00:00:00");
+        return isWithinInterval(date, { start, end });
+      });
+      if (found.length === 0) return { status: null, bookings: [] };
+      const hasFinal = found.some((b) => b.status === "final");
+      if (hasFinal) return { status: "final", bookings: found };
+      const hasNego = found.some((b) => b.status === "negosiasi");
+      if (hasNego) return { status: "negosiasi", bookings: found };
+      // batal => treat as available, but return for tooltip
+      return { status: "batal", bookings: found };
+    },
+    [bookings]
+  );
+
   const getBookingsForDay = useCallback(
     (date: Date): BookingRecord[] => {
       return bookings.filter((b) => {
@@ -142,34 +160,40 @@ export default function CalendarAdmin({
             <div key={`empty-${i}`} />
           ))}
           {daysInMonth.map((day) => {
-            const dayBookings = getBookingsForDay(day);
-            const hasBooking = dayBookings.length > 0;
-            const first = dayBookings[0];
-            const isBatal = first?.status === "batal";
-            const isFinal = first?.status === "final";
-            const isNegosiasi = first?.status === "negosiasi";
+            const { status, bookings: dayBookings } = dayStatus(day);
+            const hasBooking = status === "final" || status === "negosiasi";
+            const first = dayBookings.find((b) => b.status === status) ?? dayBookings[0];
             const isToday = isSameDay(day, today);
             const isSelected = selected === format(day, "yyyy-MM-dd");
+            const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
 
             return (
               <div
                 key={day.toISOString()}
                 onClick={() => hasBooking && first && onSelectBooking?.(first)}
                 className={`
-                  relative h-10 flex items-center justify-center text-sm rounded-md
-                  ${hasBooking && isFinal ? "bg-emerald-500 text-white font-medium cursor-pointer group" : ""}
-                  ${hasBooking && isNegosiasi ? "bg-amber-400 text-brown font-medium cursor-pointer group" : ""}
-                  ${hasBooking && isBatal ? "bg-slate-300 text-slate-600 line-through cursor-pointer group" : ""}
-                  ${!hasBooking ? "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50" : ""}
-                  ${isToday && !hasBooking ? "ring-2 ring-emerald-500 ring-offset-1" : ""}
+                  relative h-11 flex flex-col items-center justify-center text-sm rounded-xl cursor-default transition-transform
+                  ${status === "final" ? "bg-red-500 text-white font-bold group shadow-sm hover:scale-105" : ""}
+                  ${status === "negosiasi" ? "bg-amber-400 text-brown font-bold group shadow-sm hover:scale-105" : ""}
+                  ${status === null && !isPast ? "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100" : ""}
+                  ${status === null && isPast ? "bg-slate-50 text-slate-300" : ""}
+                  ${status === "batal" ? "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100" : ""}
+                  ${isToday ? "ring-2 ring-amber-400 ring-offset-1" : ""}
                   ${isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""}
+                  ${hasBooking ? "cursor-pointer" : ""}
                 `}
               >
-                {day.getDate()}
-                {hasBooking && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-                    <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
-                      {first!.school_name} ({first!.participant_count} org)
+                <span className="text-sm leading-none">{day.getDate()}</span>
+                {status === "final" && (
+                  <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">Penuh</span>
+                )}
+                {status === "negosiasi" && (
+                  <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">Nego</span>
+                )}
+                {hasBooking && first && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-10">
+                    <div className="bg-brown text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-lg">
+                      {first.school_name} — {status === "final" ? "Final" : "Negosiasi"}
                     </div>
                   </div>
                 )}
@@ -185,22 +209,22 @@ export default function CalendarAdmin({
         </p>
       )}
 
-      <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-600">
+      <div className="flex items-center justify-center flex-wrap gap-3.5 mt-5 text-xs font-medium text-gray-600">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-emerald-500" />
-          Final
+          <span className="w-4 h-4 rounded-md bg-emerald-50 border border-emerald-300" />
+          Tersedia
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-amber-400" />
+          <span className="w-4 h-4 rounded-md bg-amber-400" />
           Negosiasi
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-slate-300" />
-          Batal
+          <span className="w-4 h-4 rounded-md bg-red-500" />
+          Final
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-white border border-gray-300" />
-          Kosong
+          <span className="w-4 h-4 rounded-md border-2 border-amber-400" />
+          Hari Ini
         </div>
       </div>
     </div>
