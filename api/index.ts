@@ -233,7 +233,7 @@ app.get("/api/bookings", requireAuth, async (c) => {
       const monthStart = `${month}-01`;
       const lastDay = new Date(y!, m!, 0).getUTCDate();
       const monthEnd = `${month}-${String(lastDay).padStart(2, "0")}`;
-      vals.push(monthStart, monthEnd);
+      vals.push(monthEnd, monthStart);
       conds.push(`start_date <= $${vals.length - 1} AND end_date >= $${vals.length}`);
     }
 
