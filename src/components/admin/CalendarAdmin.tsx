@@ -91,19 +91,7 @@ export default function CalendarAdmin({
       if (hasFinal) return { status: "final", bookings: found };
       const hasNego = found.some((b) => b.status === "negosiasi");
       if (hasNego) return { status: "negosiasi", bookings: found };
-      // batal => treat as available, but return for tooltip
       return { status: "batal", bookings: found };
-    },
-    [bookings]
-  );
-
-  const getBookingsForDay = useCallback(
-    (date: Date): BookingRecord[] => {
-      return bookings.filter((b) => {
-        const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
-        const end = new Date(b.end_date.slice(0, 10) + "T00:00:00");
-        return isWithinInterval(date, { start, end });
-      });
     },
     [bookings]
   );
