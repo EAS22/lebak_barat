@@ -37,6 +37,7 @@ import {
   generateInvoice,
   type BookingRecord,
 } from "@/lib/adminApi";
+import { useAuth } from "@/lib/authContext";
 import { formatIDR, parseDateOnly, cn } from "@/lib/utils";
 import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/bookingStatus";
 import { generateInvoicePdf, type InvoiceBookingData } from "@/lib/invoicePdf";
@@ -45,6 +46,7 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
 export default function BookingsPage() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -191,7 +193,8 @@ export default function BookingsPage() {
         price: (raw["price"] ?? b.price) as number,
         invoice_generated_at: (raw["invoice_generated_at"] ?? new Date().toISOString()) as string,
       };
-      await generateInvoicePdf(pdfData);
+      const generatedByName = (user as { displayName?: string })?.displayName || user?.username;
+      await generateInvoicePdf(pdfData, { generatedByName });
       toast.success(`Invoice ${pdfData.invoice_number} berhasil diunduh`);
       await loadBookings();
     } catch (err: unknown) {

@@ -24,6 +24,7 @@ import {
   generateInvoice,
   type BookingRecord,
 } from "@/lib/adminApi";
+import { useAuth } from "@/lib/authContext";
 import { formatIDR, parseDateOnly } from "@/lib/utils";
 import { generateInvoicePdf, type InvoiceBookingData } from "@/lib/invoicePdf";
 import { FileText, Search, QrCode, AlertTriangle, Pencil } from "lucide-react";
@@ -33,6 +34,7 @@ import BookingForm from "@/components/admin/BookingForm";
 import { updateBooking } from "@/lib/adminApi";
 
 export default function InvoicesPage() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -112,7 +114,8 @@ export default function InvoicesPage() {
         price: (raw["price"] ?? b.price) as number,
         invoice_generated_at: (raw["invoice_generated_at"] ?? new Date().toISOString()) as string,
       };
-      await generateInvoicePdf(pdfData);
+      const generatedByName = (user as { displayName?: string })?.displayName || user?.username;
+      await generateInvoicePdf(pdfData, { generatedByName });
       toast.success(`Invoice ${pdfData.invoice_number} berhasil diunduh`);
       await load();
     } catch (err: unknown) {

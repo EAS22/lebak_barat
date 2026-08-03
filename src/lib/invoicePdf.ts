@@ -39,7 +39,13 @@ export interface InvoiceBookingData {
   invoice_generated_at?: string | null;
 }
 
-function loadImageAsBase64(src: string): Promise<string> {
+interface LoadedImage {
+  dataUrl: string;
+  w: number;
+  h: number;
+}
+
+function loadImageAsBase64(src: string): Promise<LoadedImage> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -50,7 +56,11 @@ function loadImageAsBase64(src: string): Promise<string> {
       const ctx = canvas.getContext("2d");
       if (!ctx) return reject(new Error("Canvas ctx null"));
       ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
+      resolve({
+        dataUrl: canvas.toDataURL("image/png"),
+        w: img.naturalWidth,
+        h: img.naturalHeight,
+      });
     };
     img.onerror = (e) => reject(e);
     img.src = src;
@@ -59,7 +69,12 @@ function loadImageAsBase64(src: string): Promise<string> {
 
 export async function generateInvoicePdf(
   booking: InvoiceBookingData,
-  opts?: { verificationBaseUrl?: string; taxPercent?: number; discount?: number }
+  opts?: {
+    verificationBaseUrl?: string;
+    taxPercent?: number;
+    discount?: number;
+    generatedByName?: string;
+  }
 ): Promise<void> {
   const verificationBaseUrl =
     opts?.verificationBaseUrl || `${baseDomain()}/verifikasi?invoice=`;
@@ -73,11 +88,11 @@ export async function generateInvoicePdf(
     color: { dark: "#111827", light: "#ffffff" },
   });
 
-  let logoDataUrl: string | null = null;
+  let logo: LoadedImage | null = null;
   try {
-    logoDataUrl = await loadImageAsBase64("/images/logo.png");
+    logo = await loadImageAsBase64("/images/logo.png");
   } catch {
-    logoDataUrl = null;
+    logo = null;
   }
 
   const doc = new jsPDF({
@@ -93,15 +108,23 @@ export async function generateInvoicePdf(
 
   let y = 10;
 
-  if (logoDataUrl) {
+  const maxLogoH = 16;
+  let logoRenderW = 0;
+  if (logo) {
+    const ratio = logo.w / logo.h;
+    logoRenderW = maxLogoH * ratio;
+    if (logoRenderW > 28) {
+      logoRenderW = 28;
+    }
+    const logoRenderH = logoRenderW / ratio;
     try {
-      doc.addImage(logoDataUrl, "PNG", margin, y, 18, 18);
+      doc.addImage(logo.dataUrl, "PNG", margin, y, logoRenderW, logoRenderH);
     } catch {
       // ignore
     }
   }
 
-  const textX = logoDataUrl ? margin + 22 : margin;
+  const textX = logo ? margin + logoRenderW + 4 : margin;
   doc.setTextColor(30, 30, 30);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
@@ -164,11 +187,7 @@ export async function generateInvoicePdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
     doc.setTextColor(20, 48, 28);
-    doc.text(title, x, yy);
-    yy += 0.8;
-    doc.setDrawColor(5, 150, 105);
-    doc.setLineWidth(0.5);
-    doc.line(x, yy, x + 26, yy);
+    doc.text(title.toUpperCase(), x, yy);
     return yy + 5;
   }
 
@@ -177,11 +196,11 @@ export async function generateInvoicePdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(90, 90, 90);
-    doc.text(label, x, yy);
+    doc.text(label.toUpperCase(), x, yy);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(30, 30, 30);
     const maxW = colW - labelW - 1;
-    const lines = doc.splitTextToSize(value, maxW) as string[];
+    const lines = doc.splitTextToSize(value.toUpperCase(), maxW) as string[];
     doc.text(lines[0] ?? "", x + labelW, yy);
     yy += 4.2;
     for (let i = 1; i < lines.length; i++) {
@@ -191,24 +210,24 @@ export async function generateInvoicePdf(
     return yy + 0.8;
   }
 
-  leftY = colTitle(leftX, leftY, "Informasi Booking");
-  leftY = colKv(leftX, leftY, "Sekolah", booking.school_name);
-  leftY = colKv(leftX, leftY, "Peserta", `${booking.participant_count} siswa`);
-  leftY = colKv(leftX, leftY, "Status", booking.status.toUpperCase());
+  leftY = colTitle(leftX, leftY, "INFORMASI BOOKING");
+  leftY = colKv(leftX, leftY, "SEKOLAH", booking.school_name);
+  leftY = colKv(leftX, leftY, "PESERTA", `${booking.participant_count} SISWA`);
+  leftY = colKv(leftX, leftY, "STATUS", booking.status.toUpperCase());
   if (booking.keterangan) {
-    leftY = colKv(leftX, leftY, "Catatan", booking.keterangan);
+    leftY = colKv(leftX, leftY, "CATATAN", booking.keterangan);
   }
 
-  rightY = colTitle(rightX, rightY, "Penanggung Jawab");
-  rightY = colKv(rightX, rightY, "Nama", booking.pic_name);
-  rightY = colKv(rightX, rightY, "Kontak", booking.pic_wa || "-");
+  rightY = colTitle(rightX, rightY, "PENANGGUNG JAWAB");
+  rightY = colKv(rightX, rightY, "NAMA", booking.pic_name);
+  rightY = colKv(rightX, rightY, "KONTAK", booking.pic_wa || "-");
   rightY = colKv(
     rightX,
     rightY,
-    "Tanggal",
-    `${format(parseDateOnly(booking.start_date), "d MMM yyyy", { locale: localeId })} - ${format(parseDateOnly(booking.end_date), "d MMM yyyy", { locale: localeId })}`
+    "TANGGAL",
+    `${format(parseDateOnly(booking.start_date), "d MMM yyyy", { locale: localeId })} - ${format(parseDateOnly(booking.end_date), "d MMM yyyy", { locale: localeId })}`.toUpperCase()
   );
-  rightY = colKv(rightX, rightY, "Durasi", "3 Hari 2 Malam");
+  rightY = colKv(rightX, rightY, "DURASI", "3 HARI 2 MALAM");
 
   y = Math.max(leftY, rightY) + 6;
 
@@ -364,47 +383,38 @@ export async function generateInvoicePdf(
   const sigLeftX = margin;
   const sigRightX = margin + contentW / 2 + 8;
   const sigTop = y + 2;
-  const lineLen = 52;
+  const lineLen = 48;
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(60, 60, 60);
   doc.text("Hormat kami,", sigLeftX, sigTop);
   doc.text("Mengetahui,", sigRightX, sigTop);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(30, 30, 30);
-  doc.text("Penanggung Jawab", sigLeftX, sigTop + 4.5);
-  doc.text("Buper Lebak Barat", sigRightX, sigTop + 4.5);
+  doc.text("Penanggung Jawab", sigLeftX, sigTop + 4);
+  doc.text("Bumi Perkemahan Lebak Barat", sigRightX, sigTop + 4);
 
-  const sigSpace = 28;
+  const sigSpace = 18;
 
-  doc.setFontSize(9.5);
   const picUpper = (booking.pic_name || "-").toUpperCase();
-  doc.text(picUpper, sigLeftX, sigTop + 4.5 + sigSpace);
-  doc.setDrawColor(30, 30, 30);
-  doc.setLineWidth(0.25);
-  doc.line(sigLeftX, sigTop + 4.5 + sigSpace + 1, sigLeftX + lineLen, sigTop + 4.5 + sigSpace + 1);
+  const adminName = (opts?.generatedByName || "-").toUpperCase();
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.2);
-  doc.setTextColor(100, 100, 100);
-  const nameLines = doc.splitTextToSize(picUpper, contentW / 2 - 8) as string[];
-  doc.text(nameLines[0] ?? picUpper, sigLeftX, sigTop + 4.5 + sigSpace + 6);
-  doc.text(booking.pic_wa || "-", sigLeftX, sigTop + 4.5 + sigSpace + 9.5);
-
-  doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
   doc.setTextColor(30, 30, 30);
-  doc.text("BUMI PERKEMAHAN LEBAK BARAT", sigRightX, sigTop + 4.5 + sigSpace);
+  doc.text(picUpper, sigLeftX, sigTop + 4 + sigSpace);
   doc.setDrawColor(30, 30, 30);
-  doc.line(sigRightX, sigTop + 4.5 + sigSpace + 1, sigRightX + lineLen, sigTop + 4.5 + sigSpace + 1);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.2);
-  doc.setTextColor(100, 100, 100);
-  doc.text("Management", sigRightX, sigTop + 4.5 + sigSpace + 6);
-  doc.text("Desa Girimulya, Banjaran", sigRightX, sigTop + 4.5 + sigSpace + 9.5);
+  doc.setLineWidth(0.2);
+  doc.line(sigLeftX, sigTop + 4 + sigSpace + 0.8, sigLeftX + lineLen, sigTop + 4 + sigSpace + 0.8);
+
+  doc.setFontSize(9);
+  doc.text(adminName, sigRightX, sigTop + 4 + sigSpace);
+  doc.setDrawColor(30, 30, 30);
+  doc.setLineWidth(0.2);
+  doc.line(sigRightX, sigTop + 4 + sigSpace + 0.8, sigRightX + lineLen, sigTop + 4 + sigSpace + 0.8);
 
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.2);
