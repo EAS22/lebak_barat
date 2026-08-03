@@ -12,7 +12,8 @@ const links = [
   { href: "#kalender", label: "Kalender" },
   { href: "#fasilitas", label: "Fasilitas" },
   { href: "#kontak", label: "Kontak" },
-];
+  { href: "/verifikasi", label: "Verifikasi", isRoute: true },
+] as const;
 
 function BrandLogo() {
   return (
@@ -71,16 +72,30 @@ export default function Navbar({ buperName }: NavbarProps) {
           </a>
 
           <div className="hidden md:flex items-center gap-8">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={handleNavClick}
-                className="relative text-sm font-medium text-slate-700 hover:text-emerald-600 transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 after:transition-all hover:after:w-full"
-              >
-                {l.label}
-              </a>
-            ))}
+            {links.map((l) => {
+              const isRoute = (l as { isRoute?: boolean }).isRoute;
+              if (isRoute) {
+                return (
+                  <Link
+                    key={l.href}
+                    to={l.href}
+                    className="relative text-sm font-medium text-slate-700 hover:text-emerald-600 transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 after:transition-all hover:after:w-full"
+                  >
+                    {l.label}
+                  </Link>
+                );
+              }
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={handleNavClick}
+                  className="relative text-sm font-medium text-slate-700 hover:text-emerald-600 transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 after:transition-all hover:after:w-full"
+                >
+                  {l.label}
+                </a>
+              );
+            })}
             <Link
               to="/admin/login"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
@@ -105,16 +120,31 @@ export default function Navbar({ buperName }: NavbarProps) {
       {open && (
         <div className="md:hidden bg-white border-b border-slate-200">
           <div className="px-4 py-3 space-y-2">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={handleNavClick}
-                className="block py-2 text-sm font-medium text-slate-600 hover:text-emerald-600"
-              >
-                {l.label}
-              </a>
-            ))}
+            {links.map((l) => {
+              const isRoute = (l as { isRoute?: boolean }).isRoute;
+              if (isRoute) {
+                return (
+                  <Link
+                    key={l.href}
+                    to={l.href}
+                    onClick={() => setOpen(false)}
+                    className="block py-2 text-sm font-medium text-slate-600 hover:text-emerald-600"
+                  >
+                    {l.label}
+                  </Link>
+                );
+              }
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={handleNavClick}
+                  className="block py-2 text-sm font-medium text-slate-600 hover:text-emerald-600"
+                >
+                  {l.label}
+                </a>
+              );
+            })}
             <Link
               to="/admin/login"
               onClick={() => setOpen(false)}

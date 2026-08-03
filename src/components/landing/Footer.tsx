@@ -61,6 +61,11 @@ export default function Footer({ buperName }: FooterProps) {
                   Kontak
                 </a>
               </li>
+              <li>
+                <a href="/verifikasi" className="hover:text-white transition-colors">
+                  Verifikasi Invoice
+                </a>
+              </li>
             </ul>
           </div>
           <div>

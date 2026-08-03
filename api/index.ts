@@ -155,6 +155,47 @@ app.get("/api/public/bookings", async (c) => {
   }
 });
 
+app.get("/api/public/verify-invoice", async (c) => {
+  try {
+    const sql = getSql();
+    const number = (c.req.query("number") || "").trim().toUpperCase();
+    if (!number) {
+      return c.json({ error: "Nomor invoice wajib diisi" }, 400);
+    }
+    const rows = await sql`SELECT
+      b.id, b.invoice_number, b.school_name, b.participant_count,
+      b.pic_name, b.start_date, b.end_date, b.status, b.price,
+      b.invoice_generated_at, b.created_at,
+      u.display_name AS generated_by_name
+    FROM bookings b
+    LEFT JOIN users u ON b.invoice_generated_by = u.id
+    WHERE b.invoice_number = ${number}
+    LIMIT 1`;
+
+    if (rows.length === 0) {
+      return c.json({ verified: false, message: "Invoice tidak ditemukan" }, 404);
+    }
+
+    const r = rows[0] as Record<string, unknown>;
+    return c.json({
+      verified: true,
+      invoice_number: r.invoice_number,
+      school_name: r.school_name,
+      participant_count: r.participant_count,
+      pic_name: r.pic_name,
+      start_date: r.start_date,
+      end_date: r.end_date,
+      status: r.status,
+      price: r.price,
+      invoice_generated_at: r.invoice_generated_at,
+      generated_by_name: r.generated_by_name,
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 // ─── Auth ────────────────────────────────────────────────────────
 
 app.post("/api/auth/login", async (c) => {
@@ -428,6 +469,79 @@ app.get("/api/bookings/export", requireAuth, async (c) => {
     c.header("Content-Type", "text/csv; charset=utf-8");
     c.header("Content-Disposition", "attachment; filename=bookings.csv");
     return c.body(csv);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.post("/api/bookings/:id/invoice", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+
+    const curRows = await sql`SELECT * FROM bookings WHERE id = ${id}`;
+    const cur = curRows[0] as Record<string, unknown> | undefined;
+    if (!cur) return c.json({ error: "Booking tidak ditemukan" }, 404);
+
+    const missing: string[] = [];
+    if (!cur.participant_count || (cur.participant_count as number) <= 0) missing.push("Jumlah siswa");
+    if (!cur.pic_name || String(cur.pic_name).trim().length < 2) missing.push("Nama PIC");
+    if (!cur.pic_wa || String(cur.pic_wa).trim().length < 8) missing.push("Kontak PIC");
+    if (cur.price === null || cur.price === undefined) missing.push("Harga sewa");
+
+    if (missing.length > 0) {
+      return c.json(
+        {
+          error: "Data belum lengkap untuk invoice",
+          missing,
+        },
+        422
+      );
+    }
+
+    if (cur.invoice_number) {
+      return c.json({
+        invoice_number: cur.invoice_number,
+        school_name: cur.school_name,
+        participant_count: cur.participant_count,
+        pic_name: cur.pic_name,
+        pic_wa: cur.pic_wa,
+        start_date: cur.start_date,
+        end_date: cur.end_date,
+        status: cur.status,
+        price: cur.price,
+        invoice_generated_at: cur.invoice_generated_at,
+      });
+    }
+
+    const now = new Date();
+    const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    let invoiceNumber: string | null = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const candidate = `INV-LB-${yyyymm}-${rand}`;
+      try {
+        const user = c.get("user") as AuthUser;
+        const rows = await sql`UPDATE bookings SET invoice_number = ${candidate}, invoice_generated_at = now(), invoice_generated_by = ${user.id}, updated_at = now() WHERE id = ${id} AND invoice_number IS NULL RETURNING invoice_number, school_name, participant_count, pic_name, pic_wa, start_date, end_date, status, price, invoice_generated_at`;
+        if (rows.length > 0) {
+          invoiceNumber = candidate;
+          return c.json(rows[0]);
+        }
+        const existing = await sql`SELECT invoice_number, school_name, participant_count, pic_name, pic_wa, start_date, end_date, status, price, invoice_generated_at FROM bookings WHERE id = ${id}`;
+        if (existing.length > 0) return c.json(existing[0]);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        if (!msg.includes("unique") && !msg.includes("duplicate")) throw e;
+      }
+    }
+
+    if (!invoiceNumber) {
+      return c.json({ error: "Gagal generate nomor invoice, coba lagi" }, 500);
+    }
+
+    return c.json({ invoice_number: invoiceNumber });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     return c.json({ error: msg }, 500);

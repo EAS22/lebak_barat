@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/authContext";
 import Landing from "@/pages/landing";
+import VerificationPage from "@/pages/verification";
 import AdminLogin from "@/pages/admin/login";
 import AdminLayout from "@/pages/admin/layout";
 import Dashboard from "@/pages/admin/dashboard";
@@ -42,6 +43,7 @@ export default function App() {
         <Toaster position="top-right" richColors />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/verifikasi" element={<VerificationPage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />

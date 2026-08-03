@@ -34,11 +34,13 @@ import {
   updateBooking,
   deleteBooking,
   exportBookings,
+  generateInvoice,
   type BookingRecord,
 } from "@/lib/adminApi";
 import { formatIDR, parseDateOnly, cn } from "@/lib/utils";
 import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/bookingStatus";
-import { Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { generateInvoicePdf, type InvoiceBookingData } from "@/lib/invoicePdf";
+import { Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
@@ -60,6 +62,12 @@ export default function BookingsPage() {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [invoiceId, setInvoiceId] = useState<string | null>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [missingFieldsOpen, setMissingFieldsOpen] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [pendingInvoiceBooking, setPendingInvoiceBooking] = useState<BookingRecord | null>(null);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -147,6 +155,64 @@ export default function BookingsPage() {
     } finally {
       setDeleteLoading(false);
     }
+  }
+
+  function checkInvoiceCompleteness(b: BookingRecord): string[] {
+    const miss: string[] = [];
+    if (!b.participant_count || b.participant_count <= 0) miss.push("Jumlah siswa");
+    if (!b.pic_name || b.pic_name.trim().length < 2) miss.push("Nama PIC");
+    if (!b.pic_wa || b.pic_wa.trim().length < 8) miss.push("Kontak PIC");
+    if (b.price == null) miss.push("Harga sewa");
+    return miss;
+  }
+
+  async function handleGenerateInvoice(b: BookingRecord) {
+    const missing = checkInvoiceCompleteness(b);
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setPendingInvoiceBooking(b);
+      setMissingFieldsOpen(true);
+      return;
+    }
+    setInvoiceId(b.id);
+    setInvoiceLoading(true);
+    try {
+      const invoiceData = await generateInvoice(b.id);
+      const raw = invoiceData as unknown as Record<string, unknown>;
+      const pdfData: InvoiceBookingData = {
+        invoice_number: (invoiceData.invoice_number || raw["invoice_number"] || "") as string,
+        school_name: (raw["school_name"] ?? b.school_name) as string,
+        participant_count: (raw["participant_count"] ?? b.participant_count) as number,
+        pic_name: (raw["pic_name"] ?? b.pic_name) as string,
+        pic_wa: (raw["pic_wa"] ?? b.pic_wa) as string,
+        start_date: (raw["start_date"] ?? b.start_date) as string,
+        end_date: (raw["end_date"] ?? b.end_date) as string,
+        status: (raw["status"] ?? b.status) as string,
+        price: (raw["price"] ?? b.price) as number,
+        invoice_generated_at: (raw["invoice_generated_at"] ?? new Date().toISOString()) as string,
+      };
+      await generateInvoicePdf(pdfData);
+      toast.success(`Invoice ${pdfData.invoice_number} berhasil diunduh`);
+      await loadBookings();
+    } catch (err: unknown) {
+      const e = err as { missing?: string[]; message?: string; status?: number };
+      if (e.status === 422 && e.missing && e.missing.length > 0) {
+        setMissingFields(e.missing);
+        setPendingInvoiceBooking(b);
+        setMissingFieldsOpen(true);
+      } else {
+        toast.error(e.message || "Gagal cetak invoice");
+      }
+    } finally {
+      setInvoiceId(null);
+      setInvoiceLoading(false);
+    }
+  }
+
+  function handleOpenEditFromMissing() {
+    if (!pendingInvoiceBooking) return;
+    setMissingFieldsOpen(false);
+    openEdit(pendingInvoiceBooking);
   }
 
   async function handleExport() {
@@ -242,8 +308,9 @@ export default function BookingsPage() {
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Harga</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Keterangan</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                      <TableHead>Invoice</TableHead>
+                      <TableHead>Keterangan</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -269,11 +336,31 @@ export default function BookingsPage() {
                           {STATUS_LABEL[b.status]}
                         </span>
                       </TableCell>
+                      <TableCell className="text-xs font-mono">
+                        {b.invoice_number ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {b.invoice_number}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="max-w-[120px] truncate text-xs text-gray-500">
                         {b.keterangan || "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Cetak Invoice PDF"
+                            disabled={invoiceLoading && invoiceId === b.id}
+                            onClick={() => handleGenerateInvoice(b)}
+                          >
+                            <FileText
+                              className={`h-4 w-4 ${invoiceLoading && invoiceId === b.id ? "animate-pulse text-emerald-300" : "text-emerald-600"}`}
+                            />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => openEdit(b)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -342,6 +429,34 @@ export default function BookingsPage() {
             </Button>
             <Button variant="destructive" disabled={deleteLoading} onClick={handleDelete}>
               {deleteLoading ? "Menghapus..." : "Hapus"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={missingFieldsOpen} onOpenChange={setMissingFieldsOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Data Belum Lengkap
+            </DialogTitle>
+            <DialogDescription>
+              Data berikut wajib diisi untuk menerbitkan invoice:
+              <ul className="mt-2 list-disc list-inside text-sm font-medium text-gray-700">
+                {missingFields.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setMissingFieldsOpen(false)}>
+              Tutup
+            </Button>
+            <Button onClick={handleOpenEditFromMissing}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit Booking
             </Button>
           </DialogFooter>
         </DialogContent>

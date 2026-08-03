@@ -11,6 +11,9 @@ export interface BookingRecord {
   price: number | null;
   status: "final" | "negosiasi" | "batal";
   keterangan: string | null;
+  invoice_number?: string | null;
+  invoice_generated_at?: string | null;
+  invoice_generated_by?: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -102,6 +105,23 @@ export async function updateBooking(id: string, data: BookingUpdateInput): Promi
     const body = await res.json().catch(() => ({}));
     const err = new Error(body.error || `Update failed: ${res.status}`);
     (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function generateInvoice(id: string): Promise<BookingRecord & { invoice_number: string }> {
+  const res = await adminFetch(`/api/bookings/${id}/invoice`, { method: "POST" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Generate invoice failed: ${res.status}`) as Error & {
+      status?: number;
+      missing?: string[];
+      details?: unknown;
+    };
+    err.status = res.status;
+    err.missing = body.missing;
+    err.details = body;
     throw err;
   }
   return res.json();
