@@ -20,7 +20,7 @@ import PineDivider from "@/components/landing/ornaments/PineDivider";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import CloudsSun from "@/components/landing/ornaments/CloudsSun";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
-import { fetchPublicSettings, type PublicSettings } from "@/lib/api";
+import type { PublicSettings } from "@/lib/api";
 
 interface VerifyResult {
   verified: boolean;
@@ -42,22 +42,21 @@ const DEFAULT_SETTINGS: PublicSettings = {
   buper_name: "Bumi Perkemahan Lebak Barat",
 };
 
-export default function VerificationPage() {
+export default function VerificationPage({
+  sharedSettings,
+}: {
+  sharedSettings?: PublicSettings;
+}) {
+  const settings = sharedSettings ?? DEFAULT_SETTINGS;
   const [searchParams, setSearchParams] = useSearchParams();
   const [input, setInput] = useState(() => searchParams.get("invoice") || "");
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const scannerRef = useRef<HTMLDivElement | null>(null);
-  const html5QrCodeRef = useRef<InstanceType<typeof import("html5-qrcode").Html5Qrcode> | null>(null);
-  const [settings, setSettings] = useState<PublicSettings>(DEFAULT_SETTINGS);
   const heroReveal = useReveal<HTMLDivElement>();
-  const pendingQrVerifyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    fetchPublicSettings().then(setSettings).catch(() => {});
-  }, []);
+  const pendingQrRef = useRef<string | null>(null);
+  const handledScanRef = useRef(false);
 
   function safeDateFormat(dateStr?: string, fmt = "d MMM yyyy"): string {
     if (!dateStr) return "-";
@@ -95,15 +94,18 @@ export default function VerificationPage() {
       setError(null);
       setLoading(true);
       setResult(null);
-
       try {
-        const res = await fetch(`/api/public/verify-invoice?number=${encodeURIComponent(number)}`);
+        const res = await fetch(
+          `/api/public/verify-invoice?number=${encodeURIComponent(number)}`
+        );
         const data = (await res.json()) as VerifyResult & { error?: string };
         if (!res.ok) {
           if (res.status === 404) {
             setResult({
               verified: false,
-              message: data.message || "Invoice tidak ditemukan. Pastikan nomor benar atau invoice palsu.",
+              message:
+                data.message ||
+                "Invoice tidak ditemukan. Pastikan nomor benar atau invoice palsu.",
             });
             setSearchParams({}, { replace: true });
             return;
@@ -125,17 +127,17 @@ export default function VerificationPage() {
 
   useEffect(() => {
     const initial = searchParams.get("invoice");
-    if (initial && !result && !loading) {
+    if (initial) {
       doVerify(initial);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (pendingQrVerifyRef.current && !scannerOpen) {
-      const val = pendingQrVerifyRef.current;
-      pendingQrVerifyRef.current = null;
-      doVerify(val);
+    if (pendingQrRef.current && !scannerOpen) {
+      const val = pendingQrRef.current;
+      pendingQrRef.current = null;
+      if (val) doVerify(val);
     }
   }, [scannerOpen, doVerify]);
 
@@ -143,35 +145,49 @@ export default function VerificationPage() {
   useEffect(() => {
     if (!scannerOpen) return;
     let cancelled = false;
-    let qrInstance: InstanceType<typeof import("html5-qrcode").Html5Qrcode> | null = null;
+    let qrInstance: { stop: () => Promise<void>; clear?: () => void } | null = null;
 
     (async () => {
       try {
         const { Html5Qrcode } = await import("html5-qrcode");
         if (cancelled) return;
-        const targetId = "qr-reader";
-        const el = document.getElementById(targetId);
+        const el = document.getElementById("qr-reader");
         if (!el) return;
 
-        const qr = new Html5Qrcode(targetId);
-        qrInstance = qr;
-        html5QrCodeRef.current = qr;
+        handledRef: if (handledScanRef.current) handledScanRef.current = false;
+
+        const qr = new Html5Qrcode("qr-reader");
+        qrInstance = qr as unknown as typeof qrInstance;
 
         await qr.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText) => {
-            if (cancelled) return;
-            cancelled = true;
-            const candidate = decodedText.trim();
-            pendingQrVerifyRef.current = candidate;
+          (decodedText: string) => {
+            if (cancelled || handledScanRef.current) return;
+            handledScanRef.current = true;
+            let candidate = decodedText.trim();
+            try {
+              if (candidate.startsWith("http")) {
+                const url = new URL(candidate);
+                const inv = url.searchParams.get("invoice");
+                if (inv) candidate = inv;
+                else {
+                  const parts = candidate.split("/").filter(Boolean);
+                  const last = parts[parts.length - 1];
+                  if (last && last.toUpperCase().startsWith("INV-")) candidate = last;
+                }
+              }
+            } catch {
+              // ignore
+            }
+            pendingQrRef.current = candidate;
             qr.stop()
               .catch(() => {})
               .finally(() => {
-                if (html5QrCodeRef.current === qr) {
-                  html5QrCodeRef.current = null;
-                }
-                setScannerOpen(false);
+                try {
+                  qr.clear();
+                } catch {}
+                if (!cancelled) setScannerOpen(false);
               });
           },
           () => {}
@@ -179,16 +195,27 @@ export default function VerificationPage() {
       } catch (e: unknown) {
         if (cancelled) return;
         const msg = e instanceof Error ? e.message : String(e);
-        setError(`Kamera tidak tersedia: ${msg}`);
+        if (!msg.includes("NotFoundError")) {
+          setError(`Kamera tidak tersedia: ${msg}`);
+        }
         setScannerOpen(false);
       }
     })();
 
     return () => {
       cancelled = true;
-      qrInstance?.stop().catch(() => {});
-      if (html5QrCodeRef.current === qrInstance) {
-        html5QrCodeRef.current = null;
+      if (qrInstance) {
+        try {
+          qrInstance.clear?.();
+        } catch {}
+        qrInstance
+          .stop()
+          .catch(() => {})
+          .then(() => {
+            try {
+              qrInstance?.clear?.();
+            } catch {}
+          });
       }
     };
   }, [scannerOpen]);
@@ -199,16 +226,23 @@ export default function VerificationPage() {
     setInput("");
     setSearchParams({}, { replace: true });
     setLoading(false);
-    pendingQrVerifyRef.current = null;
+    pendingQrRef.current = null;
+    handledScanRef.current = false;
     setScannerOpen(false);
-    setTimeout(() => setScannerOpen(true), 150);
+    setTimeout(() => setScannerOpen(true), 200);
+  }
+
+  function handleCloseScanner() {
+    handledScanRef.current = false;
+    pendingQrRef.current = null;
+    setScannerOpen(false);
   }
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col">
       <Navbar buperName={settings.buper_name} />
 
-      {/* Hero - same as landing */}
+      {/* Hero */}
       <section className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-sky-100 to-amber-50">
         <CloudsSun />
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -239,15 +273,13 @@ export default function VerificationPage() {
         <PineDivider color="#ffffff" />
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <section className="relative py-12 md:py-16 bg-white">
         <TopoPattern />
         <div className="relative z-10 max-w-2xl w-full mx-auto px-4 sm:px-6">
           <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 space-y-5">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-brown">
-                Nomor Invoice
-              </label>
+              <label className="text-sm font-semibold text-brown">Nomor Invoice</label>
               <div className="flex gap-2">
                 <div className="flex-1 relative">
                   <Search
@@ -271,9 +303,6 @@ export default function VerificationPage() {
                       handleScanAgain();
                     } else {
                       setScannerOpen((s) => !s);
-                      if (result) {
-                        setResult(null);
-                      }
                     }
                   }}
                   className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium hover:bg-emerald-100 hover:border-emerald-300 transition-all shrink-0"
@@ -283,6 +312,8 @@ export default function VerificationPage() {
                       <RotateCcw size={18} />
                       Scan Baru
                     </>
+                  ) : scannerOpen ? (
+                    <>Tutup</>
                   ) : (
                     <>
                       <QrCode size={18} />
@@ -303,23 +334,32 @@ export default function VerificationPage() {
             </button>
 
             {scannerOpen && (
-              <div className="rounded-xl overflow-hidden border-2 border-dashed border-emerald-300 bg-slate-50 animate-[fadeSlide_0.3s_ease]">
-                <div id="qr-reader" ref={scannerRef} className="w-full" />
-                <p className="text-center text-xs text-slate-500 py-2.5 flex items-center justify-center gap-1.5">
-                  <Camera size={14} />
-                  Arahkan kamera ke QR code pada invoice
-                </p>
+              <div className="rounded-xl overflow-hidden border-2 border-dashed border-emerald-300 bg-slate-50">
+                <div id="qr-reader" className="w-full" />
+                <div className="flex items-center justify-between px-3 py-2.5">
+                  <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                    <Camera size={14} />
+                    Arahkan kamera ke QR code
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCloseScanner}
+                    className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded hover:bg-white"
+                  >
+                    Tutup
+                  </button>
+                </div>
               </div>
             )}
 
             {error && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 animate-[fadeSlide_0.3s_ease]">
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             )}
 
             {result && result.verified && (
-              <div className="rounded-2xl bg-emerald-50 border-2 border-emerald-200 p-5 space-y-4 animate-[fadeSlide_0.35s_ease]">
+              <div className="rounded-2xl bg-emerald-50 border-2 border-emerald-200 p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center">
                     <BadgeCheck size={20} />
@@ -328,13 +368,11 @@ export default function VerificationPage() {
                     <p className="font-bold text-emerald-800 text-sm">Invoice Terverifikasi — Asli</p>
                     <p className="text-xs text-emerald-700/70">Dokumen resmi dari Buper Lebak Barat</p>
                   </div>
-                  <span className="ml-auto inline-flex px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                  <span className="ml-auto inline-flex px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase">
                     {result.status}
                   </span>
                 </div>
-
                 <div className="h-px bg-emerald-200" />
-
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="w-28 text-xs text-slate-500 shrink-0">No Invoice</span>
@@ -379,11 +417,10 @@ export default function VerificationPage() {
                     </div>
                   )}
                 </div>
-
                 <button
                   type="button"
                   onClick={handleScanAgain}
-                  className="w-full mt-2 h-10 rounded-xl bg-white border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition-colors inline-flex items-center justify-center gap-1.5"
+                  className="w-full mt-2 h-10 rounded-xl bg-white border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 inline-flex items-center justify-center gap-1.5"
                 >
                   <RotateCcw size={16} />
                   Scan Invoice Lain
@@ -392,7 +429,7 @@ export default function VerificationPage() {
             )}
 
             {result && !result.verified && (
-              <div className="rounded-2xl bg-red-50 border-2 border-red-200 p-5 flex items-start gap-3 animate-[fadeSlide_0.35s_ease]">
+              <div className="rounded-2xl bg-red-50 border-2 border-red-200 p-5 flex items-start gap-3">
                 <XCircleIcon size={28} className="text-red-500 shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-red-700 text-sm">Invoice Tidak Ditemukan</p>
@@ -400,7 +437,7 @@ export default function VerificationPage() {
                   <button
                     type="button"
                     onClick={handleScanAgain}
-                    className="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white border border-red-200 text-red-700 text-xs font-medium hover:bg-red-100 transition-colors"
+                    className="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white border border-red-200 text-red-700 text-xs font-medium hover:bg-red-100"
                   >
                     <RotateCcw size={14} />
                     Coba Lagi
@@ -409,10 +446,8 @@ export default function VerificationPage() {
               </div>
             )}
           </div>
-
           <p className="mt-6 text-center text-xs text-slate-400">
-            Tips: Buka kamera HP, scan QR code di invoice cetak. Sistem akan membuka halaman verifikasi
-            otomatis.
+            Tips: Buka kamera HP, scan QR code di invoice cetak. Sistem akan membuka halaman verifikasi otomatis.
           </p>
         </div>
       </section>
@@ -443,3 +478,5 @@ function XCircleIcon(props: { size: number; className?: string }) {
     </svg>
   );
 }
+
+

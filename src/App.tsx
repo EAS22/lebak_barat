@@ -1,9 +1,41 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/authContext";
+import { WaBookingProvider } from "@/components/landing/WaBookingModal";
 import Landing from "@/pages/landing";
 import VerificationPage from "@/pages/verification";
 import AdminLogin from "@/pages/admin/login";
+import { fetchPublicSettings, type PublicSettings } from "@/lib/api";
+
+const DEFAULT_SETTINGS: PublicSettings = {
+  landing_wa_number: "6280000000000",
+  landing_wa_label: "Admin Booking",
+  buper_name: "Bumi Perkemahan Lebak Barat",
+};
+
+function PublicRoutes() {
+  const [settings, setSettings] = useState<PublicSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    fetchPublicSettings()
+      .then(setSettings)
+      .catch(() => {});
+  }, []);
+
+  return (
+    <WaBookingProvider
+      fallbackNumber={settings.landing_wa_number}
+      fallbackLabel={settings.landing_wa_label}
+    >
+      <Routes>
+        <Route path="/" element={<Landing sharedSettings={settings} />} />
+        <Route path="/verifikasi" element={<VerificationPage sharedSettings={settings} />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </WaBookingProvider>
+  );
+}
 import AdminLayout from "@/pages/admin/layout";
 import Dashboard from "@/pages/admin/dashboard";
 import BookingsPage from "@/pages/admin/bookings";
@@ -43,8 +75,7 @@ export default function App() {
       <AuthProvider>
         <Toaster position="top-right" richColors />
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/verifikasi" element={<VerificationPage />} />
+          <Route path="/*" element={<PublicRoutes />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
@@ -54,7 +85,6 @@ export default function App() {
             <Route path="users" element={<UsersRoute />} />
             <Route path="settings" element={<SettingsRoute />} />
           </Route>
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
