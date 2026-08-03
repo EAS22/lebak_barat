@@ -1,3 +1,4 @@
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Stars from "@/components/landing/ornaments/Stars";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 
@@ -7,7 +8,19 @@ interface FooterProps {
 
 export default function Footer({ buperName }: FooterProps) {
   const { openWaModal } = useWaBooking();
+  const location = useLocation();
+  const navigate = useNavigate();
   const year = new Date().getFullYear();
+
+  function handleNavClick(
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) {
+    if (href.startsWith("#") && location.pathname !== "/") {
+      e.preventDefault();
+      navigate(`/${href}`);
+    }
+  }
 
   return (
     <footer className="relative overflow-hidden bg-[#14301c] text-slate-300">
@@ -37,34 +50,54 @@ export default function Footer({ buperName }: FooterProps) {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#tentang" className="hover:text-white transition-colors">
+                <a
+                  href="#tentang"
+                  onClick={(e) => handleNavClick(e, "#tentang")}
+                  className="hover:text-white transition-colors"
+                >
                   Tentang
                 </a>
               </li>
               <li>
-                <a href="#profil" className="hover:text-white transition-colors">
+                <a
+                  href="#profil"
+                  onClick={(e) => handleNavClick(e, "#profil")}
+                  className="hover:text-white transition-colors"
+                >
                   Profil & Sejarah
                 </a>
               </li>
               <li>
-                <a href="#kalender" className="hover:text-white transition-colors">
+                <a
+                  href="#kalender"
+                  onClick={(e) => handleNavClick(e, "#kalender")}
+                  className="hover:text-white transition-colors"
+                >
                   Kalender
                 </a>
               </li>
               <li>
-                <a href="#fasilitas" className="hover:text-white transition-colors">
+                <a
+                  href="#fasilitas"
+                  onClick={(e) => handleNavClick(e, "#fasilitas")}
+                  className="hover:text-white transition-colors"
+                >
                   Fasilitas
                 </a>
               </li>
               <li>
-                <a href="#kontak" className="hover:text-white transition-colors">
+                <a
+                  href="#kontak"
+                  onClick={(e) => handleNavClick(e, "#kontak")}
+                  className="hover:text-white transition-colors"
+                >
                   Kontak
                 </a>
               </li>
               <li>
-                <a href="/verifikasi" className="hover:text-white transition-colors">
+                <Link to="/verifikasi" className="hover:text-white transition-colors">
                   Verifikasi Invoice
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

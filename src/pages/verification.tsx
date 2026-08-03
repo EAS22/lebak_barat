@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Search,
@@ -53,9 +53,10 @@ export default function VerificationPage() {
   const html5QrCodeRef = useRef<InstanceType<typeof import("html5-qrcode").Html5Qrcode> | null>(null);
   const [settings, setSettings] = useState<PublicSettings>(DEFAULT_SETTINGS);
   const heroReveal = useReveal<HTMLDivElement>();
+  const pendingQrVerifyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    fetchPublicSettings().then(setSettings);
+    fetchPublicSettings().then(setSettings).catch(() => {});
   }, []);
 
   function safeDateFormat(dateStr?: string, fmt = "d MMM yyyy"): string {
@@ -69,61 +70,74 @@ export default function VerificationPage() {
     }
   }
 
-  async function doVerify(rawNumber: string) {
-    let number = rawNumber.trim();
-    try {
-      if (number.startsWith("http")) {
-        const url = new URL(number);
-        const inv = url.searchParams.get("invoice");
-        if (inv) number = inv;
-      }
-    } catch {
-      // ignore
-    }
-    number = number.trim().toUpperCase();
-    if (!number) {
-      setError("Masukkan nomor invoice");
-      return;
-    }
-    try {
-      html5QrCodeRef.current?.stop().catch(() => {});
-    } catch {}
-    setError(null);
-    setLoading(true);
-    setResult(null);
-    setScannerOpen(false);
-    try {
-      const res = await fetch(`/api/public/verify-invoice?number=${encodeURIComponent(number)}`);
-      const data = (await res.json()) as VerifyResult & { error?: string };
-      if (!res.ok) {
-        if (res.status === 404) {
-          setResult({
-            verified: false,
-            message: data.message || "Invoice tidak ditemukan. Pastikan nomor benar atau invoice palsu.",
-          });
-          setSearchParams({}, { replace: true });
-          return;
+  const doVerify = useCallback(
+    async (rawNumber: string) => {
+      let number = rawNumber.trim();
+      try {
+        if (number.startsWith("http")) {
+          const url = new URL(number);
+          const inv = url.searchParams.get("invoice");
+          if (inv) number = inv;
+          else {
+            const parts = number.split("/").filter(Boolean);
+            const last = parts[parts.length - 1];
+            if (last && last.toUpperCase().startsWith("INV-")) number = last;
+          }
         }
-        throw new Error(data.error || `Gagal verifikasi: ${res.status}`);
+      } catch {
+        // ignore
       }
-      setInput(number);
-      setResult(data);
-      setSearchParams({ invoice: number }, { replace: true });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal memverifikasi";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
+      number = number.trim().toUpperCase();
+      if (!number) {
+        setError("Masukkan nomor invoice");
+        return;
+      }
+      setError(null);
+      setLoading(true);
+      setResult(null);
+
+      try {
+        const res = await fetch(`/api/public/verify-invoice?number=${encodeURIComponent(number)}`);
+        const data = (await res.json()) as VerifyResult & { error?: string };
+        if (!res.ok) {
+          if (res.status === 404) {
+            setResult({
+              verified: false,
+              message: data.message || "Invoice tidak ditemukan. Pastikan nomor benar atau invoice palsu.",
+            });
+            setSearchParams({}, { replace: true });
+            return;
+          }
+          throw new Error(data.error || `Gagal verifikasi: ${res.status}`);
+        }
+        setInput(number);
+        setResult(data);
+        setSearchParams({ invoice: number }, { replace: true });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Gagal memverifikasi";
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setSearchParams]
+  );
 
   useEffect(() => {
     const initial = searchParams.get("invoice");
-    if (initial) {
+    if (initial && !result && !loading) {
       doVerify(initial);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (pendingQrVerifyRef.current && !scannerOpen) {
+      const val = pendingQrVerifyRef.current;
+      pendingQrVerifyRef.current = null;
+      doVerify(val);
+    }
+  }, [scannerOpen, doVerify]);
 
   // QR Scanner
   useEffect(() => {
@@ -136,6 +150,8 @@ export default function VerificationPage() {
         const { Html5Qrcode } = await import("html5-qrcode");
         if (cancelled) return;
         const targetId = "qr-reader";
+        const el = document.getElementById(targetId);
+        if (!el) return;
 
         const qr = new Html5Qrcode(targetId);
         qrInstance = qr;
@@ -146,28 +162,16 @@ export default function VerificationPage() {
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText) => {
             if (cancelled) return;
-            let candidate = decodedText.trim();
-            try {
-              if (candidate.startsWith("http")) {
-                const url = new URL(candidate);
-                const inv = url.searchParams.get("invoice");
-                if (inv) candidate = inv;
-                else {
-                  const parts = candidate.split("/").filter(Boolean);
-                  const last = parts[parts.length - 1];
-                  if (last && last.startsWith("INV-")) candidate = last;
-                }
-              }
-            } catch {
-              // not a url
-            }
-            // Stop scanner first to avoid double callbacks
+            cancelled = true;
+            const candidate = decodedText.trim();
+            pendingQrVerifyRef.current = candidate;
             qr.stop()
               .catch(() => {})
               .finally(() => {
-                if (cancelled) return;
+                if (html5QrCodeRef.current === qr) {
+                  html5QrCodeRef.current = null;
+                }
                 setScannerOpen(false);
-                doVerify(candidate);
               });
           },
           () => {}
@@ -183,9 +187,10 @@ export default function VerificationPage() {
     return () => {
       cancelled = true;
       qrInstance?.stop().catch(() => {});
-      html5QrCodeRef.current = null;
+      if (html5QrCodeRef.current === qrInstance) {
+        html5QrCodeRef.current = null;
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scannerOpen]);
 
   function handleScanAgain() {
@@ -194,8 +199,9 @@ export default function VerificationPage() {
     setInput("");
     setSearchParams({}, { replace: true });
     setLoading(false);
+    pendingQrVerifyRef.current = null;
     setScannerOpen(false);
-    setTimeout(() => setScannerOpen(true), 100);
+    setTimeout(() => setScannerOpen(true), 150);
   }
 
   return (

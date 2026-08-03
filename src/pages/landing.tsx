@@ -25,14 +25,20 @@ export default function Landing() {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
-    if (window.location.hash) {
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search
-      );
+    const hash = window.location.hash;
+    if (hash) {
+      const id = hash.replace(/^#/, "");
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        } else {
+          window.scrollTo(0, 0);
+        }
+      }, 80);
+    } else {
+      window.scrollTo(0, 0);
     }
-    window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 interface NavbarProps {
   buperName: string;
@@ -28,25 +28,41 @@ function BrandLogo() {
 export default function Navbar({ buperName }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     function onScroll() {
+      if (location.pathname !== "/") {
+        setScrolled(true);
+        return;
+      }
       setScrolled(window.scrollY > 40);
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [location.pathname]);
 
   function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    e.preventDefault();
-    const target = document.querySelector(
-      (e.currentTarget as HTMLAnchorElement).getAttribute("href") ?? ""
-    );
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
+    const href = (e.currentTarget as HTMLAnchorElement).getAttribute("href") ?? "";
+    const isHash = href.startsWith("#");
+    if (location.pathname !== "/" && isHash) {
+      e.preventDefault();
+      setOpen(false);
+      navigate(`/${href}`);
+      return;
     }
-    setOpen(false);
+    if (isHash) {
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+      }
+      setOpen(false);
+    } else {
+      setOpen(false);
+    }
   }
 
   return (
