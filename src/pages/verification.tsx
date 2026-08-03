@@ -58,19 +58,40 @@ export default function VerificationPage() {
     fetchPublicSettings().then(setSettings);
   }, []);
 
+  function safeDateFormat(dateStr?: string, fmt = "d MMM yyyy"): string {
+    if (!dateStr) return "-";
+    try {
+      const d = new Date(dateStr.slice(0, 10) + "T00:00:00");
+      if (isNaN(d.getTime())) return "-";
+      return format(d, fmt, { locale: localeId });
+    } catch {
+      return "-";
+    }
+  }
+
   async function doVerify(rawNumber: string) {
-    const number = rawNumber.trim().toUpperCase();
+    let number = rawNumber.trim();
+    try {
+      if (number.startsWith("http")) {
+        const url = new URL(number);
+        const inv = url.searchParams.get("invoice");
+        if (inv) number = inv;
+      }
+    } catch {
+      // ignore
+    }
+    number = number.trim().toUpperCase();
     if (!number) {
       setError("Masukkan nomor invoice");
       return;
     }
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setScannerOpen(false);
     try {
       html5QrCodeRef.current?.stop().catch(() => {});
     } catch {}
+    setError(null);
+    setLoading(true);
+    setResult(null);
+    setScannerOpen(false);
     try {
       const res = await fetch(`/api/public/verify-invoice?number=${encodeURIComponent(number)}`);
       const data = (await res.json()) as VerifyResult & { error?: string };
@@ -80,10 +101,12 @@ export default function VerificationPage() {
             verified: false,
             message: data.message || "Invoice tidak ditemukan. Pastikan nomor benar atau invoice palsu.",
           });
+          setSearchParams({}, { replace: true });
           return;
         }
         throw new Error(data.error || `Gagal verifikasi: ${res.status}`);
       }
+      setInput(number);
       setResult(data);
       setSearchParams({ invoice: number }, { replace: true });
     } catch (err: unknown) {
@@ -106,20 +129,23 @@ export default function VerificationPage() {
   useEffect(() => {
     if (!scannerOpen) return;
     let cancelled = false;
+    let qrInstance: InstanceType<typeof import("html5-qrcode").Html5Qrcode> | null = null;
 
     (async () => {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      if (cancelled) return;
-      const targetId = "qr-reader";
-
-      const qr = new Html5Qrcode(targetId);
-      html5QrCodeRef.current = qr;
-
       try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (cancelled) return;
+        const targetId = "qr-reader";
+
+        const qr = new Html5Qrcode(targetId);
+        qrInstance = qr;
+        html5QrCodeRef.current = qr;
+
         await qr.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText) => {
+            if (cancelled) return;
             let candidate = decodedText.trim();
             try {
               if (candidate.startsWith("http")) {
@@ -135,21 +161,28 @@ export default function VerificationPage() {
             } catch {
               // not a url
             }
-            setInput(candidate);
-            doVerify(candidate);
+            // Stop scanner first to avoid double callbacks
+            qr.stop()
+              .catch(() => {})
+              .finally(() => {
+                if (cancelled) return;
+                setScannerOpen(false);
+                doVerify(candidate);
+              });
           },
           () => {}
         );
       } catch (e: unknown) {
+        if (cancelled) return;
         const msg = e instanceof Error ? e.message : String(e);
-        if (!cancelled) setError(`Kamera tidak tersedia: ${msg}`);
+        setError(`Kamera tidak tersedia: ${msg}`);
         setScannerOpen(false);
       }
     })();
 
     return () => {
       cancelled = true;
-      html5QrCodeRef.current?.stop().catch(() => {});
+      qrInstance?.stop().catch(() => {});
       html5QrCodeRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,7 +193,9 @@ export default function VerificationPage() {
     setError(null);
     setInput("");
     setSearchParams({}, { replace: true });
-    setScannerOpen(true);
+    setLoading(false);
+    setScannerOpen(false);
+    setTimeout(() => setScannerOpen(true), 100);
   }
 
   return (
@@ -326,26 +361,14 @@ export default function VerificationPage() {
                       Tanggal
                     </span>
                     <span>
-                      {result.start_date
-                        ? format(new Date(result.start_date.slice(0, 10)), "d MMM yyyy", {
-                            locale: localeId,
-                          })
-                        : "-"}{" "}
-                      →{" "}
-                      {result.end_date
-                        ? format(new Date(result.end_date.slice(0, 10)), "d MMM yyyy", {
-                            locale: localeId,
-                          })
-                        : "-"}
+                      {safeDateFormat(result.start_date)} → {safeDateFormat(result.end_date)}
                     </span>
                   </div>
                   {result.invoice_generated_at && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="w-28 text-xs text-slate-500 shrink-0">Diterbitkan</span>
                       <span className="text-xs">
-                        {format(new Date(result.invoice_generated_at), "d MMMM yyyy HH:mm 'WIB'", {
-                          locale: localeId,
-                        })}
+                        {safeDateFormat(result.invoice_generated_at, "d MMMM yyyy HH:mm 'WIB'")}
                       </span>
                     </div>
                   )}

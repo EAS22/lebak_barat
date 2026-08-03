@@ -299,11 +299,18 @@ export async function generateInvoicePdf(
 
   y += rowH;
 
-  const taxPercent = opts?.taxPercent ?? 0;
-  const discount = opts?.discount ?? 0;
-  const total = booking.price ?? 0;
-  const taxAmount = Math.round((total * taxPercent) / 100);
-  const grandTotal = total + taxAmount - discount;
+  const taxPercent = Number(opts?.taxPercent ?? 0);
+  const discount = Number(opts?.discount ?? 0);
+  const rawTotal = booking.price;
+  const totalNum =
+    rawTotal == null
+      ? 0
+      : typeof rawTotal === "string"
+        ? Number(rawTotal)
+        : (rawTotal as number);
+  const safeTotal = Number.isNaN(totalNum) ? 0 : totalNum;
+  const taxAmount = Math.round((safeTotal * taxPercent) / 100);
+  const grandTotal = safeTotal + taxAmount - discount;
 
   function summaryRow(label: string, value: string, bold = false, dark = false) {
     if (dark) {
@@ -328,7 +335,7 @@ export async function generateInvoicePdf(
     y += 7;
   }
 
-  summaryRow("Total", formatIDRPlain(total));
+  summaryRow("Total", formatIDRPlain(safeTotal));
   summaryRow(`Pajak (${taxPercent}%)`, formatIDRPlain(taxAmount));
   summaryRow("Diskon", formatIDRPlain(discount));
   summaryRow("Grand Total", formatIDRPlain(grandTotal), true, true);
