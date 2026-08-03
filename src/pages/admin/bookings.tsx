@@ -234,10 +234,19 @@ export default function BookingsPage() {
 
   const totalPages = Math.ceil(total / limit);
 
+  const bookingsWithoutInvoice = bookings.filter((b) => !b.invoice_number && b.status === "final").length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-2xl font-bold text-gray-900">Kelola Booking</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Kelola Booking</h2>
+          {bookingsWithoutInvoice > 0 && (
+            <p className="mt-1 text-sm text-amber-600">
+              {bookingsWithoutInvoice} booking final belum dicetak invoice
+            </p>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
@@ -247,6 +256,22 @@ export default function BookingsPage() {
             <Plus className="h-4 w-4 mr-1" />
             Booking Baru
           </Button>
+        </div>
+      </div>
+
+      {/* Invoice quick-help */}
+      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+          <FileText className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-emerald-800">Cetak Invoice PDF dengan QR Code</p>
+          <p className="mt-0.5 text-xs text-emerald-700/80">
+            Pastikan Jumlah siswa, Nama PIC, Kontak PIC, dan Harga sewa sudah diisi. Klik ikon{" "}
+            <FileText className="h-3.5 w-3.5 inline text-emerald-600" /> hijau di kolom Aksi untuk
+            generate invoice. Jika data belum lengkap, modal edit akan terbuka otomatis.
+            QR di invoice mengarah ke halaman verifikasi publik.
+          </p>
         </div>
       </div>
 
@@ -308,9 +333,9 @@ export default function BookingsPage() {
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Harga</TableHead>
                     <TableHead>Status</TableHead>
-                      <TableHead>Invoice</TableHead>
+                      <TableHead className="w-[160px]">Invoice</TableHead>
                       <TableHead>Keterangan</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
+                      <TableHead className="text-right w-[180px]">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -336,13 +361,33 @@ export default function BookingsPage() {
                           {STATUS_LABEL[b.status]}
                         </span>
                       </TableCell>
-                      <TableCell className="text-xs font-mono">
+                      <TableCell className="text-xs">
                         {b.invoice_number ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            {b.invoice_number}
-                          </span>
+                          <div className="space-y-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              {b.invoice_number}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              disabled={invoiceLoading && invoiceId === b.id}
+                              onClick={() => handleGenerateInvoice(b)}
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" /> Cetak Lagi
+                            </Button>
+                          </div>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                            disabled={invoiceLoading && invoiceId === b.id}
+                            onClick={() => handleGenerateInvoice(b)}
+                          >
+                            <FileText className="h-3.5 w-3.5 mr-1" />
+                            {invoiceLoading && invoiceId === b.id ? "Membuat..." : "Cetak Invoice"}
+                          </Button>
                         )}
                       </TableCell>
                       <TableCell className="max-w-[120px] truncate text-xs text-gray-500">
@@ -350,21 +395,10 @@ export default function BookingsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Cetak Invoice PDF"
-                            disabled={invoiceLoading && invoiceId === b.id}
-                            onClick={() => handleGenerateInvoice(b)}
-                          >
-                            <FileText
-                              className={`h-4 w-4 ${invoiceLoading && invoiceId === b.id ? "animate-pulse text-emerald-300" : "text-emerald-600"}`}
-                            />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(b)}>
+                          <Button variant="ghost" size="icon" title="Edit" onClick={() => openEdit(b)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteId(b.id)}>
+                          <Button variant="ghost" size="icon" title="Hapus" onClick={() => setDeleteId(b.id)}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
