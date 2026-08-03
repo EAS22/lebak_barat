@@ -130,6 +130,14 @@ export default function VerificationPage({
     if (initial) {
       doVerify(initial);
     }
+    const handler = (e: PromiseRejectionEvent) => {
+      const msg = (e.reason as Error)?.message || String(e.reason || "");
+      if (msg.includes("not running") || msg.includes("paused") || msg.includes("Html5Qrcode")) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("unhandledrejection", handler);
+    return () => window.removeEventListener("unhandledrejection", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -141,11 +149,33 @@ export default function VerificationPage({
     }
   }, [scannerOpen, doVerify]);
 
-  // QR Scanner
+  // QR Scanner - isolated, never crashes on stop
   useEffect(() => {
     if (!scannerOpen) return;
+
     let cancelled = false;
-    let qrInstance: { stop: () => Promise<void>; clear?: () => void } | null = null;
+    let qrObj: InstanceType<typeof import("html5-qrcode").Html5Qrcode> | null = null;
+
+    const safeStop = async () => {
+      if (!qrObj) return;
+      try {
+        // html5-qrcode getState(): 0=NOT_STARTED, 1=SCANNING, 2=PAUSED
+        const state = (qrObj as unknown as { getState?: () => number }).getState?.();
+        if (state !== undefined && state !== 1) return;
+      } catch {}
+      try {
+        await qrObj.stop();
+      } catch (e: unknown) {
+        const msg = (e as Error)?.message || String(e);
+        if (!msg.includes("not running") && !msg.includes("paused")) {
+          // only log truly unexpected errors
+          console.warn("[QR] stop error (ignored):", msg);
+        }
+      }
+      try {
+        qrObj.clear();
+      } catch {}
+    };
 
     (async () => {
       try {
@@ -154,10 +184,9 @@ export default function VerificationPage({
         const el = document.getElementById("qr-reader");
         if (!el) return;
 
-        handledRef: if (handledScanRef.current) handledScanRef.current = false;
-
+        handledScanRef.current = false;
         const qr = new Html5Qrcode("qr-reader");
-        qrInstance = qr as unknown as typeof qrInstance;
+        qrObj = qr as unknown as typeof qrObj;
 
         await qr.start(
           { facingMode: "environment" },
@@ -181,42 +210,29 @@ export default function VerificationPage({
               // ignore
             }
             pendingQrRef.current = candidate;
-            qr.stop()
-              .catch(() => {})
-              .finally(() => {
-                try {
-                  qr.clear();
-                } catch {}
-                if (!cancelled) setScannerOpen(false);
-              });
+            safeStop().finally(() => {
+              if (!cancelled) setScannerOpen(false);
+            });
           },
           () => {}
         );
+        if (cancelled) {
+          await safeStop();
+          return;
+        }
       } catch (e: unknown) {
         if (cancelled) return;
         const msg = e instanceof Error ? e.message : String(e);
-        if (!msg.includes("NotFoundError")) {
+        if (!msg.includes("NotFoundError") && !msg.toLowerCase().includes("not found")) {
           setError(`Kamera tidak tersedia: ${msg}`);
+          setScannerOpen(false);
         }
-        setScannerOpen(false);
       }
     })();
 
     return () => {
       cancelled = true;
-      if (qrInstance) {
-        try {
-          qrInstance.clear?.();
-        } catch {}
-        qrInstance
-          .stop()
-          .catch(() => {})
-          .then(() => {
-            try {
-              qrInstance?.clear?.();
-            } catch {}
-          });
-      }
+      safeStop();
     };
   }, [scannerOpen]);
 
