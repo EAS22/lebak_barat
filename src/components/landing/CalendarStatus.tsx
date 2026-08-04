@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -223,6 +223,21 @@ export default function CalendarStatus() {
 
   const today = startOfDay(new Date());
 
+  // Patokan tinggi: ukur tinggi kalender kiri
+  const [calendarHeight, setCalendarHeight] = useState<number | null>(null);
+  const calendarInnerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = calendarInnerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCalendarHeight(entry.contentRect.height);
+      }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [bookings, loading, monthStr]);
+
   const finalCount = useMemo(
     () => daysInMonth.filter((d) => dayStatus(d) === "final").length,
     [daysInMonth, dayStatus]
@@ -267,13 +282,16 @@ export default function CalendarStatus() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
-          {/* Kalender */}
+          {/* Kalender - kiri jadi patokan tinggi */}
           <div
             ref={wrap.ref}
             id="kalender-grid"
-            className={`flex flex-col reveal ${wrap.visible ? "is-visible" : ""}`}
+            className={`flex flex-col h-full min-h-0 reveal ${wrap.visible ? "is-visible" : ""}`}
           >
-            <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 flex flex-col h-full">
+            <div
+              ref={calendarInnerRef}
+              className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 flex flex-col h-full min-h-0"
+            >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <button
@@ -431,10 +449,15 @@ export default function CalendarStatus() {
             </div>
           </div>
 
-          {/* Daftar booking tahun berjalan */}
+          {/* Daftar booking tahun berjalan - tinggi ikut kalender kiri, scroll internal */}
           <div
             ref={listReveal.ref}
-            className={`flex flex-col reveal reveal-right ${listReveal.visible ? "is-visible" : ""}`}
+            className={`flex flex-col min-h-0 reveal reveal-right lg:h-full ${listReveal.visible ? "is-visible" : ""}`}
+            style={
+              calendarHeight
+                ? { height: `${calendarHeight}px` }
+                : undefined
+            }
           >
             <YearBookingList year={currentYear} onSelectDate={(d) => setCurrentMonth(d)} />
           </div>
