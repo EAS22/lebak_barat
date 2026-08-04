@@ -82,7 +82,7 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
   }, [year]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 flex flex-col h-full min-h-0">
+    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 flex flex-col h-full min-h-[560px] lg:min-h-0">
       <div className="flex items-center gap-3 mb-1 shrink-0">
         <ScoutBadge
           icon={<CalendarCheck size={18} />}
@@ -177,11 +177,35 @@ export default function CalendarStatus() {
   const [currentMonth, setCurrentMonth] = useState(() =>
     startOfMonth(new Date())
   );
+  const rightCardRef = useRef<HTMLDivElement | null>(null);
   const [bookings, setBookings] = useState<PublicBooking[]>([]);
   const [loading, setLoading] = useState(false);
 
   const monthStr = format(currentMonth, "yyyy-MM");
   const currentYear = getYear(currentMonth);
+
+  // Sync right card height to left card on desktop
+  useEffect(() => {
+    const left = document.getElementById("kalender-card");
+    const right = rightCardRef.current;
+    if (!left || !right || window.innerWidth < 1024) return;
+
+    const sync = () => {
+      const h = left.getBoundingClientRect().height;
+      if (h > 0) {
+        right.style.height = `${h}px`;
+      }
+    };
+
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(left);
+    window.addEventListener("resize", sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", sync);
+    };
+  }, [bookings, loading]);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,21 +246,6 @@ export default function CalendarStatus() {
   );
 
   const today = startOfDay(new Date());
-
-  // Patokan tinggi: ukur tinggi kalender kiri
-  const [calendarHeight, setCalendarHeight] = useState<number | null>(null);
-  const calendarInnerRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = calendarInnerRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setCalendarHeight(entry.contentRect.height);
-      }
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [bookings, loading, monthStr]);
 
   const finalCount = useMemo(
     () => daysInMonth.filter((d) => dayStatus(d) === "final").length,
@@ -281,16 +290,16 @@ export default function CalendarStatus() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
-          {/* Kalender - kiri jadi patokan tinggi */}
+        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto lg:items-stretch items-start">
+          {/* Kalender - patokan tinggi */}
           <div
             ref={wrap.ref}
             id="kalender-grid"
-            className={`flex flex-col h-full min-h-0 reveal ${wrap.visible ? "is-visible" : ""}`}
+            className={`reveal lg:flex lg:flex-col lg:h-full ${wrap.visible ? "is-visible" : ""}`}
           >
             <div
-              ref={calendarInnerRef}
-              className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 flex flex-col h-full min-h-0"
+              id="kalender-card"
+              className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 lg:flex lg:flex-col lg:h-full lg:min-h-[560px]"
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -449,15 +458,15 @@ export default function CalendarStatus() {
             </div>
           </div>
 
-          {/* Daftar booking tahun berjalan - tinggi ikut kalender kiri, scroll internal */}
+          {/* Daftar booking tahun berjalan - tinggi ikut kalender */}
           <div
-            ref={listReveal.ref}
-            className={`flex flex-col min-h-0 reveal reveal-right lg:h-full ${listReveal.visible ? "is-visible" : ""}`}
-            style={
-              calendarHeight
-                ? { height: `${calendarHeight}px` }
-                : undefined
-            }
+            ref={(node) => {
+              if (node) {
+                (listReveal.ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+                rightCardRef.current = node;
+              }
+            }}
+            className={`reveal reveal-right lg:flex lg:flex-col lg:h-full ${listReveal.visible ? "is-visible" : ""}`}
           >
             <YearBookingList year={currentYear} onSelectDate={(d) => setCurrentMonth(d)} />
           </div>
