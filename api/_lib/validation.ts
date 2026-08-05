@@ -68,6 +68,16 @@ export const settingsSchema = z.object({
   buperName: z.string().max(100).optional(),
 });
 
+export const eventSchema = z.object({
+  institution: z.string().min(2).max(200),
+  eventName: z.string().min(2).max(200),
+  participantCount: z.number().int().positive(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  keterangan: z.string().max(1000).optional().nullable(),
+});
+export const eventUpdateSchema = eventSchema.partial();
+
 export const facilitySchema = z.object({
   name: z.string().min(2).max(200),
   category: z.enum(["utama", "opsional"]),

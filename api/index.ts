@@ -16,6 +16,8 @@ import {
   settingsSchema,
   facilitySchema,
   facilityUpdateSchema,
+  eventSchema,
+  eventUpdateSchema,
 } from "./_lib/validation.js";
 
 type AuthUser = { id: string; username: string; role: string };
@@ -128,6 +130,46 @@ app.get("/api/public/bookings/year", async (c) => {
     const yearStart = `${year}-01-01`;
     const yearEnd = `${year}-12-31`;
     const rows = await sql`SELECT id, school_name, start_date, end_date, status FROM bookings WHERE status IN ('final','negosiasi') AND start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.get("/api/public/events", async (c) => {
+  try {
+    const sql = getSql();
+    const month = c.req.query("month");
+    if (month && !/^\d{4}-\d{2}$/.test(month)) {
+      return c.json({ error: "Parameter month harus format YYYY-MM" }, 400);
+    }
+    if (month) {
+      const [y, m] = month.split("-").map(Number);
+      const monthStart = `${month}-01`;
+      const lastDay = new Date(y!, m!, 0).getUTCDate();
+      const monthEnd = `${month}-${String(lastDay).padStart(2, "0")}`;
+      const rows = await sql`SELECT id, institution, event_name, start_date, end_date FROM events WHERE NOT (end_date < ${monthStart} OR start_date > ${monthEnd}) ORDER BY start_date`;
+      return c.json(rows);
+    }
+    const rows = await sql`SELECT id, institution, event_name, start_date, end_date FROM events ORDER BY start_date`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.get("/api/public/events/year", async (c) => {
+  try {
+    const sql = getSql();
+    const year = c.req.query("year");
+    if (!year || !/^\d{4}$/.test(year)) {
+      return c.json({ error: "Parameter year harus format YYYY" }, 400);
+    }
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
+    const rows = await sql`SELECT id, institution, event_name, start_date, end_date FROM events WHERE start_date >= ${yearStart} AND start_date <= ${yearEnd} ORDER BY start_date`;
     return c.json(rows);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -332,6 +374,16 @@ app.post("/api/bookings", requireAuth, async (c) => {
           409
         );
       }
+      const eventOverlap = await sql`SELECT id, event_name, institution FROM events WHERE NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
+      if (eventOverlap.length > 0) {
+        const ev = eventOverlap[0] as { event_name: string; institution: string };
+        return c.json(
+          {
+            error: `Tanggal bentrok dengan event internal "${ev.event_name}" (${ev.institution}). Tanggal tersebut tidak tersedia untuk booking.`,
+          },
+          409
+        );
+      }
     }
 
     const user = c.get("user") as AuthUser;
@@ -379,6 +431,16 @@ app.put("/api/bookings/:id", requireAuth, async (c) => {
         return c.json(
           {
             error: `Tanggal bentrok dengan booking ${existing.status} lain (${existing.school_name}). 1 sesi 3 hari 2 malam tidak boleh tumpang tindih.`,
+          },
+          409
+        );
+      }
+      const eventOverlap = await sql`SELECT id, event_name, institution FROM events WHERE NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
+      if (eventOverlap.length > 0) {
+        const ev = eventOverlap[0] as { event_name: string; institution: string };
+        return c.json(
+          {
+            error: `Tanggal bentrok dengan event internal "${ev.event_name}" (${ev.institution}).`,
           },
           409
         );
@@ -542,6 +604,151 @@ app.post("/api/bookings/:id/invoice", requireAuth, async (c) => {
     }
 
     return c.json({ invoice_number: invoiceNumber });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+// ─── Events (admin) — internal, block booking ─────────────────────
+
+app.get("/api/events", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const month = c.req.query("month");
+    const search = c.req.query("search");
+    const from = c.req.query("from");
+    const to = c.req.query("to");
+    const page = Math.max(1, parseInt(c.req.query("page") || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") || "20", 10)));
+    const offset = (page - 1) * limit;
+
+    const conds: string[] = [];
+    const vals: unknown[] = [];
+
+    if (month && /^\d{4}-\d{2}$/.test(month)) {
+      const monthStart = `${month}-01`;
+      const lastDay = new Date(Number(month.split("-")[0]), Number(month.split("-")[1]), 0).getUTCDate();
+      const monthEnd = `${month}-${String(lastDay).padStart(2, "0")}`;
+      vals.push(monthEnd, monthStart);
+      conds.push(`start_date <= $${vals.length - 1} AND end_date >= $${vals.length}`);
+    }
+    if (search) {
+      vals.push(`%${search}%`, `%${search}%`);
+      conds.push(`(institution ILIKE $${vals.length - 1} OR event_name ILIKE $${vals.length})`);
+    }
+    if (from && to) {
+      vals.push(from, to);
+      conds.push(`start_date >= $${vals.length - 1} AND end_date <= $${vals.length}`);
+    }
+
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    const countRow = await sql.query(`SELECT COUNT(*)::int AS total FROM events ${where}`, vals);
+    const total = (countRow[0] as Record<string, unknown>)?.total as number ?? 0;
+
+    vals.push(limit, offset);
+    const rows = await sql.query(
+      `SELECT * FROM events ${where} ORDER BY start_date DESC LIMIT $${vals.length - 1} OFFSET $${vals.length}`,
+      vals
+    );
+    return c.json({ data: rows, page, limit, total });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.post("/api/events", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const body = await c.req.json();
+    const parsed = eventSchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+    const d = parsed.data;
+    const endDate = d.endDate ?? addDaysStr(d.startDate, 2);
+
+    const overlapBooking = await sql`SELECT id, school_name, status FROM bookings WHERE status IN ('final','negosiasi') AND NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
+    if (overlapBooking.length > 0) {
+      const ex = overlapBooking[0] as { school_name: string; status: string };
+      return c.json({ error: `Tanggal bentrok dengan booking ${ex.status} (${ex.school_name})` }, 409);
+    }
+    const overlapEvent = await sql`SELECT id, event_name FROM events WHERE NOT (end_date < ${d.startDate} OR start_date > ${endDate}) LIMIT 1`;
+    if (overlapEvent.length > 0) {
+      const ev = overlapEvent[0] as { event_name: string };
+      return c.json({ error: `Tanggal bentrok dengan event lain (${ev.event_name})` }, 409);
+    }
+
+    const user = c.get("user") as AuthUser;
+    const rows = await sql`INSERT INTO events (institution, event_name, participant_count, start_date, end_date, keterangan, created_by) VALUES (${d.institution}, ${d.eventName}, ${d.participantCount}, ${d.startDate}, ${endDate}, ${d.keterangan ?? null}, ${user.id}) RETURNING *`;
+    return c.json(rows[0], 201);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.put("/api/events/:id", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const parsed = eventUpdateSchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+    const d = parsed.data;
+
+    const curRows = await sql`SELECT * FROM events WHERE id = ${id}`;
+    const cur = curRows[0] as Record<string, unknown> | undefined;
+    if (!cur) return c.json({ error: "Event tidak ditemukan" }, 404);
+
+    const newStart = d.startDate ?? (cur.start_date as string);
+    let newEnd = d.endDate ?? (cur.end_date as string);
+    if (d.startDate && !d.endDate) newEnd = addDaysStr(d.startDate, 2);
+
+    if (d.startDate || d.endDate) {
+      const overlapBooking = await sql`SELECT id, school_name, status FROM bookings WHERE status IN ('final','negosiasi') AND NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
+      if (overlapBooking.length > 0) {
+        const ex = overlapBooking[0] as { school_name: string; status: string };
+        return c.json({ error: `Tanggal bentrok dengan booking ${ex.status} (${ex.school_name})` }, 409);
+      }
+      const overlapEvent = await sql`SELECT id, event_name FROM events WHERE id != ${id} AND NOT (end_date < ${newStart} OR start_date > ${newEnd}) LIMIT 1`;
+      if (overlapEvent.length > 0) {
+        const ev = overlapEvent[0] as { event_name: string };
+        return c.json({ error: `Tanggal bentrok dengan event lain (${ev.event_name})` }, 409);
+      }
+    }
+
+    const sets: string[] = [];
+    const vals: unknown[] = [];
+    if (d.institution !== undefined) { vals.push(d.institution); sets.push(`institution = $${vals.length}`); }
+    if (d.eventName !== undefined) { vals.push(d.eventName); sets.push(`event_name = $${vals.length}`); }
+    if (d.participantCount !== undefined) { vals.push(d.participantCount); sets.push(`participant_count = $${vals.length}`); }
+    if (d.startDate !== undefined) { vals.push(d.startDate); sets.push(`start_date = $${vals.length}`); }
+    if (d.endDate !== undefined || d.startDate !== undefined) { vals.push(newEnd); sets.push(`end_date = $${vals.length}`); }
+    if (d.keterangan !== undefined) { vals.push(d.keterangan ?? null); sets.push(`keterangan = $${vals.length}`); }
+
+    sets.push(`updated_at = now()`);
+    if (sets.length === 1) {
+      const rows = await sql`SELECT * FROM events WHERE id = ${id}`;
+      return c.json(rows[0]);
+    }
+    vals.push(id);
+    const rows = await sql.query(
+      `UPDATE events SET ${sets.join(", ")} WHERE id = $${vals.length} RETURNING *`,
+      vals
+    );
+    return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.delete("/api/events/:id", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    await sql`DELETE FROM events WHERE id = ${id}`;
+    return c.json({ ok: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     return c.json({ error: msg }, 500);

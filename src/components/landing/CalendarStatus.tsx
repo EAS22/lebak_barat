@@ -63,19 +63,37 @@ function fmtRange(startStr: string, endStr: string): string {
   return `${format(start, "d MMM", { locale: id })} – ${format(end, "d MMM", { locale: id })}`;
 }
 
+type UnifiedYearItem =
+  | (PublicYearBooking & { _kind: "booking" })
+  | (import("@/lib/api").PublicEvent & { _kind: "event" });
+
 function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: (date: Date) => void }) {
-  const [items, setItems] = useState<PublicYearBooking[]>([]);
+  const [items, setItems] = useState<UnifiedYearItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchPublicYearBookings(year).then((data) => {
-      if (!cancelled) {
-        setItems(data);
+    Promise.all([
+      fetchPublicYearBookings(year),
+      import("@/lib/api").then((m) => m.fetchPublicEventsByYear(year)),
+    ])
+      .then(([bookings, events]) => {
+        if (cancelled) return;
+        const merged: UnifiedYearItem[] = [
+          ...bookings.map((b) => ({ ...b, _kind: "booking" as const })),
+          ...events.map((e) => ({ ...e, _kind: "event" as const })),
+        ].sort(
+          (a, b) =>
+            new Date(a.start_date.slice(0, 10) + "T00:00:00").getTime() -
+            new Date(b.start_date.slice(0, 10) + "T00:00:00").getTime()
+        );
+        setItems(merged);
         setLoading(false);
-      }
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -121,6 +139,9 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
             const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
             const monthIdx = start.getMonth();
             const colorCls = MONTH_COLORS[monthIdx] ?? MONTH_COLORS[0];
+            const isEvent = (b as UnifiedYearItem)._kind === "event";
+            const ev = b as import("@/lib/api").PublicEvent & { _kind: "event" };
+            const bk = b as PublicYearBooking & { _kind: "booking" };
             return (
               <li
                 key={b.id}
@@ -134,7 +155,7 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
                 className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:shadow-sm hover:border-emerald-300 cursor-pointer transition-all active:scale-[0.98]"
               >
                 <span
-                  className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border font-bold ${colorCls}`}
+                  className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border font-bold ${isEvent ? "bg-blue-900 text-white border-blue-800" : colorCls}`}
                 >
                   <span className="text-base leading-none">
                     {format(start, "d")}
@@ -145,21 +166,23 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 font-semibold text-sm text-brown truncate">
-                    <School size={13} className="flex-shrink-0 text-emerald-600" />
-                    <span className="truncate">{b.school_name}</span>
+                    <School size={13} className={`flex-shrink-0 ${isEvent ? "text-blue-900" : "text-emerald-600"}`} />
+                    <span className="truncate">{isEvent ? ev.institution : bk.school_name}</span>
                   </span>
                   <span className="block text-xs text-slate-500 mt-0.5">
-                    {fmtRange(b.start_date, b.end_date)}
+                    {isEvent ? ev.event_name : fmtRange(bk.start_date, bk.end_date)}
                   </span>
                 </span>
                 <span
                   className={`flex-shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
-                    b.status === "final"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
+                    isEvent
+                      ? "bg-blue-900 text-white"
+                      : bk.status === "final"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-amber-100 text-amber-700"
                   }`}
                 >
-                  {b.status === "final" ? "Final" : "Negosiasi"}
+                  {isEvent ? "Event" : bk.status === "final" ? "Final" : "Negosiasi"}
                 </span>
               </li>
             );
@@ -207,15 +230,24 @@ export default function CalendarStatus() {
     };
   }, [bookings, loading]);
 
+  const [events, setEvents] = useState<import("@/lib/api").PublicEvent[]>([]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchPublicBookings(monthStr).then((data) => {
-      if (!cancelled) {
-        setBookings(data);
+    Promise.all([
+      fetchPublicBookings(monthStr),
+      import("@/lib/api").then((m) => m.fetchPublicEvents(monthStr)),
+    ])
+      .then(([b, e]) => {
+        if (cancelled) return;
+        setBookings(b);
+        setEvents(e as import("@/lib/api").PublicEvent[]);
         setLoading(false);
-      }
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -230,7 +262,12 @@ export default function CalendarStatus() {
   const firstDayOffset = mondayIndex(daysInMonth[0]!);
 
   const dayStatus = useCallback(
-    (date: Date): "final" | "negosiasi" | null => {
+    (date: Date): "event" | "final" | "negosiasi" | null => {
+      for (const ev of events) {
+        const s = new Date(ev.start_date.slice(0, 10) + "T00:00:00");
+        const en = new Date(ev.end_date.slice(0, 10) + "T00:00:00");
+        if (isWithinInterval(date, { start: s, end: en })) return "event";
+      }
       let found: "final" | "negosiasi" | null = null;
       for (const b of bookings) {
         const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
@@ -242,7 +279,7 @@ export default function CalendarStatus() {
       }
       return found;
     },
-    [bookings]
+    [bookings, events]
   );
 
   const today = startOfDay(new Date());
@@ -393,13 +430,15 @@ export default function CalendarStatus() {
                         className={`
                           relative h-11 flex flex-col items-center justify-center rounded-xl cursor-default transition-transform hover:scale-105
                           ${
-                            status === "final"
-                              ? "bg-red-500 text-white font-bold group shadow-sm"
-                              : status === "negosiasi"
-                                ? "bg-amber-400 text-brown font-bold group shadow-sm"
-                                : past
-                                  ? "bg-slate-50 text-slate-300"
-                                  : "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
+                            status === "event"
+                              ? "bg-blue-900 text-white font-bold group shadow-sm"
+                              : status === "final"
+                                ? "bg-red-500 text-white font-bold group shadow-sm"
+                                : status === "negosiasi"
+                                  ? "bg-amber-400 text-brown font-bold group shadow-sm"
+                                  : past
+                                    ? "bg-slate-50 text-slate-300"
+                                    : "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
                           }
                           ${isToday ? "ring-2 ring-amber-400 ring-offset-1" : ""}
                         `}
@@ -417,12 +456,19 @@ export default function CalendarStatus() {
                             Nego
                           </span>
                         )}
+                        {status === "event" && (
+                          <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">
+                            Event
+                          </span>
+                        )}
                         {status && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-10">
                             <div className="bg-brown text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-lg">
-                              {status === "final"
-                                ? "Sudah Terbooking (Final)"
-                                : "Dalam Negosiasi"}
+                              {status === "event"
+                                ? "Event Internal"
+                                : status === "final"
+                                  ? "Sudah Terbooking (Final)"
+                                  : "Dalam Negosiasi"}
                             </div>
                           </div>
                         )}
@@ -433,7 +479,7 @@ export default function CalendarStatus() {
               )}
 
               {/* Legend */}
-              <div className="flex items-center justify-center flex-wrap gap-3.5 mt-5 text-xs font-medium text-slate-700">
+              <div className="flex items-center justify-center flex-wrap gap-3 mt-5 text-xs font-medium text-slate-700">
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md bg-emerald-50 border border-emerald-300" />
                   Tersedia
@@ -445,6 +491,10 @@ export default function CalendarStatus() {
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md bg-red-500" />
                   Final
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-md bg-blue-900" />
+                  Event
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md border-2 border-amber-400" />

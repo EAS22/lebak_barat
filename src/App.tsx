@@ -39,6 +39,7 @@ function PublicRoutes() {
 import AdminLayout from "@/pages/admin/layout";
 import Dashboard from "@/pages/admin/dashboard";
 import BookingsPage from "@/pages/admin/bookings";
+import EventsPage from "@/pages/admin/events";
 import UsersPage from "@/pages/admin/users";
 import SettingsPage from "@/pages/admin/settings";
 import FacilitiesPage from "@/pages/admin/facilities";
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="bookings" element={<BookingsPage />} />
+            <Route path="events" element={<EventsPage />} />
             <Route path="invoices" element={<InvoicesPage />} />
             <Route path="facilities" element={<FacilitiesRoute />} />
             <Route path="users" element={<UsersRoute />} />

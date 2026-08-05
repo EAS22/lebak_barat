@@ -44,6 +44,19 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  institution: varchar("institution", { length: 200 }).notNull(),
+  eventName: varchar("event_name", { length: 200 }).notNull(),
+  participantCount: integer("participant_count").notNull(),
+  startDate: date("start_date", { mode: "date" }).notNull(),
+  endDate: date("end_date", { mode: "date" }).notNull(),
+  keterangan: text("keterangan"),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const facilities = pgTable("facilities", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 200 }).notNull(),

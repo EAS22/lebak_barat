@@ -1,4 +1,12 @@
-import type { BookingInput, BookingUpdateInput, CreateUserInput, UpdateUserInput, SettingsInput } from "./validation";
+import type {
+  BookingInput,
+  BookingUpdateInput,
+  CreateUserInput,
+  UpdateUserInput,
+  SettingsInput,
+  EventInput,
+  EventUpdateInput,
+} from "./validation";
 
 export interface BookingRecord {
   id: string;
@@ -129,6 +137,85 @@ export async function generateInvoice(id: string): Promise<BookingRecord & { inv
 
 export async function deleteBooking(id: string): Promise<void> {
   const res = await adminFetch(`/api/bookings/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+}
+
+export interface EventRecord {
+  id: string;
+  institution: string;
+  event_name: string;
+  participant_count: number;
+  start_date: string;
+  end_date: string;
+  keterangan: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventsResponse {
+  data: EventRecord[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface EventParams {
+  month?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  from?: string;
+  to?: string;
+}
+
+export async function getEvents(params: EventParams = {}): Promise<EventsResponse> {
+  const qs = new URLSearchParams();
+  if (params.month) qs.set("month", params.month);
+  if (params.search) qs.set("search", params.search);
+  if (params.page) qs.set("page", String(params.page));
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.from) qs.set("from", params.from);
+  if (params.to) qs.set("to", params.to);
+  const res = await adminFetch(`/api/events?${qs.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch events: ${res.status}`);
+  return res.json();
+}
+
+export async function createEvent(data: EventInput): Promise<EventRecord> {
+  const res = await adminFetch("/api/events", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Create failed: ${res.status}`) as Error & {
+      status?: number;
+    };
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function updateEvent(id: string, data: EventUpdateInput): Promise<EventRecord> {
+  const res = await adminFetch(`/api/events/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.error || `Update failed: ${res.status}`) as Error & {
+      status?: number;
+    };
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+  const res = await adminFetch(`/api/events/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 

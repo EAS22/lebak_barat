@@ -72,6 +72,17 @@ export const bookingUpdateSchema = z
     status: z.enum(bookingStatusValues).optional(),
   });
 
+export const eventSchema = z.object({
+  institution: z.string().min(2).max(200),
+  eventName: z.string().min(2).max(200),
+  participantCount: z.number().int().positive(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  keterangan: z.string().max(1000).optional().nullable(),
+});
+
+export const eventUpdateSchema = eventSchema.partial();
+
 export const facilitySchema = z.object({
   name: z.string().min(2).max(200),
   category: z.enum(["utama", "opsional"]),
@@ -92,6 +103,8 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type BookingInput = z.infer<typeof bookingSchema>;
 export type BookingUpdateInput = z.infer<typeof bookingUpdateSchema>;
+export type EventInput = z.infer<typeof eventSchema>;
+export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;
 export type FacilityInput = z.infer<typeof facilitySchema>;
 export type FacilityUpdateInput = z.infer<typeof facilityUpdateSchema>;

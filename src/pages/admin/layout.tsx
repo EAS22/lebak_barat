@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarDays,
+  CalendarRange,
   Users,
   Settings,
   FileText,
@@ -22,6 +23,7 @@ export type AdminOutletContext = { user: AuthUser };
 const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, superOnly: false },
   { to: "/admin/bookings", label: "Bookings", icon: CalendarDays, end: false, superOnly: false },
+  { to: "/admin/events", label: "Event Internal", icon: CalendarRange, end: false, superOnly: false },
   { to: "/admin/invoices", label: "Invoices", icon: FileText, end: false, superOnly: false },
   { to: "/admin/facilities", label: "Fasilitas", icon: Tent, end: false, superOnly: true },
   { to: "/admin/users", label: "Users", icon: Users, end: false, superOnly: true },

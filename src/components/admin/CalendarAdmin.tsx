@@ -79,8 +79,27 @@ export default function CalendarAdmin({
 
   const firstDayOffset = mondayIndex(daysInMonth[0]!);
 
+  const [events, setEvents] = useState<
+    { id: string; start_date: string; end_date: string }[]
+  >([]);
+
+  useEffect(() => {
+    fetch(`/api/public/events?month=${monthStr}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        if (Array.isArray(data)) setEvents(data as never);
+      })
+      .catch(() => {});
+  }, [monthStr]);
+
   const dayStatus = useCallback(
-    (date: Date): { status: "final" | "negosiasi" | "batal" | null; bookings: BookingRecord[] } => {
+    (date: Date): { status: "event" | "final" | "negosiasi" | "batal" | null; bookings: BookingRecord[] } => {
+      const ev = events.some((e) => {
+        const s = new Date(e.start_date.slice(0, 10) + "T00:00:00");
+        const en = new Date(e.end_date.slice(0, 10) + "T00:00:00");
+        return isWithinInterval(date, { start: s, end: en });
+      });
+      if (ev) return { status: "event", bookings: [] };
       const found = bookings.filter((b) => {
         const start = new Date(b.start_date.slice(0, 10) + "T00:00:00");
         const end = new Date(b.end_date.slice(0, 10) + "T00:00:00");
@@ -93,7 +112,7 @@ export default function CalendarAdmin({
       if (hasNego) return { status: "negosiasi", bookings: found };
       return { status: "batal", bookings: found };
     },
-    [bookings]
+    [bookings, events]
   );
 
   function navigateMonth(delta: number) {
@@ -161,6 +180,7 @@ export default function CalendarAdmin({
                 onClick={() => hasBooking && first && onSelectBooking?.(first)}
                 className={`
                   relative h-11 flex flex-col items-center justify-center text-sm rounded-xl cursor-default transition-transform
+                  ${status === "event" ? "bg-blue-900 text-white font-bold group shadow-sm hover:scale-105" : ""}
                   ${status === "final" ? "bg-red-500 text-white font-bold group shadow-sm hover:scale-105" : ""}
                   ${status === "negosiasi" ? "bg-amber-400 text-brown font-bold group shadow-sm hover:scale-105" : ""}
                   ${status === null && !isPast ? "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100" : ""}
@@ -168,7 +188,7 @@ export default function CalendarAdmin({
                   ${status === "batal" ? "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100" : ""}
                   ${isToday ? "ring-2 ring-amber-400 ring-offset-1" : ""}
                   ${isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""}
-                  ${hasBooking ? "cursor-pointer" : ""}
+                  ${hasBooking || status === "event" ? "cursor-pointer" : ""}
                 `}
               >
                 <span className="text-sm leading-none">{day.getDate()}</span>
@@ -178,10 +198,17 @@ export default function CalendarAdmin({
                 {status === "negosiasi" && (
                   <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">Nego</span>
                 )}
-                {hasBooking && first && (
+                {status === "event" && (
+                  <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">Event</span>
+                )}
+                {(hasBooking || status === "event") && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-10">
                     <div className="bg-brown text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-lg">
-                      {first.school_name} — {status === "final" ? "Final" : "Negosiasi"}
+                      {status === "event"
+                        ? "Event Internal"
+                        : first
+                          ? `${first.school_name} — ${status === "final" ? "Final" : "Negosiasi"}`
+                          : status}
                     </div>
                   </div>
                 )}
@@ -197,7 +224,7 @@ export default function CalendarAdmin({
         </p>
       )}
 
-      <div className="flex items-center justify-center flex-wrap gap-3.5 mt-5 text-xs font-medium text-gray-600">
+      <div className="flex items-center justify-center flex-wrap gap-3 mt-5 text-xs font-medium text-gray-600">
         <div className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-md bg-emerald-50 border border-emerald-300" />
           Tersedia
@@ -209,6 +236,10 @@ export default function CalendarAdmin({
         <div className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-md bg-red-500" />
           Final
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-md bg-blue-900" />
+          Event
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-md border-2 border-amber-400" />
