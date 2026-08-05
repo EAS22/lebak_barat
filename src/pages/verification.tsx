@@ -353,10 +353,10 @@ export default function VerificationPage({
         <TopoPattern />
         <div className="relative z-10 max-w-2xl w-full mx-auto px-4 sm:px-6">
           <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-brown">Nomor Invoice</label>
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-brown">Nomor Invoice</label>
+                <div className="relative">
                   <Search
                     size={16}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -371,6 +371,8 @@ export default function VerificationPage({
                     className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/60 text-sm font-mono tracking-wide focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   disabled={imageUploading}
@@ -381,7 +383,7 @@ export default function VerificationPage({
                       setScannerOpen((s) => !s);
                     }
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium hover:bg-emerald-100 hover:border-emerald-300 transition-all shrink-0 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium hover:bg-emerald-100 hover:border-emerald-300 transition-all disabled:opacity-50"
                 >
                   {result ? (
                     <>
@@ -401,7 +403,7 @@ export default function VerificationPage({
                   type="button"
                   disabled={imageUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shrink-0 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-50"
                   title="Upload gambar QR dari galeri"
                 >
                   {imageUploading ? (
