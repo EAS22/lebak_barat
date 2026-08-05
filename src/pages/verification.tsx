@@ -10,6 +10,7 @@ import {
   CalendarDays,
   UserRound,
   RotateCcw,
+  ImagePlus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -54,6 +55,8 @@ export default function VerificationPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const heroReveal = useReveal<HTMLDivElement>();
   const pendingQrRef = useRef<string | null>(null);
   const handledScanRef = useRef(false);
@@ -236,6 +239,62 @@ export default function VerificationPage({
     };
   }, [scannerOpen]);
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setImageUploading(true);
+    setError(null);
+    try {
+      const { Html5Qrcode: QR } = await import("html5-qrcode");
+      // html5-qrcode v2.3.8 scanFile adalah instance method, bukan static
+      const tempDivId = "__qr-file-temp";
+      let tempDiv = document.getElementById(tempDivId);
+      if (!tempDiv) {
+        tempDiv = document.createElement("div");
+        tempDiv.id = tempDivId;
+        tempDiv.style.display = "none";
+        document.body.appendChild(tempDiv);
+      }
+      const qrTemp = new QR(tempDivId);
+      const result = await qrTemp.scanFile(file, true);
+      try {
+        qrTemp.clear();
+      } catch {}
+      let candidate = result.trim();
+      try {
+        if (candidate.startsWith("http")) {
+          const url = new URL(candidate);
+          const inv = url.searchParams.get("invoice");
+          if (inv) candidate = inv;
+          else {
+            const parts = candidate.split("/").filter(Boolean);
+            const last = parts[parts.length - 1];
+            if (last && last.toUpperCase().startsWith("INV-")) candidate = last;
+          }
+        }
+      } catch {}
+      if (candidate) {
+        doVerify(candidate);
+      } else {
+        setError("QR code tidak terdeteksi di gambar tersebut");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (
+        msg.toLowerCase().includes("not found") ||
+        msg.toLowerCase().includes("no qr code") ||
+        msg.toLowerCase().includes("no multi")
+      ) {
+        setError("QR code tidak ditemukan pada gambar. Pastikan gambar jelas dan berisi QR code invoice.");
+      } else {
+        setError(`Gagal membaca gambar: ${msg}`);
+      }
+    } finally {
+      setImageUploading(false);
+    }
+  }
+
   function handleScanAgain() {
     setResult(null);
     setError(null);
@@ -314,6 +373,7 @@ export default function VerificationPage({
                 </div>
                 <button
                   type="button"
+                  disabled={imageUploading}
                   onClick={() => {
                     if (result) {
                       handleScanAgain();
@@ -321,7 +381,7 @@ export default function VerificationPage({
                       setScannerOpen((s) => !s);
                     }
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium hover:bg-emerald-100 hover:border-emerald-300 transition-all shrink-0"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium hover:bg-emerald-100 hover:border-emerald-300 transition-all shrink-0 disabled:opacity-50"
                 >
                   {result ? (
                     <>
@@ -333,10 +393,33 @@ export default function VerificationPage({
                   ) : (
                     <>
                       <QrCode size={18} />
-                      Scan QR
+                      Scan Kamera
                     </>
                   )}
                 </button>
+                <button
+                  type="button"
+                  disabled={imageUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shrink-0 disabled:opacity-50"
+                  title="Upload gambar QR dari galeri"
+                >
+                  {imageUploading ? (
+                    <>Memuat...</>
+                  ) : (
+                    <>
+                      <ImagePlus size={18} />
+                      Pilih Gambar
+                    </>
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
               </div>
             </div>
 
@@ -462,9 +545,20 @@ export default function VerificationPage({
               </div>
             )}
           </div>
-          <p className="mt-6 text-center text-xs text-slate-400">
-            Tips: Buka kamera HP, scan QR code di invoice cetak. Sistem akan membuka halaman verifikasi otomatis.
-          </p>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-500">
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 flex gap-2">
+              <QrCode size={16} className="shrink-0 text-emerald-600 mt-0.5" />
+              <span>
+                <span className="font-semibold text-slate-700">Opsi 1 — Scan langsung:</span> Klik "Scan Kamera" dan arahkan kamera ke QR code pada invoice cetak.
+              </span>
+            </div>
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 flex gap-2">
+              <ImagePlus size={16} className="shrink-0 text-emerald-600 mt-0.5" />
+              <span>
+                <span className="font-semibold text-slate-700">Opsi 2 — Dari galeri:</span> Klik "Pilih Gambar" dan upload screenshot/foto QR yang sudah disimpan di HP.
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
