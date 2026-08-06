@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Stars from "@/components/landing/ornaments/Stars";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
-import { APP_VERSION, BUILD_DATE } from "@/lib/version";
+import { APP_VERSION } from "@/lib/version";
 
 interface FooterProps {
   buperName: string;
@@ -127,7 +127,7 @@ export default function Footer({ buperName }: FooterProps) {
           <span>&copy; {year} {buperName}. All rights reserved. | lebakbarat.girimulya.com</span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/10 text-[11px] font-mono text-emerald-100/80">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            v{APP_VERSION} · {BUILD_DATE}
+            v{APP_VERSION}
           </span>
         </div>
       </div>

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, type AuthUser } from "@/lib/authContext";
-import { APP_VERSION, BUILD_DATE, GIT_COMMIT } from "@/lib/version";
+import { APP_VERSION } from "@/lib/version";
 
 export type { AuthUser };
 export type AdminOutletContext = { user: AuthUser };
@@ -174,10 +174,10 @@ export default function AdminLayout() {
         <div className={cn("px-3 py-2 border-t border-white/5", collapsed && "lg:px-2")}>
           <div
             className={cn(
-              "flex items-center gap-2 px-2 py-1 rounded-md bg-white/[0.06] border border-white/[0.06]",
+              "flex items-center gap-2 px-2 py-1.5 rounded-md bg-white/[0.06] border border-white/[0.06]",
               collapsed && "lg:justify-center lg:px-0"
             )}
-            title={`${APP_VERSION} • ${BUILD_DATE} • ${GIT_COMMIT}`}
+            title={`v${APP_VERSION}`}
           >
             <div className="h-5 w-5 shrink-0 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -185,9 +185,6 @@ export default function AdminLayout() {
             <div className={cn("min-w-0 flex-1", collapsed && "lg:hidden")}>
               <p className="text-[11px] font-mono font-medium text-emerald-100/80 leading-none">
                 v{APP_VERSION}
-              </p>
-              <p className="text-[10px] font-mono text-emerald-200/40 leading-none mt-0.5">
-                {BUILD_DATE} · {GIT_COMMIT.slice(0, 7)}
               </p>
             </div>
           </div>
