@@ -6,6 +6,7 @@ import CloudsSun from "@/components/landing/ornaments/CloudsSun";
 import TentIllustration from "@/components/landing/ornaments/TentIllustration";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
+import NextEventCard from "@/components/landing/NextEventCard";
 
 function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const { ref, visible } = useReveal<HTMLSpanElement>();
@@ -125,6 +126,8 @@ export default function Hero() {
                 <div className="text-sm text-slate-600">Akses Aman</div>
               </div>
             </div>
+
+            <NextEventCard />
           </div>
           <div className="hidden md:flex flex-col items-center gap-6">
             <img
