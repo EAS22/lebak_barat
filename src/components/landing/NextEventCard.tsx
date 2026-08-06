@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CalendarClock, MapPin, Users, Tent, Sparkles, ArrowRight } from "lucide-react";
+import { CalendarClock, MapPin, Users, Tent, Sparkles, ArrowRight, X } from "lucide-react";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import {
@@ -37,6 +37,7 @@ export default function NextEventCard() {
   const [next, setNext] = useState<(Unified & { _isOngoing?: boolean }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [forcedVisible, setForcedVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setForcedVisible(true), 700);
@@ -71,16 +72,10 @@ export default function NextEventCard() {
       try {
         const mergedThisYear = await loadYear(thisYear);
         if (cancelled) return;
-
-        console.log("[NextEventCard] thisYear", thisYear, "merged", mergedThisYear.length, "today", today.toISOString());
-
         const notEnded = mergedThisYear.filter((item) => {
           const end = parseOnly(item.end_date);
           return end >= today;
         });
-
-        console.log("[NextEventCard] notEnded", notEnded.length);
-
         if (notEnded.length > 0) {
           const upcoming = notEnded.filter((it) => parseOnly(it.start_date) >= today);
           const rawPick = (upcoming[0] ?? notEnded[0]) as Unified & {
@@ -91,7 +86,6 @@ export default function NextEventCard() {
             if (parseOnly(pick.start_date) < today) {
               pick._isOngoing = true;
             }
-            console.log("[NextEventCard] pick", pick);
             setNext(pick);
           } else {
             setNext(null);
@@ -99,11 +93,9 @@ export default function NextEventCard() {
           setLoading(false);
           return;
         }
-
         const nextYear = thisYear + 1;
         const mergedNext = await loadYear(nextYear);
         if (cancelled) return;
-        console.log("[NextEventCard] nextYear", nextYear, mergedNext.length);
         if (mergedNext.length === 0) {
           setNext(null);
           setLoading(false);
@@ -125,18 +117,35 @@ export default function NextEventCard() {
     }
 
     findNext();
-
     return () => {
       cancelled = true;
     };
   }, []);
 
+  if (dismissed) {
+    return (
+      <div className="fixed bottom-4 left-4 z-[90] md:bottom-6 md:left-6">
+        <button
+          onClick={() => setDismissed(false)}
+          className="group relative w-11 h-11 md:w-10 md:h-10 rounded-full bg-white border-2 border-dashed border-amber-300 shadow-xl flex items-center justify-center hover:scale-110 hover:border-emerald-300 transition-all duration-300"
+          aria-label="Tampilkan jadwal selanjutnya"
+        >
+          <Tent size={18} className="text-emerald-700 group-hover:rotate-6 transition-transform" />
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600 border-2 border-white" />
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="fixed bottom-6 left-6 z-[60] md:bottom-8 md:left-8 w-full max-w-[360px] rounded-2xl border-2 border-dashed border-amber-200/60 bg-white/60 p-4 animate-pulse backdrop-blur-xl">
-        <div className="h-4 w-32 bg-slate-100 rounded mb-3" />
-        <div className="h-5 w-48 bg-slate-100 rounded mb-2" />
-        <div className="h-3 w-28 bg-slate-100 rounded" />
+      <div className="fixed bottom-4 left-4 z-[60] md:bottom-6 md:left-6 w-[calc(100vw-32px)] max-w-[280px] md:max-w-[300px] rounded-xl border-2 border-dashed border-amber-200/60 bg-white/70 p-3 animate-pulse backdrop-blur-xl">
+        <div className="h-3 w-20 bg-slate-100 rounded mb-2" />
+        <div className="h-4 w-36 bg-slate-100 rounded mb-1.5" />
+        <div className="h-2.5 w-24 bg-slate-100 rounded" />
       </div>
     );
   }
@@ -162,14 +171,14 @@ export default function NextEventCard() {
       : "bg-amber-400 text-brown";
 
   const countdownLabel = isOngoing
-    ? "Sedang Berlangsung"
+    ? "Berlangsung"
     : dUntil === 0
       ? "Hari ini"
       : dUntil === 1
         ? "Besok"
         : dUntil > 0
-          ? `Dalam ${dUntil} hari`
-          : `${Math.abs(dUntil)} hari lalu`;
+          ? `${dUntil}hr lagi`
+          : `${Math.abs(dUntil)}hr lalu`;
 
   function handleClick() {
     document.querySelector("#kalender")?.scrollIntoView({ behavior: "smooth" });
@@ -180,82 +189,88 @@ export default function NextEventCard() {
   return (
     <div
       ref={reveal.ref}
-      className={`fixed bottom-6 left-6 z-[90] md:bottom-8 md:left-8 w-full max-w-[360px] reveal ${isVisible ? "is-visible" : ""}`}
+      className={`fixed bottom-4 left-4 z-[90] md:bottom-6 md:left-6 w-[calc(100vw-32px)] max-w-[280px] md:max-w-[300px] reveal ${isVisible ? "is-visible" : ""}`}
       style={{ ["--delay" as string]: "0.2s" }}
     >
       <div
         onClick={handleClick}
-        className="group relative cursor-pointer rounded-2xl bg-white/95 backdrop-blur-xl border-2 border-dashed border-amber-300 p-4 pr-5 shadow-2xl hover:shadow-2xl hover:-translate-y-1 hover:rotate-[-1deg] hover:scale-105 transition-all duration-300 hover:border-emerald-300"
+        className="group relative cursor-pointer rounded-xl bg-white/95 backdrop-blur-xl border-2 border-dashed border-amber-300 p-3 pr-3 shadow-xl hover:shadow-2xl hover:-translate-y-0.5 hover:rotate-[-0.5deg] hover:border-emerald-300 transition-all duration-300"
       >
-        {/* Live dot + shimmer */}
-        <div className="absolute -top-2 -right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide shadow-md">
-          <span className="relative flex h-2 w-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDismissed(true);
+          }}
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors z-10"
+          aria-label="Sembunyikan"
+        >
+          <X size={12} />
+        </button>
+
+        <div className="absolute -top-2 -left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wide shadow-md">
+          <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
           </span>
           Next
         </div>
 
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-amber-100/40 to-transparent transition-transform duration-700 ease-out" />
+        <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
+          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-0 bg-gradient-to-r from-transparent via-amber-100/30 to-transparent transition-transform duration-700 ease-out" />
         </div>
 
-        <div className="relative flex items-start gap-3">
+        <div className="relative flex items-start gap-2.5">
           <div className="shrink-0">
             <div className="relative">
-              <ScoutBadge
-                icon={<Tent size={18} />}
-                size={48}
-                colorClass="text-emerald-700"
-              />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-amber-300 flex items-center justify-center shadow-sm">
-                <Sparkles size={10} className="text-amber-500" />
+              <ScoutBadge icon={<Tent size={14} />} size={36} colorClass="text-emerald-700" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-amber-300 flex items-center justify-center shadow-sm">
+                <Sparkles size={8} className="text-amber-500" />
               </div>
             </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${badgeClass}`}>
+            <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+              <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase ${badgeClass}`}>
                 {badgeText}
               </span>
-              <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 flex items-center gap-1">
+              <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
                 <CalendarClock size={10} />
                 {countdownLabel}
               </span>
             </div>
 
-            <h4 className="font-bold text-brown text-[15px] leading-tight truncate group-hover:text-emerald-700 transition-colors">
+            <h4 className="font-bold text-brown text-[12.5px] leading-tight truncate group-hover:text-emerald-700 transition-colors">
               {title}
             </h4>
-            <p className="text-xs text-slate-500 truncate flex items-center gap-1 mt-0.5">
+            <p className="text-[11px] text-slate-500 truncate flex items-center gap-1 mt-0.5">
               {isEvent ? (
                 <>
-                  <MapPin size={11} className="shrink-0" />
+                  <MapPin size={10} className="shrink-0" />
                   {subtitle}
                 </>
               ) : (
                 <>
-                  <Users size={11} className="shrink-0" />
+                  <Users size={10} className="shrink-0" />
                   {subtitle}
                 </>
               )}
             </p>
 
-            <div className="mt-2 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brown bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-brown bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
                 {range}
               </span>
-              <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+              <span className="ml-auto hidden md:inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-300">
                 Lihat
-                <ArrowRight size={12} />
+                <ArrowRight size={10} />
               </span>
             </div>
           </div>
         </div>
 
-        {/* Idle subtle glow */}
-        <div className="absolute -bottom-3 left-6 right-6 h-6 bg-amber-200/30 blur-xl rounded-full -z-10 group-hover:bg-emerald-200/40 transition-colors duration-500" />
+        <div className="absolute -bottom-2 left-4 right-4 h-4 bg-amber-200/20 blur-lg rounded-full -z-10 group-hover:bg-emerald-200/30 transition-colors duration-500" />
       </div>
     </div>
   );
