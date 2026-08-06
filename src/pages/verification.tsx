@@ -18,7 +18,6 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useReveal } from "@/hooks/useReveal";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
-import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import CloudsSun from "@/components/landing/ornaments/CloudsSun";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 import type { PublicSettings } from "@/lib/api";
@@ -317,39 +316,30 @@ export default function VerificationPage({
     <div className="min-h-screen bg-white text-slate-900 flex flex-col">
       <Navbar buperName={settings.buper_name} />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-20 bg-gradient-to-b from-sky-100 to-amber-50">
+      {/* Hero compact */}
+      <section className="relative overflow-hidden pt-20 pb-6 md:pt-24 md:pb-8 bg-gradient-to-b from-sky-100 to-amber-50">
         <CloudsSun />
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
           <div
             ref={heroReveal.ref}
-            className={`text-center reveal ${heroReveal.visible ? "is-visible" : ""}`}
+            className={`reveal ${heroReveal.visible ? "is-visible" : ""}`}
           >
-            <div className="mx-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-sm font-semibold mb-4">
-              <BadgeCheck size={16} />
+            <div className="mx-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold mb-2">
+              <BadgeCheck size={13} />
               Keaslian Dokumen
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold text-brown leading-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-brown leading-snug">
               Verifikasi <span className="text-emerald-600">Invoice</span>
             </h1>
-            <p className="mt-4 text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
-              Scan QR Code pada invoice atau masukkan nomor invoice untuk
-              memastikan keaslian booking di{" "}
-              <span className="font-semibold text-brown">Bumi Perkemahan Lebak Barat</span>.
+            <p className="mt-1.5 text-sm text-slate-600 max-w-lg mx-auto">
+              Scan QR Code atau masukkan nomor invoice untuk memastikan keaslian booking.
             </p>
           </div>
         </div>
-        <div className="absolute bottom-0 -left-4 w-[calc(100%+32px)]">
-          <MountainDivider colors={["#A5D6A7", "#66BB6A", "#FFF8E1"]} />
-        </div>
       </section>
 
-      <div className="bg-cream">
-        <PineDivider color="#ffffff" />
-      </div>
-
       {/* Main */}
-      <section className="relative py-12 md:py-16 bg-white">
+      <section className="relative py-6 md:py-10 bg-white">
         <TopoPattern />
         <div className="relative z-10 max-w-2xl w-full mx-auto px-4 sm:px-6">
           <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 space-y-5">
@@ -546,20 +536,6 @@ export default function VerificationPage({
                 </div>
               </div>
             )}
-          </div>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-500">
-            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 flex gap-2">
-              <QrCode size={16} className="shrink-0 text-emerald-600 mt-0.5" />
-              <span>
-                <span className="font-semibold text-slate-700">Opsi 1 — Scan langsung:</span> Klik "Scan Kamera" dan arahkan kamera ke QR code pada invoice cetak.
-              </span>
-            </div>
-            <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 flex gap-2">
-              <ImagePlus size={16} className="shrink-0 text-emerald-600 mt-0.5" />
-              <span>
-                <span className="font-semibold text-slate-700">Opsi 2 — Dari galeri:</span> Klik "Pilih Gambar" dan upload screenshot/foto QR yang sudah disimpan di HP.
-              </span>
-            </div>
           </div>
         </div>
       </section>
