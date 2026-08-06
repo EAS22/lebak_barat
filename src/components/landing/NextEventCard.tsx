@@ -33,27 +33,38 @@ function fmtRange(startStr: string, endStr: string): string {
 }
 
 export default function NextEventCard() {
-  const reveal = useReveal<HTMLDivElement>();
+  const reveal = useReveal<HTMLDivElement>(0.05);
   const [next, setNext] = useState<(Unified & { _isOngoing?: boolean }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [forcedVisible, setForcedVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setForcedVisible(true), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     const today = startOfDay(new Date());
-    const thisYear = new Date().getFullYear();
+    const thisYear = today.getFullYear();
 
     async function loadYear(y: number): Promise<Unified[]> {
-      const [bookings, events] = await Promise.all([
-        fetchPublicYearBookings(y),
-        fetchPublicEventsByYear(y),
-      ]);
-      const merged: Unified[] = [
-        ...bookings.map((b) => ({ ...b, _kind: "booking" as const })),
-        ...events.map((e) => ({ ...e, _kind: "event" as const })),
-      ];
-      return merged.sort(
-        (a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime()
-      );
+      try {
+        const [bookings, events] = await Promise.all([
+          fetchPublicYearBookings(y),
+          fetchPublicEventsByYear(y),
+        ]);
+        const merged: Unified[] = [
+          ...bookings.map((b) => ({ ...b, _kind: "booking" as const })),
+          ...events.map((e) => ({ ...e, _kind: "event" as const })),
+        ];
+        return merged.sort(
+          (a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime()
+        );
+      } catch (err) {
+        console.error("[NextEventCard] loadYear failed", y, err);
+        return [];
+      }
     }
 
     async function findNext() {
@@ -61,14 +72,16 @@ export default function NextEventCard() {
         const mergedThisYear = await loadYear(thisYear);
         if (cancelled) return;
 
-        // Patokan: event yang belum selesai (end >= today) di tahun berjalan
+        console.log("[NextEventCard] thisYear", thisYear, "merged", mergedThisYear.length, "today", today.toISOString());
+
         const notEnded = mergedThisYear.filter((item) => {
           const end = parseOnly(item.end_date);
           return end >= today;
         });
 
+        console.log("[NextEventCard] notEnded", notEnded.length);
+
         if (notEnded.length > 0) {
-          // Prefer upcoming start >= today, else ongoing
           const upcoming = notEnded.filter((it) => parseOnly(it.start_date) >= today);
           const rawPick = (upcoming[0] ?? notEnded[0]) as Unified & {
             _isOngoing?: boolean;
@@ -78,6 +91,7 @@ export default function NextEventCard() {
             if (parseOnly(pick.start_date) < today) {
               pick._isOngoing = true;
             }
+            console.log("[NextEventCard] pick", pick);
             setNext(pick);
           } else {
             setNext(null);
@@ -86,11 +100,10 @@ export default function NextEventCard() {
           return;
         }
 
-        // Kalau sudah lewat semua di tahun ini (last event), coba tahun depan
-        // Sesuai spec: kecuali event berada di tanggal terakhir tahun, maka tidak tampil
         const nextYear = thisYear + 1;
         const mergedNext = await loadYear(nextYear);
         if (cancelled) return;
+        console.log("[NextEventCard] nextYear", nextYear, mergedNext.length);
         if (mergedNext.length === 0) {
           setNext(null);
           setLoading(false);
@@ -101,7 +114,7 @@ export default function NextEventCard() {
           _isOngoing?: boolean;
         };
         if (finalPick && parseOnly(finalPick.start_date) < today) {
-          finalPick._isOngoing = true;
+          (finalPick as Unified & { _isOngoing?: boolean })._isOngoing = true;
         }
         setNext(finalPick ?? null);
         setLoading(false);
@@ -162,10 +175,12 @@ export default function NextEventCard() {
     document.querySelector("#kalender")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  const isVisible = reveal.visible || forcedVisible || !loading;
+
   return (
     <div
       ref={reveal.ref}
-      className={`mt-8 md:mt-10 w-full max-w-[360px] reveal ${reveal.visible ? "is-visible" : ""}`}
+      className={`mt-8 md:mt-10 w-full max-w-[360px] reveal ${isVisible ? "is-visible" : ""}`}
       style={{ ["--delay" as string]: "0.2s" }}
     >
       <div
