@@ -10,6 +10,7 @@ import Contact from "@/components/landing/Contact";
 import Footer from "@/components/landing/Footer";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
+import NextEventCard from "@/components/landing/NextEventCard";
 
 const DEFAULT_SETTINGS: PublicSettings = {
   landing_wa_number: "6280000000000",
@@ -87,6 +88,7 @@ export default function Landing({
         <PineDivider color="#14301c" />
       </div>
       <Footer buperName={settings.buper_name} />
+      <NextEventCard />
     </div>
   );
 }
