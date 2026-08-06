@@ -180,12 +180,12 @@ export default function NextEventCard() {
   return (
     <div
       ref={reveal.ref}
-      className={`mt-8 md:mt-10 w-full max-w-[360px] reveal ${isVisible ? "is-visible" : ""}`}
+      className={`fixed bottom-6 left-6 z-50 md:bottom-8 md:left-8 w-full max-w-[360px] reveal ${isVisible ? "is-visible" : ""}`}
       style={{ ["--delay" as string]: "0.2s" }}
     >
       <div
         onClick={handleClick}
-        className="group relative cursor-pointer rounded-2xl bg-white/90 backdrop-blur-md border-2 border-dashed border-amber-300 p-4 pr-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:rotate-[0.7deg] hover:border-emerald-300"
+        className="group relative cursor-pointer rounded-2xl bg-white/95 backdrop-blur-xl border-2 border-dashed border-amber-300 p-4 pr-5 shadow-2xl hover:shadow-2xl hover:-translate-y-1 hover:rotate-[-1deg] hover:scale-105 transition-all duration-300 hover:border-emerald-300"
       >
         {/* Live dot + shimmer */}
         <div className="absolute -top-2 -right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide shadow-md">
