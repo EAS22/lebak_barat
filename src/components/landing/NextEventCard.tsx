@@ -133,7 +133,7 @@ export default function NextEventCard() {
 
   if (loading) {
     return (
-      <div className="mt-10 w-full max-w-sm rounded-2xl border-2 border-dashed border-amber-200/60 bg-white/60 p-4 animate-pulse">
+      <div className="fixed bottom-6 left-6 z-[9999] md:bottom-8 md:left-8 w-full max-w-[360px] rounded-2xl border-2 border-dashed border-amber-200/60 bg-white/60 p-4 animate-pulse backdrop-blur-xl">
         <div className="h-4 w-32 bg-slate-100 rounded mb-3" />
         <div className="h-5 w-48 bg-slate-100 rounded mb-2" />
         <div className="h-3 w-28 bg-slate-100 rounded" />
@@ -180,7 +180,7 @@ export default function NextEventCard() {
   return (
     <div
       ref={reveal.ref}
-      className={`fixed bottom-6 left-6 z-50 md:bottom-8 md:left-8 w-full max-w-[360px] reveal ${isVisible ? "is-visible" : ""}`}
+      className={`fixed bottom-6 left-6 z-[9999] md:bottom-8 md:left-8 w-full max-w-[360px] reveal ${isVisible ? "is-visible" : ""}`}
       style={{ ["--delay" as string]: "0.2s" }}
     >
       <div
