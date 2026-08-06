@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { CalendarClock, MapPin, Users, Tent, Sparkles, ArrowRight } from "lucide-react";
 import { format, differenceInCalendarDays, startOfDay } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { fetchPublicYearBookings, type PublicYearBooking, type PublicEvent } from "@/lib/api";
+import {
+  fetchPublicYearBookings,
+  fetchPublicEventsByYear,
+  type PublicYearBooking,
+  type PublicEvent,
+} from "@/lib/api";
 import { useReveal } from "@/hooks/useReveal";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
 
@@ -37,12 +42,11 @@ export default function NextEventCard() {
     const today = startOfDay(new Date());
     const thisYear = new Date().getFullYear();
 
-    async function loadYear(y: number) {
-      const [{ fetchPublicEventsByYear }, bookings] = await Promise.all([
-        import("@/lib/api"),
+    async function loadYear(y: number): Promise<Unified[]> {
+      const [bookings, events] = await Promise.all([
         fetchPublicYearBookings(y),
-      ] as const);
-      const events = await fetchPublicEventsByYear(y);
+        fetchPublicEventsByYear(y),
+      ]);
       const merged: Unified[] = [
         ...bookings.map((b) => ({ ...b, _kind: "booking" as const })),
         ...events.map((e) => ({ ...e, _kind: "event" as const })),
@@ -57,35 +61,52 @@ export default function NextEventCard() {
         const mergedThisYear = await loadYear(thisYear);
         if (cancelled) return;
 
-        // Events that haven't ended yet in this year (including ongoing)
+        // Patokan: event yang belum selesai (end >= today) di tahun berjalan
         const notEnded = mergedThisYear.filter((item) => {
           const end = parseOnly(item.end_date);
           return end >= today;
         });
 
         if (notEnded.length > 0) {
-          // Prefer upcoming (start >= today), else ongoing (start <= today <= end)
+          // Prefer upcoming start >= today, else ongoing
           const upcoming = notEnded.filter((it) => parseOnly(it.start_date) >= today);
-          const pick = (upcoming[0] ?? notEnded[0]) as Unified & { _isOngoing?: boolean };
-          if (pick && parseOnly(pick.start_date) < today) {
-            pick._isOngoing = true;
+          const rawPick = (upcoming[0] ?? notEnded[0]) as Unified & {
+            _isOngoing?: boolean;
+          };
+          if (rawPick) {
+            const pick = { ...rawPick } as Unified & { _isOngoing?: boolean };
+            if (parseOnly(pick.start_date) < today) {
+              pick._isOngoing = true;
+            }
+            setNext(pick);
+          } else {
+            setNext(null);
           }
-          setNext(pick ?? null);
           setLoading(false);
           return;
         }
 
-        // If nothing left this year and we already passed last event of this year -> no card (per spec: except last event)
-        // Try next year for upcoming
+        // Kalau sudah lewat semua di tahun ini (last event), coba tahun depan
+        // Sesuai spec: kecuali event berada di tanggal terakhir tahun, maka tidak tampil
         const nextYear = thisYear + 1;
         const mergedNext = await loadYear(nextYear);
         if (cancelled) return;
-        const upcomingNext = mergedNext
-          .filter((it) => parseOnly(it.start_date) >= today)
-          .sort((a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime());
-        setNext((upcomingNext[0] as Unified & { _isOngoing?: boolean }) ?? null);
+        if (mergedNext.length === 0) {
+          setNext(null);
+          setLoading(false);
+          return;
+        }
+        const upcomingNext = mergedNext.filter((it) => parseOnly(it.start_date) >= today);
+        const finalPick = (upcomingNext[0] ?? mergedNext[0]) as Unified & {
+          _isOngoing?: boolean;
+        };
+        if (finalPick && parseOnly(finalPick.start_date) < today) {
+          finalPick._isOngoing = true;
+        }
+        setNext(finalPick ?? null);
         setLoading(false);
-      } catch {
+      } catch (e) {
+        console.error("[NextEventCard] failed", e);
         if (!cancelled) setLoading(false);
       }
     }
