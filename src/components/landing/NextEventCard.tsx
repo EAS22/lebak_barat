@@ -29,51 +29,68 @@ function fmtRange(startStr: string, endStr: string): string {
 
 export default function NextEventCard() {
   const reveal = useReveal<HTMLDivElement>();
-  const [next, setNext] = useState<Unified | null>(null);
+  const [next, setNext] = useState<(Unified & { _isOngoing?: boolean }) | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    const year = new Date().getFullYear();
-    Promise.all([
-      fetchPublicYearBookings(year),
-      import("@/lib/api").then((m) => m.fetchPublicEventsByYear(year)),
-    ])
-      .then(([bookings, events]) => {
+    const today = startOfDay(new Date());
+    const thisYear = new Date().getFullYear();
+
+    async function loadYear(y: number) {
+      const [{ fetchPublicEventsByYear }, bookings] = await Promise.all([
+        import("@/lib/api"),
+        fetchPublicYearBookings(y),
+      ] as const);
+      const events = await fetchPublicEventsByYear(y);
+      const merged: Unified[] = [
+        ...bookings.map((b) => ({ ...b, _kind: "booking" as const })),
+        ...events.map((e) => ({ ...e, _kind: "event" as const })),
+      ];
+      return merged.sort(
+        (a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime()
+      );
+    }
+
+    async function findNext() {
+      try {
+        const mergedThisYear = await loadYear(thisYear);
         if (cancelled) return;
-        const today = startOfDay(new Date());
-        const merged: Unified[] = [
-          ...bookings.map((b) => ({ ...b, _kind: "booking" as const })),
-          ...events.map((e) => ({ ...e, _kind: "event" as const })),
-        ]
-          .filter((item) => {
-            const d = parseOnly(item.start_date);
-            return d >= today;
-          })
-          .sort((a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime());
-        setNext(merged[0] ?? null);
-        setLoading(false);
-        // If empty, try next year
-        if (merged.length === 0) {
-          const nextYear = year + 1;
-          Promise.all([
-            fetchPublicYearBookings(nextYear),
-            import("@/lib/api").then((m) => m.fetchPublicEventsByYear(nextYear)),
-          ]).then(([b2, e2]) => {
-            if (cancelled) return;
-            const merged2: Unified[] = [
-              ...b2.map((b) => ({ ...b, _kind: "booking" as const })),
-              ...e2.map((e) => ({ ...e, _kind: "event" as const })),
-            ]
-              .filter((it) => parseOnly(it.start_date) >= today)
-              .sort((a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime());
-            if (merged2[0]) setNext(merged2[0]);
-          });
+
+        // Events that haven't ended yet in this year (including ongoing)
+        const notEnded = mergedThisYear.filter((item) => {
+          const end = parseOnly(item.end_date);
+          return end >= today;
+        });
+
+        if (notEnded.length > 0) {
+          // Prefer upcoming (start >= today), else ongoing (start <= today <= end)
+          const upcoming = notEnded.filter((it) => parseOnly(it.start_date) >= today);
+          const pick = (upcoming[0] ?? notEnded[0]) as Unified & { _isOngoing?: boolean };
+          if (pick && parseOnly(pick.start_date) < today) {
+            pick._isOngoing = true;
+          }
+          setNext(pick ?? null);
+          setLoading(false);
+          return;
         }
-      })
-      .catch(() => {
+
+        // If nothing left this year and we already passed last event of this year -> no card (per spec: except last event)
+        // Try next year for upcoming
+        const nextYear = thisYear + 1;
+        const mergedNext = await loadYear(nextYear);
+        if (cancelled) return;
+        const upcomingNext = mergedNext
+          .filter((it) => parseOnly(it.start_date) >= today)
+          .sort((a, b) => parseOnly(a.start_date).getTime() - parseOnly(b.start_date).getTime());
+        setNext((upcomingNext[0] as Unified & { _isOngoing?: boolean }) ?? null);
+        setLoading(false);
+      } catch {
         if (!cancelled) setLoading(false);
-      });
+      }
+    }
+
+    findNext();
 
     return () => {
       cancelled = true;
@@ -93,6 +110,7 @@ export default function NextEventCard() {
   if (!next) return null;
 
   const isEvent = next._kind === "event";
+  const isOngoing = (next as Unified & { _isOngoing?: boolean })._isOngoing === true;
   const start = next.start_date;
   const dUntil = daysUntil(start);
   const range = fmtRange(next.start_date, next.end_date);
@@ -109,8 +127,9 @@ export default function NextEventCard() {
       ? "bg-red-500 text-white"
       : "bg-amber-400 text-brown";
 
-  const countdownLabel =
-    dUntil === 0
+  const countdownLabel = isOngoing
+    ? "Sedang Berlangsung"
+    : dUntil === 0
       ? "Hari ini"
       : dUntil === 1
         ? "Besok"
