@@ -13,6 +13,7 @@ import {
   type PublicBooking,
   type PublicYearBooking,
 } from "@/lib/api";
+import { generateSlots, countSlotStatuses } from "@/lib/slotUtils";
 import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
@@ -284,21 +285,17 @@ export default function CalendarStatus() {
 
   const today = startOfDay(new Date());
 
-  const finalCount = useMemo(
-    () => daysInMonth.filter((d) => dayStatus(d) === "final").length,
-    [daysInMonth, dayStatus]
-  );
-  const negoCount = useMemo(
-    () => daysInMonth.filter((d) => dayStatus(d) === "negosiasi").length,
-    [daysInMonth, dayStatus]
-  );
-  const availableCount = useMemo(
-    () =>
-      daysInMonth.filter(
-        (d) => dayStatus(d) !== "final" && !isBefore(d, today)
-      ).length,
-    [daysInMonth, dayStatus, today]
-  );
+  const slotSummary = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const slots = generateSlots(year, month);
+    return countSlotStatuses(
+      slots,
+      bookings.map((b) => ({ start_date: b.start_date, end_date: b.end_date, status: b.status })),
+      events.map((e) => ({ start_date: e.start_date, end_date: e.end_date })),
+      today
+    );
+  }, [currentMonth, bookings, events, today]);
 
   const waMessage = `Halo Admin Bumi Perkemahan Lebak Barat, saya ingin cek ketersediaan tanggal di bulan ${format(
     currentMonth,
@@ -361,19 +358,19 @@ export default function CalendarStatus() {
                 </button>
               </div>
 
-              {/* Ringkasan bulan */}
+              {/* Ringkasan slot bulan (1 slot = 3H2M) */}
               <div className="grid grid-cols-3 gap-2.5 mb-5">
                 <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-2 py-2 text-center">
                   <div className="text-lg font-bold text-emerald-700">
-                    {loading ? "..." : availableCount}
+                    {loading ? "..." : slotSummary.available}
                   </div>
                   <div className="text-[11px] font-medium text-emerald-700">
-                    Tersedia
+                    Slot Tersedia
                   </div>
                 </div>
                 <div className="rounded-xl bg-amber-50 border border-amber-200 px-2 py-2 text-center">
                   <div className="text-lg font-bold text-amber-600">
-                    {loading ? "..." : negoCount}
+                    {loading ? "..." : slotSummary.negosiasi}
                   </div>
                   <div className="text-[11px] font-medium text-amber-600">
                     Negosiasi
@@ -381,13 +378,16 @@ export default function CalendarStatus() {
                 </div>
                 <div className="rounded-xl bg-red-50 border border-red-200 px-2 py-2 text-center">
                   <div className="text-lg font-bold text-red-600">
-                    {loading ? "..." : finalCount}
+                    {loading ? "..." : slotSummary.final}
                   </div>
                   <div className="text-[11px] font-medium text-red-600">
                     Terisi Final
                   </div>
                 </div>
               </div>
+              <p className="text-[10px] text-slate-400 text-center -mt-3 mb-4">
+                1 slot = 3 hari 2 malam · Total {slotSummary.total} slot
+              </p>
 
               {/* Day headers */}
               <div className="grid grid-cols-7 gap-1.5 mb-2">
