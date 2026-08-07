@@ -57,21 +57,23 @@ function FacilityCard({
   const Icon = iconFor(facility.name);
   return (
     <div
-      className={`group bg-white rounded-xl border-2 p-4 text-center transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
+      className={`group bg-white rounded-xl border-2 p-4 text-center flex flex-col items-center justify-between h-full min-h-[128px] transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
         opsional
           ? "border-dashed border-emerald-300 hover:border-emerald-500"
           : "border-dashed border-amber-300 hover:border-emerald-400"
       } ${visible ? "is-visible" : ""}`}
       style={{ "--delay": `${index * 0.06}s` } as CSSProperties}
     >
-      <div className="w-11 h-11 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 transition-all group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110">
-        <Icon size={20} />
+      <div className="flex flex-col items-center">
+        <div className="w-11 h-11 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 transition-all group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 shrink-0">
+          <Icon size={20} />
+        </div>
+        <h3 className="font-semibold text-brown text-sm leading-tight">
+          {facility.name}
+        </h3>
       </div>
-      <h3 className="font-semibold text-brown text-sm leading-tight">
-        {facility.name}
-      </h3>
       {opsional && (
-        <span className="mt-1.5 inline-block text-[10px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5">
+        <span className="mt-2 inline-block text-[10px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 shrink-0">
           Opsional
         </span>
       )}
@@ -140,7 +142,7 @@ export default function Facilities() {
                 <h3 className="text-lg font-bold text-brown mb-4 text-center md:text-left">
                   Fasilitas Utama &amp; Area
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 items-stretch">
                   {utama.map((f, i) => (
                     <FacilityCard
                       key={f.id}
@@ -157,7 +159,7 @@ export default function Facilities() {
                 <h3 className="text-lg font-bold text-brown mb-4 text-center md:text-left">
                   Layanan &amp; Fasilitas Opsional
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 items-stretch">
                   {opsional.map((f, i) => (
                     <FacilityCard
                       key={f.id}
