@@ -11,6 +11,7 @@ const links = [
   { href: "#profil", label: "Profil" },
   { href: "#kalender", label: "Kalender" },
   { href: "#fasilitas", label: "Fasilitas" },
+  { href: "#galeri", label: "Galeri" },
   { href: "#kontak", label: "Kontak" },
   { href: "/verifikasi", label: "Verifikasi", isRoute: true },
 ] as const;

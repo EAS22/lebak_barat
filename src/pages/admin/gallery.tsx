@@ -16,6 +16,8 @@ interface GallerySlot {
 
 type CropState = {
   imgSrc: string;
+  naturalW: number;
+  naturalH: number;
   x: number;
   y: number;
   scale: number;
@@ -24,52 +26,78 @@ type CropState = {
   year: string;
 };
 
-function parseImageFile(file: File): Promise<string> {
+function parseImageFile(file: File): Promise<{ src: string; w: number; h: number }> {
   return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result as string;
+      const img = new Image();
+      img.onload = () => resolve({ src, w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = reject;
+      img.src = src;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 
-function cropAndCompress(
+function cropPrecise(
   imgSrc: string,
-  crop: { x: number; y: number; scale: number },
+  crop: { x: number; y: number; scale: number; naturalW: number; naturalH: number },
   containerSize: number,
   outputSize: number
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
+      const { x, y, scale, naturalW, naturalH } = crop;
+      const displayW = naturalW * scale;
+      const displayH = naturalH * scale;
+      const sx = (0 - x) / scale;
+      const sy = (0 - y) / scale;
+      const sW = containerSize / scale;
+      const sH = containerSize / scale;
+
+      const clampedSx = Math.max(0, Math.min(naturalW, sx));
+      const clampedSy = Math.max(0, Math.min(naturalH, sy));
+      const clampedSW = Math.max(1, Math.min(naturalW - clampedSx, sW));
+      const clampedSH = Math.max(1, Math.min(naturalH - clampedSy, sH));
+
       const canvas = document.createElement("canvas");
       canvas.width = outputSize;
       canvas.height = outputSize;
       const ctx = canvas.getContext("2d")!;
-      const displayW = img.width * crop.scale;
-      const displayH = img.height * crop.scale;
-      const offsetX = crop.x + (containerSize - displayW) / 2;
-      const offsetY = crop.y + (containerSize - displayH) / 2;
-      const scaleFactor = outputSize / containerSize;
-      ctx.drawImage(
-        img,
-        offsetX * scaleFactor,
-        offsetY * scaleFactor,
-        displayW * scaleFactor,
-        displayH * scaleFactor
-      );
-      let q = 0.65;
+      ctx.fillStyle = "#FFF8E1";
+      ctx.fillRect(0, 0, outputSize, outputSize);
+
+      const destX = ((clampedSx - sx) / sW) * outputSize;
+      const destY = ((clampedSy - sy) / sH) * outputSize;
+      const destW = (clampedSW / sW) * outputSize;
+      const destH = (clampedSH / sH) * outputSize;
+
+      ctx.drawImage(img, clampedSx, clampedSy, clampedSW, clampedSH, destX, destY, destW, destH);
+
+      void displayW;
+      void displayH;
+
+      let q = 0.72;
       let dataUrl = canvas.toDataURL("image/webp", q);
-      if (dataUrl.length > 350_000) {
-        dataUrl = canvas.toDataURL("image/webp", 0.5);
+      if (dataUrl.length > 380_000) {
+        dataUrl = canvas.toDataURL("image/webp", 0.55);
       }
-      if (dataUrl.length > 350_000) {
+      if (dataUrl.length > 380_000) {
         const small = document.createElement("canvas");
-        small.width = 600;
-        small.height = 600;
+        small.width = 700;
+        small.height = 700;
         const sCtx = small.getContext("2d")!;
-        sCtx.drawImage(canvas, 0, 0, 600, 600);
-        dataUrl = small.toDataURL("image/webp", 0.5);
+        sCtx.drawImage(canvas, 0, 0, 700, 700);
+        dataUrl = small.toDataURL("image/webp", 0.55);
+        const finalCanvas = document.createElement("canvas");
+        finalCanvas.width = outputSize;
+        finalCanvas.height = outputSize;
+        const fCtx = finalCanvas.getContext("2d")!;
+        fCtx.drawImage(small, 0, 0, outputSize, outputSize);
+        dataUrl = finalCanvas.toDataURL("image/webp", 0.55);
       }
       resolve(dataUrl);
     };
@@ -87,42 +115,48 @@ function CropModal({
   onClose: () => void;
   onSave: (base64: string) => void;
 }) {
+  const containerSize = 360;
+  const outputSize = 800;
   const [crop, setCrop] = useState({ x: state.x, y: state.y, scale: state.scale });
   const [dragging, setDragging] = useState(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
-  const containerSize = 360;
-  const outputSize = 800;
   const [saving, setSaving] = useState(false);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  function handlePointerDown(e: React.PointerEvent) {
     setDragging(true);
     lastRef.current = { x: e.clientX, y: e.clientY };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
 
-  const handlePointerMove = (e: React.PointerEvent) => {
+  function handlePointerMove(e: React.PointerEvent) {
     if (!dragging || !lastRef.current) return;
     const dx = e.clientX - lastRef.current.x;
     const dy = e.clientY - lastRef.current.y;
     setCrop((c) => ({ ...c, x: c.x + dx, y: c.y + dy }));
     lastRef.current = { x: e.clientX, y: e.clientY };
-  };
+  }
 
-  const handlePointerUp = () => {
+  function handlePointerUp() {
     setDragging(false);
     lastRef.current = null;
-  };
+  }
 
-  const handleWheel = (e: React.WheelEvent) => {
+  function handleWheel(e: React.WheelEvent) {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.05 : 0.05;
-    setCrop((c) => ({ ...c, scale: Math.min(3, Math.max(0.2, c.scale + delta)) }));
-  };
+    const delta = e.deltaY > 0 ? -0.06 : 0.06;
+    setCrop((c) => ({
+      ...c,
+      scale: Math.min(4, Math.max(0.08, c.scale + delta)),
+    }));
+  }
+
+  const displayW = state.naturalW * crop.scale;
+  const displayH = state.naturalH * crop.scale;
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const compressed = await cropAndCompress(state.imgSrc, crop, containerSize, outputSize);
+      const compressed = await cropPrecise(state.imgSrc, { ...crop, naturalW: state.naturalW, naturalH: state.naturalH }, containerSize, outputSize);
       onSave(compressed);
     } catch {
       toast.error("Gagal compress gambar");
@@ -133,72 +167,105 @@ function CropModal({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b">
-          <h3 className="font-bold text-sm">Atur Crop — Slot {state.slot}</h3>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b shrink-0">
+          <h3 className="font-bold text-sm">Atur Crop — Slot {state.slot} (1:1)</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto">
           <div
-            className="relative mx-auto overflow-hidden rounded-xl bg-slate-100 border-2 border-dashed border-amber-300"
+            className="relative mx-auto overflow-hidden rounded-xl bg-[#FFF8E1] border-2 border-amber-300"
             style={{ width: containerSize, height: containerSize, maxWidth: "100%" }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onWheel={handleWheel}
           >
-            {/* crop image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={state.imgSrc}
-              alt="crop"
+              alt="crop preview"
               draggable={false}
-              className="absolute select-none"
+              className="absolute select-none pointer-events-none"
               style={{
                 left: crop.x,
                 top: crop.y,
-                width: 320 * crop.scale,
-                height: "auto",
+                width: displayW,
+                height: displayH,
                 maxWidth: "none",
                 cursor: dragging ? "grabbing" : "grab",
               }}
             />
-            <div className="absolute inset-0 border-[40px] border-black/30 pointer-events-none rounded-xl" />
+            <div className="absolute inset-0 border-[36px] border-black/40 pointer-events-none" />
             <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
               {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="border border-white/20" />
+                <div key={i} className="border border-white/25" />
               ))}
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-white/60 bg-black/30 px-2 py-0.5 rounded-full">
+                Drag untuk geser · Scroll untuk zoom
+              </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="text-xs font-medium">Zoom</label>
+            <label className="text-xs font-medium shrink-0">Zoom</label>
             <input
               type="range"
-              min={0.2}
-              max={3}
-              step={0.05}
+              min={0.08}
+              max={4}
+              step={0.02}
               value={crop.scale}
               onChange={(e) => setCrop((c) => ({ ...c, scale: Number(e.target.value) }))}
               className="flex-1"
             />
-            <span className="text-xs w-8">{crop.scale.toFixed(2)}x</span>
+            <span className="text-xs w-12 text-right font-mono">{crop.scale.toFixed(2)}x</span>
           </div>
 
-          <p className="text-[11px] text-slate-500">
-            Drag untuk geser, scroll atau slider untuk zoom. Hasil crop 1:1 akan di-compress WebP ~150-200KB.
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const cover = Math.max(containerSize / state.naturalW, containerSize / state.naturalH);
+                setCrop({ x: (containerSize - state.naturalW * cover) / 2, y: (containerSize - state.naturalH * cover) / 2, scale: cover });
+              }}
+            >
+              Cover
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const contain = Math.min(containerSize / state.naturalW, containerSize / state.naturalH);
+                setCrop({ x: (containerSize - state.naturalW * contain) / 2, y: (containerSize - state.naturalH * contain) / 2, scale: contain });
+              }}
+            >
+              Contain
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCrop({ x: (containerSize - displayW) / 2, y: (containerSize - displayH) / 2, scale: crop.scale })}
+            >
+              Center
+            </Button>
+          </div>
+
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Area yang terlihat di dalam kotak = hasil akhir di landing. Akan di-export 800×800 WebP 0.72 (~150-250KB). Drag untuk menggeser foto, scroll wheel atau slider untuk zoom.
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t bg-slate-50">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t bg-slate-50 shrink-0">
           <Button variant="outline" size="sm" onClick={onClose}>
             Batal
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
-            {saving ? "Menyimpan..." : "Simpan Crop"}
+            {saving ? "Memproses..." : "Simpan Crop"}
           </Button>
         </div>
       </div>
@@ -247,31 +314,41 @@ export default function GalleryAdminPage() {
       toast.error("File terlalu besar (max 15MB sebelum compress)");
       return;
     }
-    const src = await parseImageFile(file);
-    const ed = editMap[slotNum] ?? { caption: "", year: "" };
-    setCropState({
-      imgSrc: src,
-      x: 0,
-      y: 0,
-      scale: 1,
-      slot: slotNum,
-      caption: ed.caption,
-      year: ed.year,
-    });
+    try {
+      const { src, w, h } = await parseImageFile(file);
+      const containerSize = 360;
+      const cover = Math.max(containerSize / w, containerSize / h);
+      const ed = editMap[slotNum] ?? { caption: "", year: "" };
+      setCropState({
+        imgSrc: src,
+        naturalW: w,
+        naturalH: h,
+        x: (containerSize - w * cover) / 2,
+        y: (containerSize - h * cover) / 2,
+        scale: cover,
+        slot: slotNum,
+        caption: ed.caption,
+        year: ed.year,
+      });
+    } catch {
+      toast.error("Gagal membaca file gambar");
+    }
   }
 
   async function handleCropSave(base64: string) {
     if (!cropState) return;
     setPendingBase64Map((m) => ({ ...m, [cropState.slot]: base64 }));
+    const slotNum = cropState.slot;
     setCropState(null);
-    toast.success(`Foto slot ${cropState.slot} siap disimpan — klik Simpan Slot`);
+    toast.success(`Foto slot ${slotNum} siap — preview persis sama dengan landing. Klik Simpan Slot`);
   }
 
   async function handleSave(slotNum: number) {
     const edits = editMap[slotNum];
     if (!edits) return;
     const base64 = pendingBase64Map[slotNum] ?? null;
-    if (!base64 && !slots.find((s) => s.slot_number === slotNum)?.image_base64) {
+    const existing = slots.find((s) => s.slot_number === slotNum);
+    if (!base64 && !existing?.image_base64) {
       toast.error("Pilih foto terlebih dahulu");
       return;
     }
@@ -282,10 +359,8 @@ export default function GalleryAdminPage() {
         year: edits.year || null,
       };
       if (base64) payload.image_base64 = base64;
-      else {
-        const existing = slots.find((s) => s.slot_number === slotNum);
-        payload.image_base64 = existing?.image_base64 ?? null;
-      }
+      else payload.image_base64 = existing?.image_base64 ?? null;
+
       const res = await fetch(`/api/gallery/${slotNum}`, {
         method: "PUT",
         credentials: "include",
@@ -366,10 +441,10 @@ export default function GalleryAdminPage() {
             Galeri — 8 Slot Polaroid
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Upload foto akan di-compress WebP 800x800 ~150-200KB. Slot yang di-upload ulang akan menimpa foto lama — DB size stabil.
+            Upload akan di-crop 1:1 presisi — preview crop = hasil landing. Replace slot menimpa foto lama — DB stabil.
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            Terisi {totalFilled}/8 · Estimasi DB {estSizeKB}KB · 1 foto bisa di-crop 1:1 sebelum simpan.
+            Terisi {totalFilled}/8 · Estimasi DB {estSizeKB}KB · WebP 800×800
           </p>
         </div>
       </div>
@@ -394,7 +469,7 @@ export default function GalleryAdminPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-3">
-                <div className="relative aspect-square rounded-xl bg-cream border-2 border-dashed border-amber-200 overflow-hidden flex items-center justify-center">
+                <div className="relative aspect-square rounded-xl bg-[#FFF8E1] border-2 border-dashed border-amber-200 overflow-hidden flex items-center justify-center">
                   {previewSrc ? (
                     <img src={previewSrc} alt={`Slot ${slot.slot_number}`} className="w-full h-full object-cover" />
                   ) : (
@@ -497,13 +572,7 @@ export default function GalleryAdminPage() {
         })}
       </div>
 
-      {cropState && (
-        <CropModal
-          state={cropState}
-          onClose={() => setCropState(null)}
-          onSave={handleCropSave}
-        />
-      )}
+      {cropState && <CropModal state={cropState} onClose={() => setCropState(null)} onSave={handleCropSave} />}
     </div>
   );
 }
