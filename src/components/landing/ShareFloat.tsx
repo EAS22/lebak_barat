@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Share2, Copy, Check, X, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -9,6 +9,10 @@ const SITE_DESC = "Bumi perkemahan eksklusif di Majalengka untuk school camp 3H2
 export default function ShareFloat() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(open ? "sharefloat:open" : "sharefloat:close"));
+  }, [open]);
 
   async function handleCopy() {
     try {
@@ -30,7 +34,7 @@ export default function ShareFloat() {
         <div className="fixed inset-0 z-[87] bg-black/20 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none md:pointer-events-none" onClick={() => setOpen(false)} />
       )}
 
-      <div className="fixed bottom-4 right-4 z-[88] md:bottom-6 md:right-6 flex flex-col items-end gap-2 max-w-[calc(100vw-32px)]">
+      <div className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 flex flex-col items-end gap-2 max-w-[calc(100vw-32px)] ${open ? "z-[92]" : "z-[88]"}`}>
         {open && (
           <div className="bg-white rounded-2xl shadow-2xl border-2 border-dashed border-amber-300 p-3 w-[min(300px,calc(100vw-32px))] max-w-[calc(100vw-32px)] animate-in slide-in-from-bottom-2 fade-in duration-200 pointer-events-auto">
             <div className="flex items-center justify-between mb-2.5">

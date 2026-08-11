@@ -38,10 +38,22 @@ export default function NextEventCard() {
   const [loading, setLoading] = useState(true);
   const [forcedVisible, setForcedVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setForcedVisible(true), 700);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const onOpen = () => setShareOpen(true);
+    const onClose = () => setShareOpen(false);
+    window.addEventListener("sharefloat:open", onOpen);
+    window.addEventListener("sharefloat:close", onClose);
+    return () => {
+      window.removeEventListener("sharefloat:open", onOpen);
+      window.removeEventListener("sharefloat:close", onClose);
+    };
   }, []);
 
   useEffect(() => {
@@ -121,6 +133,14 @@ export default function NextEventCard() {
       cancelled = true;
     };
   }, []);
+
+  if (shareOpen) {
+    return (
+      <div className="fixed bottom-4 left-4 z-[90] md:bottom-6 md:left-6 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div className="w-11 h-11" />
+      </div>
+    );
+  }
 
   if (dismissed) {
     return (
