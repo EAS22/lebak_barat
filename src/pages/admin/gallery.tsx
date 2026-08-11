@@ -280,6 +280,7 @@ export default function GalleryAdminPage() {
   const [savingSlot, setSavingSlot] = useState<number | null>(null);
   const [cropState, setCropState] = useState<CropState | null>(null);
   const [pendingBase64Map, setPendingBase64Map] = useState<Record<number, string>>({});
+  const [bulkSaving, setBulkSaving] = useState(false);
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const fetchSlots = useCallback(async () => {
@@ -437,8 +438,6 @@ export default function GalleryAdminPage() {
     if (!ed) return false;
     return ed.caption !== (s.caption ?? "") || ed.year !== (s.year ?? "");
   }) || hasPending;
-
-  const [bulkSaving, setBulkSaving] = useState(false);
 
   async function handleSaveAll() {
     if (!hasEdits && !hasPending) {

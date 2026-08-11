@@ -27,8 +27,99 @@ import {
   deleteFacility,
   type FacilityRecord,
 } from "@/lib/adminApi";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { ICON_OPTIONS, ICON_MAP } from "@/components/landing/Facilities";
+
+function IconPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const filtered = ICON_OPTIONS.filter((opt) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return opt.key.toLowerCase().includes(q) || opt.label.toLowerCase().includes(q);
+  });
+
+  const selected = ICON_OPTIONS.find((o) => o.key === value);
+  const SelectedIcon = value ? ICON_MAP[value] : null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 border border-slate-200 bg-white rounded-md px-3 py-2 text-sm h-9 hover:bg-slate-50"
+      >
+        {SelectedIcon ? (
+          <>
+            <SelectedIcon size={16} className="text-emerald-600" />
+            <span>{selected?.label ?? value}</span>
+          </>
+        ) : (
+          <span className="text-slate-400">Auto (dari nama)</span>
+        )}
+        <span className="ml-auto text-xs text-slate-400">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-full bg-white rounded-xl shadow-xl border border-slate-200 flex flex-col max-h-[360px]">
+          <div className="p-2 border-b flex items-center gap-2 shrink-0">
+            <Search size={14} className="text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari icon (nama/key)..."
+              className="flex-1 text-sm outline-none bg-transparent"
+              autoFocus
+            />
+            {search && (
+              <button className="text-xs text-slate-400 hover:text-slate-600" onClick={() => setSearch("")}>
+                clear
+              </button>
+            )}
+          </div>
+
+          <div className="overflow-y-auto p-1">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+              className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-50 ${!value ? "bg-emerald-50 text-emerald-700" : ""}`}
+            >
+              <span className="w-5 h-5 flex items-center justify-center">—</span>
+              Auto (dari nama)
+            </button>
+            {filtered.map((opt) => {
+              const Icon = ICON_MAP[opt.key];
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.key);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className={`w-full text-left px-2 py-1.5 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-50 ${value === opt.key ? "bg-emerald-50 text-emerald-700" : ""}`}
+                >
+                  {Icon ? <Icon size={16} className="shrink-0" /> : <span className="w-4" />}
+                  <span className="flex-1">{opt.label}</span>
+                  <span className="text-[10px] font-mono text-slate-400">{opt.key}</span>
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="p-3 text-center text-xs text-slate-400">Tidak ada icon cocok &quot;{search}&quot;</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface AuthUser {
   id: string;
@@ -282,45 +373,7 @@ export default function FacilitiesPage({ currentUser }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>Icon</Label>
-              <Select
-                value={form.icon || "__auto__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, icon: v === "__auto__" ? "" : v }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih icon (auto dari nama jika kosong)">
-                    {form.icon
-                      ? (() => {
-                          const opt = ICON_OPTIONS.find((o) => o.key === form.icon);
-                          const Icon = form.icon ? ICON_MAP[form.icon] : null;
-                          return opt ? (
-                            <span className="flex items-center gap-2">
-                              {Icon && <Icon size={16} />}
-                              {opt.label}
-                            </span>
-                          ) : (
-                            form.icon
-                          );
-                        })()
-                      : "Auto (dari nama)"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  <SelectItem value="__auto__">Auto (dari nama)</SelectItem>
-                  {ICON_OPTIONS.map((opt) => {
-                    const Icon = ICON_MAP[opt.key];
-                    return (
-                      <SelectItem key={opt.key} value={opt.key}>
-                        <span className="flex items-center gap-2">
-                          {Icon && <Icon size={16} />}
-                          {opt.label} ({opt.key})
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              <IconPicker value={form.icon} onChange={(v) => setForm((f) => ({ ...f, icon: v }))} />
               <p className="text-[11px] text-slate-500">Icon tampil di card landing. Kosongkan untuk auto detect dari nama fasilitas.</p>
             </div>
             <div className="space-y-1.5">
