@@ -12,6 +12,7 @@ import Footer from "@/components/landing/Footer";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import NextEventCard from "@/components/landing/NextEventCard";
+import ShareFloat from "@/components/landing/ShareFloat";
 
 const DEFAULT_SETTINGS: PublicSettings = {
   landing_wa_number: "6280000000000",
@@ -94,6 +95,7 @@ export default function Landing({
       </div>
       <Footer buperName={settings.buper_name} />
       <NextEventCard />
+      <ShareFloat />
     </div>
   );
 }
