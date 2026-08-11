@@ -301,6 +301,7 @@ export interface FacilityRecord {
   name: string;
   category: "utama" | "opsional";
   sort_order: number;
+  icon: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -316,6 +317,7 @@ export async function createFacility(data: {
   name: string;
   category: "utama" | "opsional";
   sortOrder?: number;
+  icon?: string;
   isActive?: boolean;
 }): Promise<FacilityRecord> {
   const res = await adminFetch("/api/facilities", {
@@ -337,6 +339,7 @@ export async function updateFacility(
     name: string;
     category: "utama" | "opsional";
     sortOrder: number;
+    icon: string | null;
     isActive: boolean;
   }>
 ): Promise<FacilityRecord> {

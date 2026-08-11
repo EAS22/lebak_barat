@@ -87,13 +87,14 @@ export const facilitySchema = z.object({
   name: z.string().min(2).max(200),
   category: z.enum(["utama", "opsional"]),
   sortOrder: z.number().int().optional(),
+  icon: z.string().max(50).optional(),
   isActive: z.boolean().optional(),
 });
 
 export const facilityUpdateSchema = facilitySchema.partial();
 
 export const settingsSchema = z.object({
-  landingWaNumber: z.string().min(8).max(20),
+  landingWaNumber: z.string().min(8).max(20).optional(),
   landingWaLabel: z.string().max(100).optional(),
   buperName: z.string().max(100).optional(),
 });

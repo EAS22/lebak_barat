@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSettings, updateSettings, type SettingsRecord } from "@/lib/adminApi";
-import { Save, ExternalLink } from "lucide-react";
+import { Save } from "lucide-react";
 import { formatDateTimeWIB } from "@/lib/utils";
 
 interface AuthUser {
@@ -26,8 +26,6 @@ export default function SettingsPage({ currentUser }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    landingWaNumber: "",
-    landingWaLabel: "",
     buperName: "",
   });
 
@@ -38,13 +36,11 @@ export default function SettingsPage({ currentUser }: Props) {
         const data = await getSettings();
         setSettings(data);
         setForm({
-          landingWaNumber: data.landing_wa_number || "",
-          landingWaLabel: data.landing_wa_label || "",
           buperName: data.buper_name || "",
         });
-    } catch {
-      toast.error("Gagal memuat pengaturan");
-    } finally {
+      } catch {
+        toast.error("Gagal memuat pengaturan");
+      } finally {
         setLoading(false);
       }
     }
@@ -57,8 +53,6 @@ export default function SettingsPage({ currentUser }: Props) {
     setSuccess(false);
     try {
       const data = await updateSettings({
-        landingWaNumber: form.landingWaNumber,
-        landingWaLabel: form.landingWaLabel || undefined,
         buperName: form.buperName || undefined,
       });
       setSettings(data);
@@ -89,8 +83,6 @@ export default function SettingsPage({ currentUser }: Props) {
     return <div className="p-8 text-center text-gray-500">Loading...</div>;
   }
 
-  const waLink = form.landingWaNumber ? `https://wa.me/${form.landingWaNumber.replace(/^0/, "62")}` : "";
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Pengaturan</h2>
@@ -98,7 +90,9 @@ export default function SettingsPage({ currentUser }: Props) {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
           {error}
-          <button className="ml-2 underline" onClick={() => setError(null)}>Tutup</button>
+          <button className="ml-2 underline" onClick={() => setError(null)}>
+            Tutup
+          </button>
         </div>
       )}
 
@@ -107,44 +101,6 @@ export default function SettingsPage({ currentUser }: Props) {
           Pengaturan berhasil disimpan.
         </div>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Kontak WhatsApp Landing Page</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Nomor WhatsApp</Label>
-            <Input
-              value={form.landingWaNumber}
-              onChange={(e) => setForm((f) => ({ ...f, landingWaNumber: e.target.value }))}
-              placeholder="628xxxxxxxxxx"
-            />
-            {waLink && (
-              <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                Preview:{" "}
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-emerald-600 hover:underline inline-flex items-center gap-1"
-                >
-                  {waLink}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Label Tombol WA</Label>
-            <Input
-              value={form.landingWaLabel}
-              onChange={(e) => setForm((f) => ({ ...f, landingWaLabel: e.target.value }))}
-              placeholder="Admin Booking"
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
@@ -159,19 +115,19 @@ export default function SettingsPage({ currentUser }: Props) {
               placeholder="Bumi Perkemahan Lebak Barat"
             />
           </div>
+          <p className="text-xs text-gray-500">
+            Kontak WhatsApp landing page diambil dari daftar <span className="font-semibold">Users → Admin Booking</span> yang aktif dan punya nomor WA.
+          </p>
         </CardContent>
       </Card>
 
       {settings && (
         <p className="text-xs text-gray-400">
-          Terakhir diperbarui:{" "}
-          {settings.updated_at
-            ? formatDateTimeWIB(settings.updated_at)
-            : "—"}
+          Terakhir diperbarui: {settings.updated_at ? formatDateTimeWIB(settings.updated_at) : "—"}
         </p>
       )}
 
-      <Button onClick={handleSave} disabled={saving || !form.landingWaNumber}>
+      <Button onClick={handleSave} disabled={saving}>
         <Save className="h-4 w-4 mr-1" />
         {saving ? "Menyimpan..." : "Simpan Pengaturan"}
       </Button>

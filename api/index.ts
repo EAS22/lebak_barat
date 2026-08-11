@@ -82,7 +82,7 @@ async function requireSuper(
 app.get("/api/public/facilities", async (c) => {
   try {
     const sql = getSql();
-    const rows = await sql`SELECT id, name, category, sort_order FROM facilities WHERE is_active = true ORDER BY sort_order, created_at`;
+    const rows = await sql`SELECT id, name, category, sort_order, icon FROM facilities WHERE is_active = true ORDER BY sort_order, created_at`;
     return c.json(rows);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -905,7 +905,7 @@ app.post("/api/facilities", requireAuth, requireSuper, async (c) => {
       const maxRows = await sql`SELECT COALESCE(MAX(sort_order),0)::int AS mx FROM facilities`;
       sortOrder = ((maxRows[0] as { mx: number }).mx ?? 0) + 1;
     }
-    const rows = await sql`INSERT INTO facilities (name, category, sort_order, is_active) VALUES (${d.name}, ${d.category}, ${sortOrder}, ${d.isActive ?? true}) RETURNING *`;
+    const rows = await sql`INSERT INTO facilities (name, category, sort_order, icon, is_active) VALUES (${d.name}, ${d.category}, ${sortOrder}, ${d.icon ?? null}, ${d.isActive ?? true}) RETURNING *`;
     return c.json(rows[0], 201);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -927,6 +927,7 @@ app.patch("/api/facilities/:id", requireAuth, requireSuper, async (c) => {
     if (d.name !== undefined) { vals.push(d.name); sets.push(`name = $${vals.length}`); }
     if (d.category !== undefined) { vals.push(d.category); sets.push(`category = $${vals.length}`); }
     if (d.sortOrder !== undefined) { vals.push(d.sortOrder); sets.push(`sort_order = $${vals.length}`); }
+    if ((d as { icon?: string | null }).icon !== undefined) { vals.push((d as { icon?: string | null }).icon); sets.push(`icon = $${vals.length}`); }
     if (d.isActive !== undefined) { vals.push(d.isActive); sets.push(`is_active = $${vals.length}`); }
 
     if (sets.length === 0) {

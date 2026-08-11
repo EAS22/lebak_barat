@@ -75,6 +75,7 @@ export interface PublicFacility {
   name: string;
   category: "utama" | "opsional";
   sort_order: number;
+  icon: string | null;
 }
 
 export async function fetchPublicFacilities(): Promise<PublicFacility[]> {

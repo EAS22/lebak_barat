@@ -62,6 +62,7 @@ export const facilities = pgTable("facilities", {
   name: varchar("name", { length: 200 }).notNull(),
   category: varchar("category", { length: 20 }).default("utama").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
+  icon: varchar("icon", { length: 50 }),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

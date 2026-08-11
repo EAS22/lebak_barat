@@ -431,10 +431,64 @@ export default function GalleryAdminPage() {
       return acc + (b64.length * 0.75) / 1024;
     }, 0)
   );
+  const hasPending = Object.keys(pendingBase64Map).length > 0;
+  const hasEdits = slots.some((s) => {
+    const ed = editMap[s.slot_number];
+    if (!ed) return false;
+    return ed.caption !== (s.caption ?? "") || ed.year !== (s.year ?? "");
+  }) || hasPending;
+
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  async function handleSaveAll() {
+    if (!hasEdits && !hasPending) {
+      toast.info("Tidak ada perubahan untuk disimpan");
+      return;
+    }
+    setBulkSaving(true);
+    let ok = 0;
+    let fail = 0;
+    for (const slot of slots) {
+      const num = slot.slot_number;
+      const edits = editMap[num];
+      if (!edits) continue;
+      const pendingB64 = pendingBase64Map[num] ?? null;
+      const captionChanged = edits.caption !== (slot.caption ?? "");
+      const yearChanged = edits.year !== (slot.year ?? "");
+      const hasB64Change = pendingB64 !== null;
+      if (!captionChanged && !yearChanged && !hasB64Change) continue;
+
+      try {
+        const payload: Record<string, unknown> = {
+          caption: edits.caption,
+          year: edits.year || null,
+        };
+        if (pendingB64) payload.image_base64 = pendingB64;
+        else if (!captionChanged && !yearChanged) continue;
+        else payload.image_base64 = slot.image_base64;
+
+        const res = await fetch(`/api/gallery/${num}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        ok++;
+      } catch {
+        fail++;
+      }
+    }
+    setBulkSaving(false);
+    if (fail > 0) toast.error(`${ok} slot tersimpan, ${fail} gagal`);
+    else toast.success(`${ok} slot berhasil disimpan`);
+    setPendingBase64Map({});
+    await fetchSlots();
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
             <Images className="h-5 w-5 text-emerald-600" />
@@ -445,8 +499,17 @@ export default function GalleryAdminPage() {
           </p>
           <p className="text-xs text-slate-400 mt-1">
             Terisi {totalFilled}/8 · Estimasi DB {estSizeKB}KB · WebP 800×800
+            {hasPending ? ` · ${Object.keys(pendingBase64Map).length} belum disimpan` : ""}
           </p>
         </div>
+        <Button
+          onClick={handleSaveAll}
+          disabled={bulkSaving || (!hasEdits && !hasPending)}
+          className="bg-emerald-600 hover:bg-emerald-700 shrink-0"
+        >
+          <Save size={16} className="mr-1.5" />
+          {bulkSaving ? "Menyimpan..." : "Simpan Semua"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

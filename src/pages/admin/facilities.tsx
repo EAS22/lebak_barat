@@ -28,6 +28,7 @@ import {
   type FacilityRecord,
 } from "@/lib/adminApi";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { ICON_OPTIONS, ICON_MAP } from "@/components/landing/Facilities";
 
 interface AuthUser {
   id: string;
@@ -43,10 +44,11 @@ interface FacilityForm {
   name: string;
   category: "utama" | "opsional";
   sortOrder: string;
+  icon: string;
 }
 
 function emptyForm(): FacilityForm {
-  return { name: "", category: "utama", sortOrder: "" };
+  return { name: "", category: "utama", sortOrder: "", icon: "" };
 }
 
 export default function FacilitiesPage({ currentUser }: Props) {
@@ -88,6 +90,7 @@ export default function FacilitiesPage({ currentUser }: Props) {
       name: f.name,
       category: f.category,
       sortOrder: String(f.sort_order),
+      icon: f.icon ?? "",
     });
     setDialogOpen(true);
   }
@@ -96,11 +99,13 @@ export default function FacilitiesPage({ currentUser }: Props) {
     setFormLoading(true);
     try {
       const sortOrder = form.sortOrder.trim() === "" ? undefined : parseInt(form.sortOrder, 10);
+      const iconVal = form.icon.trim() === "" ? null : form.icon.trim();
       if (editing) {
         await updateFacility(editing.id, {
           name: form.name,
           category: form.category,
           ...(sortOrder !== undefined ? { sortOrder } : {}),
+          icon: iconVal,
         });
         toast.success("Fasilitas berhasil diperbarui");
       } else {
@@ -108,6 +113,7 @@ export default function FacilitiesPage({ currentUser }: Props) {
           name: form.name,
           category: form.category,
           ...(sortOrder !== undefined ? { sortOrder } : {}),
+          icon: form.icon.trim() || undefined,
         });
         toast.success("Fasilitas berhasil ditambahkan");
       }
@@ -180,6 +186,12 @@ export default function FacilitiesPage({ currentUser }: Props) {
           <li key={f.id} className="flex items-center gap-3 px-4 py-3">
             <span className="w-8 text-center text-xs font-mono text-gray-400 shrink-0">
               {f.sort_order}
+            </span>
+            <span className="shrink-0">
+              {(() => {
+                const Icon = f.icon && ICON_MAP[f.icon] ? ICON_MAP[f.icon] : null;
+                return Icon ? <Icon size={16} className="text-emerald-600" /> : <span className="text-xs text-slate-400">—</span>;
+              })()}
             </span>
             <span className="flex-1 font-medium text-sm text-gray-900 truncate">
               {f.name}
@@ -267,6 +279,49 @@ export default function FacilitiesPage({ currentUser }: Props) {
                   <SelectItem value="opsional">Layanan &amp; Fasilitas Opsional</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Icon</Label>
+              <Select
+                value={form.icon || "__auto__"}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, icon: v === "__auto__" ? "" : v }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih icon (auto dari nama jika kosong)">
+                    {form.icon
+                      ? (() => {
+                          const opt = ICON_OPTIONS.find((o) => o.key === form.icon);
+                          const Icon = form.icon ? ICON_MAP[form.icon] : null;
+                          return opt ? (
+                            <span className="flex items-center gap-2">
+                              {Icon && <Icon size={16} />}
+                              {opt.label}
+                            </span>
+                          ) : (
+                            form.icon
+                          );
+                        })()
+                      : "Auto (dari nama)"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="__auto__">Auto (dari nama)</SelectItem>
+                  {ICON_OPTIONS.map((opt) => {
+                    const Icon = ICON_MAP[opt.key];
+                    return (
+                      <SelectItem key={opt.key} value={opt.key}>
+                        <span className="flex items-center gap-2">
+                          {Icon && <Icon size={16} />}
+                          {opt.label} ({opt.key})
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-slate-500">Icon tampil di card landing. Kosongkan untuk auto detect dari nama fasilitas.</p>
             </div>
             <div className="space-y-1.5">
               <Label>Urutan (opsional)</Label>

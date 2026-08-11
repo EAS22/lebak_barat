@@ -16,6 +16,14 @@ import {
   Mic,
   Tent,
   Flag,
+  TreePine,
+  Waves,
+  Coffee,
+  Lamp,
+  Speaker,
+  Mountain,
+  Binoculars,
+  Footprints,
   type LucideIcon,
 } from "lucide-react";
 import type { CSSProperties } from "react";
@@ -23,8 +31,64 @@ import { useReveal } from "@/hooks/useReveal";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 import { fetchPublicFacilities, type PublicFacility } from "@/lib/api";
 
-function iconFor(name: string): LucideIcon {
-  const n = name.toLowerCase();
+export const ICON_MAP: Record<string, LucideIcon> = {
+  tent: Tent,
+  flag: Flag,
+  utensils: Utensils,
+  car: Car,
+  heart: Heart,
+  droplets: Droplets,
+  music: Music,
+  cross: Cross,
+  zap: Zap,
+  shield: Shield,
+  flame: Flame,
+  map: Map,
+  mic: Mic,
+  store: Store,
+  building: Building,
+  package: Package,
+  treepine: TreePine,
+  waves: Waves,
+  coffee: Coffee,
+  lamp: Lamp,
+  speaker: Speaker,
+  mountain: Mountain,
+  binoculars: Binoculars,
+  footprints: Footprints,
+};
+
+export const ICON_OPTIONS = [
+  { key: "tent", label: "Tenda" },
+  { key: "flag", label: "Bendera / Lapangan" },
+  { key: "utensils", label: "Dapur" },
+  { key: "car", label: "Parkir" },
+  { key: "heart", label: "Mushola / Hati" },
+  { key: "droplets", label: "Toilet / Air" },
+  { key: "music", label: "Sound / Musik" },
+  { key: "cross", label: "P3K / Medis" },
+  { key: "zap", label: "Listrik" },
+  { key: "shield", label: "Keamanan" },
+  { key: "flame", label: "Kayu Bakar / Api" },
+  { key: "map", label: "Jelajah / Peta" },
+  { key: "mic", label: "Pemateri" },
+  { key: "store", label: "Kantin / Pedagang" },
+  { key: "building", label: "Gedung / Aula" },
+  { key: "treepine", label: "Pohon / Alam" },
+  { key: "waves", label: "Air / Embung" },
+  { key: "coffee", label: "Kopi / Kantin" },
+  { key: "lamp", label: "Lampu / Penerangan" },
+  { key: "speaker", label: "Speaker / Pengumuman" },
+  { key: "mountain", label: "Gunung / Camping" },
+  { key: "binoculars", label: "Teropong / Tracking" },
+  { key: "footprints", label: "Jejak / Hiking" },
+  { key: "package", label: "Lainnya" },
+] as const;
+
+function iconForExplicit(iconKey?: string | null, fallbackName?: string): LucideIcon {
+  if (iconKey && ICON_MAP[iconKey]) return ICON_MAP[iconKey]!;
+  if (!fallbackName) return Package;
+  const n = fallbackName.toLowerCase();
   if (n.includes("camping") || n.includes("tenda")) return Tent;
   if (n.includes("upacara") || n.includes("lapangan")) return Flag;
   if (n.includes("dapur") || n.includes("cathering") || n.includes("catering")) return Utensils;
@@ -54,7 +118,7 @@ function FacilityCard({
   visible: boolean;
   opsional?: boolean;
 }) {
-  const Icon = iconFor(facility.name);
+  const Icon = iconForExplicit(facility.icon, facility.name);
   return (
     <div
       className={`group bg-white rounded-xl border-2 p-4 text-center flex flex-col items-center justify-between h-full min-h-[128px] transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
