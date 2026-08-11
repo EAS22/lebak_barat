@@ -6,6 +6,7 @@ import About from "@/components/landing/About";
 import History from "@/components/landing/History";
 import CalendarStatus from "@/components/landing/CalendarStatus";
 import Facilities from "@/components/landing/Facilities";
+import Gallery from "@/components/landing/Gallery";
 import Contact from "@/components/landing/Contact";
 import Footer from "@/components/landing/Footer";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
@@ -80,6 +81,10 @@ export default function Landing({
         <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
       </div>
       <Facilities />
+      <div className="bg-white">
+        <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
+      </div>
+      <Gallery />
       <div className="bg-cream">
         <PineDivider color="#ffffff" />
       </div>
