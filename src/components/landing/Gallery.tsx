@@ -191,7 +191,7 @@ export default function Gallery() {
   }
 
   return (
-    <section id="galeri" className="relative py-16 md:py-24 bg-cream overflow-hidden">
+    <section id="galeri" className="relative py-16 md:py-24 bg-cream overflow-x-clip">
       <TopoPattern />
       <div
         ref={reveal.ref}
@@ -209,13 +209,13 @@ export default function Gallery() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-7 max-w-5xl mx-auto overflow-hidden py-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] rounded-[2px] bg-white/60 border-2 border-dashed border-amber-200 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7 lg:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-7 lg:gap-8 max-w-5xl mx-auto overflow-visible md:overflow-visible py-2 px-1">
             {items.map((item, i) => (
               <PolaroidCard key={item.slot_number} item={item} index={i} onClick={() => setSelected(item.slot_number)} />
             ))}

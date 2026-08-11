@@ -138,9 +138,8 @@ export default function Hero() {
       </div>
 
       <div
-        className="absolute bottom-0 -left-4 transition-transform duration-300 ease-out"
+        className="absolute bottom-0 left-0 right-0 transition-transform duration-300 ease-out overflow-hidden"
         style={{
-          width: "calc(100% + 32px)",
           transform: `translateX(${offsetX}px)`,
         }}
       >

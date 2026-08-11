@@ -26,9 +26,13 @@ export default function ShareFloat() {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-[88] md:bottom-6 md:right-6 flex flex-col items-end gap-2">
+      {open && (
+        <div className="fixed inset-0 z-[87] bg-black/20 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none md:pointer-events-none" onClick={() => setOpen(false)} />
+      )}
+
+      <div className="fixed bottom-4 right-4 z-[88] md:bottom-6 md:right-6 flex flex-col items-end gap-2 max-w-[calc(100vw-32px)]">
         {open && (
-          <div className="bg-white rounded-2xl shadow-2xl border-2 border-dashed border-amber-300 p-3 w-[280px] animate-in slide-in-from-bottom-2 fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl border-2 border-dashed border-amber-300 p-3 w-[min(300px,calc(100vw-32px))] max-w-[calc(100vw-32px)] animate-in slide-in-from-bottom-2 fade-in duration-200 pointer-events-auto">
             <div className="flex items-center justify-between mb-2.5">
               <p className="text-xs font-bold text-brown flex items-center gap-1.5">
                 <Share2 size={14} className="text-emerald-600" />
@@ -105,7 +109,7 @@ export default function ShareFloat() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white border-2 border-dashed border-amber-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-emerald-300 hover:rotate-[-2deg] transition-all duration-300 flex items-center justify-center group"
+          className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white border-2 border-dashed border-amber-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-emerald-300 hover:rotate-[-2deg] transition-all duration-300 flex items-center justify-center group pointer-events-auto"
           title="Bagikan website"
           aria-label="Bagikan website"
         >

@@ -313,7 +313,7 @@ export default function VerificationPage({
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col overflow-x-clip max-w-[100vw]">
       <Navbar buperName={settings.buper_name} />
 
       {/* Hero compact */}
