@@ -135,3 +135,22 @@ export async function fetchPublicSettings(): Promise<PublicSettings> {
     return DEFAULT_SETTINGS;
   }
 }
+
+export interface PublicGalleryItem {
+  slot_number: number;
+  caption: string;
+  year: string | null;
+  image_url: string;
+}
+
+export async function fetchPublicGallery(): Promise<PublicGalleryItem[]> {
+  try {
+    const res = await fetch("/api/public/gallery");
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data as PublicGalleryItem[];
+    return [];
+  } catch {
+    return [];
+  }
+}

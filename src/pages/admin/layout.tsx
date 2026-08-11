@@ -13,6 +13,7 @@ import {
   Tent,
   PanelLeftClose,
   PanelLeftOpen,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, type AuthUser } from "@/lib/authContext";
@@ -27,6 +28,7 @@ const navItems = [
   { to: "/admin/events", label: "Event Internal", icon: CalendarRange, end: false, superOnly: false },
   { to: "/admin/invoices", label: "Invoices", icon: FileText, end: false, superOnly: false },
   { to: "/admin/facilities", label: "Fasilitas", icon: Tent, end: false, superOnly: true },
+  { to: "/admin/gallery", label: "Galeri", icon: Images, end: false, superOnly: true },
   { to: "/admin/users", label: "Users", icon: Users, end: false, superOnly: true },
   { to: "/admin/settings", label: "Settings", icon: Settings, end: false, superOnly: true },
 ];

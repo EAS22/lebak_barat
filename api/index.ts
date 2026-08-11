@@ -990,6 +990,61 @@ app.put("/api/settings", requireAuth, requireSuper, async (c) => {
   }
 });
 
+app.get("/api/public/gallery", async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT slot_number, caption, year, image_base64 FROM gallery_slots WHERE image_base64 IS NOT NULL ORDER BY slot_number`;
+    return c.json(rows.map((r: Record<string, unknown>) => ({ slot_number: r.slot_number, caption: r.caption, year: r.year, image_url: r.image_base64 })));
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.get("/api/gallery", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT slot_number, caption, year, image_base64, updated_at FROM gallery_slots ORDER BY slot_number`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.put("/api/gallery/:slot", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const slotNum = Number(c.req.param("slot"));
+    if (!Number.isInteger(slotNum) || slotNum < 1 || slotNum > 8) {
+      return c.json({ error: "Slot harus 1-8" }, 400);
+    }
+    const body = await c.req.json() as { caption?: string; year?: string; image_base64?: string | null; clear?: boolean };
+    if (body.clear) {
+      const rows = await sql`UPDATE gallery_slots SET image_base64 = NULL, caption = '', year = '', updated_at = now() WHERE slot_number = ${slotNum} RETURNING *`;
+      return c.json(rows[0]);
+    }
+    const caption = (body.caption ?? "").slice(0, 100);
+    const year = body.year ? String(body.year).slice(0, 10) : null;
+    const img = body.image_base64 ?? null;
+    if (img !== null) {
+      if (!img.startsWith("data:image/")) {
+        return c.json({ error: "image_base64 harus format data:image/..." }, 400);
+      }
+      const b64len = img.length - (img.indexOf(",") + 1);
+      const approxBytes = Math.floor(b64len * 0.75);
+      if (approxBytes > 400 * 1024) {
+        return c.json({ error: `Ukuran gambar ${Math.round(approxBytes / 1024)}KB melebihi limit 400KB setelah compress` }, 400);
+      }
+    }
+    const rows = await sql`UPDATE gallery_slots SET caption = ${caption}, year = ${year}, image_base64 = ${img}, updated_at = now() WHERE slot_number = ${slotNum} RETURNING slot_number, caption, year, image_base64, updated_at`;
+    return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 const handler = (request: Request) => app.fetch(request);
 
 export const GET = handler;

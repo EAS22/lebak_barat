@@ -1,72 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useReveal } from "@/hooks/useReveal";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
+import { fetchPublicGallery, type PublicGalleryItem } from "@/lib/api";
 
-type GalleryItem = {
-  id: number;
-  src: string;
-  alt: string;
-  caption: string;
-  year?: string;
-};
+type GalleryItem = PublicGalleryItem;
 
-const MOCK_GALLERY: GalleryItem[] = [
+const FALLBACK_GALLERY: GalleryItem[] = [
   {
-    id: 1,
-    src: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=600&h=600&fit=crop",
-    alt: "Kemah Pramuka",
+    slot_number: 1,
     caption: "Jambore Ranting Banjaran",
     year: "'23",
+    image_url: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=600&h=600&fit=crop",
   },
   {
-    id: 2,
-    src: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&h=800&fit=crop",
-    alt: "Malam Api Unggun",
+    slot_number: 2,
     caption: "Api Unggun Malam",
     year: "'23",
+    image_url: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&h=800&fit=crop",
   },
   {
-    id: 3,
-    src: "https://images.unsplash.com/photo-1482398650355-d4c6462afa0e?w=600&h=600&fit=crop",
-    alt: "Baris Berbaris",
+    slot_number: 3,
     caption: "Upacara Bendera",
     year: "'24",
+    image_url: "https://images.unsplash.com/photo-1482398650355-d4c6462afa0e?w=600&h=600&fit=crop",
   },
   {
-    id: 4,
-    src: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&h=700&fit=crop",
-    alt: "Tenda Kemah",
+    slot_number: 4,
     caption: "Area Tenda Peserta",
     year: "'24",
+    image_url: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=600&h=700&fit=crop",
   },
   {
-    id: 5,
-    src: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=600&h=600&fit=crop",
-    alt: "Kegiatan Outbond",
+    slot_number: 5,
     caption: "Jelajah Alam",
     year: "'24",
+    image_url: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=600&h=600&fit=crop",
   },
   {
-    id: 6,
-    src: "https://images.unsplash.com/photo-1537225228614-56cc3556d7ed?w=600&h=750&fit=crop",
-    alt: "Foto Bersama",
+    slot_number: 6,
     caption: "Foto Bersama Kwarran",
     year: "'25",
+    image_url: "https://images.unsplash.com/photo-1537225228614-56cc3556d7ed?w=600&h=750&fit=crop",
   },
   {
-    id: 7,
-    src: "https://images.unsplash.com/photo-1508873696983-2dfd5898f08b?w=600&h=600&fit=crop",
-    alt: "Kegiatan Pagi",
+    slot_number: 7,
     caption: "Senam Pagi Ceria",
     year: "'25",
+    image_url: "https://images.unsplash.com/photo-1508873696983-2dfd5898f08b?w=600&h=600&fit=crop",
   },
   {
-    id: 8,
-    src: "https://images.unsplash.com/photo-1517824806704-9040b037703b?w=600&h=800&fit=crop",
-    alt: "Pentas Seni",
+    slot_number: 8,
     caption: "Pentas Seni Api Unggun",
     year: "'25",
+    image_url: "https://images.unsplash.com/photo-1517824806704-9040b037703b?w=600&h=800&fit=crop",
   },
 ];
 
@@ -98,8 +85,8 @@ function PolaroidCard({
         </div>
         <div className="aspect-square overflow-hidden bg-slate-100">
           <img
-            src={item.src}
-            alt={item.alt}
+            src={item.image_url}
+            alt={item.caption}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -157,7 +144,7 @@ function Lightbox({
         <ChevronRight size={20} />
       </button>
       <div className="max-w-3xl w-full">
-        <img src={item.src} alt={item.alt} className="w-full h-auto max-h-[80vh] object-contain rounded-lg" />
+        <img src={item.image_url} alt={item.caption} className="w-full h-auto max-h-[80vh] object-contain rounded-lg" />
         <p className="mt-3 text-center text-white text-sm font-medium">
           {item.caption} {item.year && `· ${item.year}`}
         </p>
@@ -169,20 +156,38 @@ function Lightbox({
 
 export default function Gallery() {
   const reveal = useReveal<HTMLDivElement>(0.05);
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
 
-  const selItem = selected !== null ? MOCK_GALLERY.find((g) => g.id === selected) ?? null : null;
-  const selIdx = selItem ? MOCK_GALLERY.indexOf(selItem) : -1;
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicGallery().then((data) => {
+      if (cancelled) return;
+      if (data.length > 0) {
+        setItems(data);
+      } else {
+        setItems(FALLBACK_GALLERY);
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selItem = selected !== null ? items.find((g) => g.slot_number === selected) ?? null : null;
+  const selIdx = selItem ? items.indexOf(selItem) : -1;
 
   function prev() {
     if (selIdx === -1) return;
-    const n = (selIdx - 1 + MOCK_GALLERY.length) % MOCK_GALLERY.length;
-    setSelected(MOCK_GALLERY[n]!.id);
+    const n = (selIdx - 1 + items.length) % items.length;
+    setSelected(items[n]!.slot_number);
   }
   function next() {
     if (selIdx === -1) return;
-    const n = (selIdx + 1) % MOCK_GALLERY.length;
-    setSelected(MOCK_GALLERY[n]!.id);
+    const n = (selIdx + 1) % items.length;
+    setSelected(items[n]!.slot_number);
   }
 
   return (
@@ -203,11 +208,19 @@ export default function Gallery() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7 lg:gap-8 max-w-5xl mx-auto">
-          {MOCK_GALLERY.map((item, i) => (
-            <PolaroidCard key={item.id} item={item} index={i} onClick={() => setSelected(item.id)} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7 max-w-5xl mx-auto">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-[2px] bg-white/60 border-2 border-dashed border-amber-200 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-7 lg:gap-8 max-w-5xl mx-auto">
+            {items.map((item, i) => (
+              <PolaroidCard key={item.slot_number} item={item} index={i} onClick={() => setSelected(item.slot_number)} />
+            ))}
+          </div>
+        )}
 
         <p className="mt-8 text-center text-xs text-slate-400">
           Klik foto untuk memperbesar · Geser kiri/kanan di lightbox

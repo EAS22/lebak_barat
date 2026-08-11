@@ -67,6 +67,14 @@ export const facilities = pgTable("facilities", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const gallerySlots = pgTable("gallery_slots", {
+  slotNumber: integer("slot_number").primaryKey(),
+  caption: varchar("caption", { length: 100 }).default("").notNull(),
+  year: varchar("year", { length: 10 }),
+  imageBase64: text("image_base64"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const settings = pgTable("settings", {
   id: integer("id").primaryKey().default(1),
   landingWaNumber: varchar("landing_wa_number", { length: 20 })
