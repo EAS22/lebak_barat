@@ -202,9 +202,9 @@ export default function Gallery() {
             <Images size={16} />
             Galeri Kegiatan
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-brown">Momen Seru di Lebak Barat</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-brown">Jelajahi Lebak Barat</h2>
           <p className="mt-3 text-slate-600 max-w-xl mx-auto text-sm md:text-base">
-            Foto-foto kemah, jambore, api unggun, dan kebersamaan yang bikin kangen balik lagi.
+            Pemandangan alam, fasilitas unggulan, momen kemah, dan detail sudut terbaik dari Bumi Perkemahan Lebak Barat.
           </p>
         </div>
 
