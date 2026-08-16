@@ -100,8 +100,10 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
     };
   }, [year]);
 
+  const { isDark } = useLandingTheme();
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-3 sm:p-6 flex flex-col w-full max-w-full overflow-hidden min-h-[400px] sm:min-h-[560px] lg:min-h-0 lg:h-full">
+    <div className={`rounded-2xl shadow-lg border-2 border-dashed p-3 sm:p-6 flex flex-col w-full max-w-full overflow-hidden min-h-[400px] sm:min-h-[560px] lg:min-h-0 lg:h-full transition-colors duration-700 ${isDark ? "bg-[#132a1a] border-emerald-800" : "bg-white border-emerald-300"}`}>
       <div className="flex items-center gap-3 mb-1 shrink-0">
         <ScoutBadge
           icon={<CalendarCheck size={18} />}
@@ -316,19 +318,19 @@ export default function CalendarStatus() {
     <section id="kalender" className={`py-16 md:py-24 overflow-x-clip transition-colors duration-700 ${isDark ? "bg-[#0a1210]" : "bg-white"}`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full max-w-[100vw] sm:max-w-7xl box-border">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold mb-4">
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-4 ${isDark ? "bg-amber-900/50 text-amber-200 border border-amber-800" : "bg-amber-100 text-amber-800"}`}>
             <Tent size={16} />
             Jadwal Kemah
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-brown">
+          <h2 className={`text-3xl md:text-4xl font-bold ${isDark ? "text-emerald-50" : "text-brown"}`}>
             Cek Tanggal Favoritmu!
           </h2>
-          <p className="mt-3 text-slate-600 max-w-xl mx-auto">
-            Tanggal <span className="font-semibold text-red-600">merah</span>{" "}
+          <p className={`mt-3 max-w-xl mx-auto ${isDark ? "text-emerald-200/70" : "text-slate-600"}`}>
+            Tanggal <span className={`font-semibold ${isDark ? "text-red-400" : "text-red-600"}`}>merah</span>{" "}
             sudah terisi (final), tanggal{" "}
-            <span className="font-semibold text-amber-500">kuning</span> masih
+            <span className={`font-semibold ${isDark ? "text-amber-300" : "text-amber-500"}`}>kuning</span> masih
             dalam negosiasi, dan tanggal{" "}
-            <span className="font-semibold text-emerald-600">hijau</span> masih
+            <span className={`font-semibold ${isDark ? "text-emerald-300" : "text-emerald-600"}`}>hijau</span> masih
             tersedia. Amankan tanggalmu sebelum keduluan sekolah lain!
           </p>
         </div>
@@ -342,7 +344,7 @@ export default function CalendarStatus() {
           >
             <div
               id="kalender-card"
-              className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-3 sm:p-6 w-full max-w-full overflow-hidden lg:flex lg:flex-col lg:h-full lg:min-h-[560px]"
+              className={`rounded-2xl shadow-lg border-2 border-dashed p-3 sm:p-6 w-full max-w-full overflow-hidden lg:flex lg:flex-col lg:h-full lg:min-h-[560px] transition-colors duration-700 ${isDark ? "bg-[#132a1a] border-emerald-800" : "bg-white border-amber-300"}`}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -354,7 +356,7 @@ export default function CalendarStatus() {
                 >
                   <ChevronLeft size={20} />
                 </button>
-                <h3 className="text-xl font-bold text-brown capitalize">
+                <h3 className={`text-xl font-bold capitalize ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   {format(currentMonth, "MMMM yyyy", { locale: id })}
                 </h3>
                 <button
@@ -400,7 +402,7 @@ export default function CalendarStatus() {
                 {DAY_LABELS.map((d) => (
                   <div
                     key={d}
-                    className="text-center text-[10px] sm:text-xs font-bold text-brown/70 py-1"
+                    className={`text-center text-[10px] sm:text-xs font-bold py-1 ${isDark ? "text-emerald-200/50" : "text-brown/70"}`}
                   >
                     {d}
                   </div>
@@ -485,7 +487,7 @@ export default function CalendarStatus() {
               )}
 
               {/* Legend */}
-              <div className="flex items-center justify-center flex-wrap gap-3 mt-5 text-xs font-medium text-slate-700">
+              <div className={`flex items-center justify-center flex-wrap gap-3 mt-5 text-xs font-medium ${isDark ? "text-emerald-200/60" : "text-slate-700"}`}>
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-4 rounded-md bg-emerald-50 border border-emerald-300" />
                   Tersedia

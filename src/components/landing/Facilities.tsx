@@ -336,25 +336,31 @@ function FacilityCard({
   opsional?: boolean;
 }) {
   const Icon = iconForExplicit(facility.icon, facility.name);
+  const { isDark } = useLandingTheme();
+
   return (
     <div
-      className={`group bg-white rounded-xl border-2 p-4 text-center flex flex-col items-center justify-between h-full min-h-[128px] transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
-        opsional
-          ? "border-dashed border-emerald-300 hover:border-emerald-500"
-          : "border-dashed border-amber-300 hover:border-emerald-400"
+      className={`group rounded-xl border-2 p-4 text-center flex flex-col items-center justify-between h-full min-h-[128px] transition-all hover:-translate-y-1 hover:rotate-1 hover:shadow-lg reveal ${
+        isDark
+          ? opsional
+            ? "bg-[#132a1a] border-dashed border-emerald-800 hover:border-emerald-600"
+            : "bg-[#132a1a] border-dashed border-emerald-800 hover:border-emerald-600"
+          : opsional
+            ? "bg-white border-dashed border-emerald-300 hover:border-emerald-500"
+            : "bg-white border-dashed border-amber-300 hover:border-emerald-400"
       } ${visible ? "is-visible" : ""}`}
       style={{ "--delay": `${index * 0.06}s` } as CSSProperties}
     >
       <div className="flex flex-col items-center">
-        <div className="w-11 h-11 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 transition-all group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 shrink-0">
+        <div className={`w-11 h-11 mx-auto rounded-full flex items-center justify-center mb-2.5 transition-all group-hover:scale-110 shrink-0 ${isDark ? "bg-emerald-900/50 text-emerald-300 group-hover:bg-emerald-700 group-hover:text-white" : "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white"}`}>
           <Icon size={20} />
         </div>
-        <h3 className="font-semibold text-brown text-sm leading-tight">
+        <h3 className={`font-semibold text-sm leading-tight ${isDark ? "text-emerald-100" : "text-brown"}`}>
           {facility.name}
         </h3>
       </div>
       {opsional && (
-        <span className="mt-2 inline-block text-[10px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 shrink-0">
+        <span className={`mt-2 inline-block text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 shrink-0 ${isDark ? "text-emerald-300 bg-emerald-900/50" : "text-emerald-600 bg-emerald-50"}`}>
           Opsional
         </span>
       )}
@@ -396,10 +402,10 @@ export default function Facilities() {
         className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
       >
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-brown">
+          <h2 className={`text-3xl md:text-4xl font-bold ${isDark ? "text-emerald-50" : "text-brown"}`}>
             Fasilitas
           </h2>
-          <p className="mt-3 text-slate-600">
+          <p className={`mt-3 ${isDark ? "text-emerald-200/70" : "text-slate-600"}`}>
             Fasilitas lengkap untuk kenyamanan kegiatan Anda.
           </p>
         </div>

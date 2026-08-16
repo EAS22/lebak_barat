@@ -207,12 +207,12 @@ export default function Gallery() {
         className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal ${reveal.visible ? "is-visible" : ""}`}
       >
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold mb-4">
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-4 ${isDark ? "bg-amber-900/40 text-amber-200 border border-amber-800" : "bg-amber-100 text-amber-800"}`}>
             <Images size={16} />
             Galeri Kegiatan
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-brown">Jelajahi Lebak Barat</h2>
-          <p className="mt-3 text-slate-600 max-w-xl mx-auto text-sm md:text-base">
+          <h2 className={`text-3xl md:text-4xl font-bold ${isDark ? "text-emerald-50" : "text-brown"}`}>Jelajahi Lebak Barat</h2>
+          <p className={`mt-3 max-w-xl mx-auto text-sm md:text-base ${isDark ? "text-emerald-200/70" : "text-slate-600"}`}>
             Pemandangan alam, fasilitas unggulan, momen kemah, dan detail sudut terbaik dari Bumi Perkemahan Lebak Barat.
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function Gallery() {
           </div>
         )}
 
-        <p className="mt-8 text-center text-xs text-slate-400">
+        <p className={`mt-8 text-center text-xs ${isDark ? "text-emerald-200/40" : "text-slate-400"}`}>
           Klik foto untuk memperbesar · Geser kiri/kanan di lightbox
         </p>
       </div>

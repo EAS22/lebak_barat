@@ -32,14 +32,14 @@ export default function History() {
       <TopoPattern />
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-sm font-semibold mb-4">
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-4 ${isDark ? "bg-emerald-900/50 text-emerald-200 border border-emerald-800" : "bg-emerald-100 text-emerald-800"}`}>
             <Landmark size={16} />
             Profil & Sejarah
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-brown">
+          <h2 className={`text-3xl md:text-4xl font-bold ${isDark ? "text-emerald-50" : "text-brown"}`}>
             Sejarah Buper Lebak Barat
           </h2>
-          <p className="mt-3 text-slate-600 max-w-2xl mx-auto">
+          <p className={`mt-3 max-w-2xl mx-auto ${isDark ? "text-emerald-200/70" : "text-slate-600"}`}>
             Perjalanan Bumi Perkemahan Lebak Barat dari peresmian hingga menjadi
             pusat kegiatan kepramukaan Kecamatan Banjaran.
           </p>
@@ -51,7 +51,7 @@ export default function History() {
             ref={left.ref}
             className={`reveal reveal-left ${left.visible ? "is-visible" : ""}`}
           >
-            <div className="rounded-2xl overflow-hidden shadow-lg border-2 border-dashed border-amber-300 bg-white p-2">
+            <div className={`rounded-2xl overflow-hidden shadow-lg border-2 border-dashed p-2 transition-colors ${isDark ? "border-emerald-800 bg-[#132a1a]" : "border-amber-300 bg-white"}`}>
               <div className="relative w-full aspect-video rounded-xl overflow-hidden">
                 <iframe
                   className="absolute inset-0 w-full h-full"
@@ -64,7 +64,7 @@ export default function History() {
                 />
               </div>
             </div>
-            <div className="mt-4 rounded-2xl overflow-hidden shadow-lg border-2 border-dashed border-amber-300 bg-white p-2">
+            <div className={`mt-4 rounded-2xl overflow-hidden shadow-lg border-2 border-dashed p-2 transition-colors ${isDark ? "border-emerald-800 bg-[#132a1a]" : "border-amber-300 bg-white"}`}>
               <div className="relative w-full aspect-video rounded-xl overflow-hidden">
                 <iframe
                   className="absolute inset-0 w-full h-full"
@@ -77,20 +77,19 @@ export default function History() {
                 />
               </div>
             </div>
-            <p className="mt-3 text-center text-xs text-slate-500">
+            <p className={`mt-3 text-center text-xs ${isDark ? "text-emerald-200/50" : "text-slate-500"}`}>
               Video profil &amp; dokumentasi Bumi Perkemahan Lebak Barat
             </p>
           </div>
 
-          {/* Text */}
           <div
             ref={right.ref}
             className={`reveal reveal-right ${right.visible ? "is-visible" : ""}`}
           >
-            <div className="space-y-4 text-slate-700 leading-relaxed">
+            <div className={`space-y-4 leading-relaxed ${isDark ? "text-emerald-200/70" : "text-slate-700"}`}>
               <p>
                 Bumi Perkemahan Lebak Barat diresmikan pada tanggal{" "}
-                <span className="font-semibold text-brown">
+                <span className={`font-semibold ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   14 Agustus 2023
                 </span>{" "}
                 oleh Bupati Majalengka sekaligus Mabicab (Bapak Dr. H. Karna
@@ -103,13 +102,13 @@ export default function History() {
               <p>
                 Buper Lebak Barat merupakan tanah Aset (Bengkok) Desa Girimulya
                 dengan luas{" "}
-                <span className="font-semibold text-brown">15.000 m²</span>,
+                <span className={`font-semibold ${isDark ? "text-emerald-100" : "text-brown"}`}>15.000 m²</span>,
                 terdapat kolam (embung desa) yang berada di tengah-tengah Buper
                 sehingga menambah daya tarik pengunjung.
               </p>
               <p>
                 Buper Lebak Barat merupakan{" "}
-                <span className="font-semibold text-brown">
+                <span className={`font-semibold ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   Home Base Kwartir Ranting Pramuka Kecamatan Banjaran
                 </span>{" "}
                 dimana seluruh kegiatan kepramukaan yang ada di Kecamatan
@@ -128,14 +127,14 @@ export default function History() {
                     <ScoutBadge
                       icon={<Icon size={18} />}
                       size={44}
-                      colorClass="text-emerald-600"
+                      colorClass={isDark ? "text-emerald-400" : "text-emerald-600"}
                     />
                   </span>
                   <span>
-                    <span className="block font-semibold text-brown text-sm">
+                    <span className={`block font-semibold text-sm ${isDark ? "text-emerald-100" : "text-brown"}`}>
                       {title}
                     </span>
-                    <span className="block text-sm text-slate-600 mt-0.5">
+                    <span className={`block text-sm mt-0.5 ${isDark ? "text-emerald-200/60" : "text-slate-600"}`}>
                       {desc}
                     </span>
                   </span>

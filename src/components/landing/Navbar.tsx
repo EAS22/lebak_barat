@@ -89,30 +89,22 @@ export default function Navbar({ buperName }: NavbarProps) {
             }}
           >
             <BrandLogo />
-            <span className="truncate">{buperName || "Buper Lebak Barat"}</span>
+            <span className={`truncate ${isDark ? "text-emerald-50" : "text-brown"}`}>{buperName || "Buper Lebak Barat"}</span>
           </a>
 
           <div className="hidden md:flex items-center gap-8">
             {links.map((l) => {
               const isRoute = (l as { isRoute?: boolean }).isRoute;
+              const linkCls = `relative text-sm font-medium transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-500 after:transition-all hover:after:w-full ${isDark ? "text-emerald-200/70 hover:text-emerald-200" : "text-slate-700 hover:text-emerald-600"}`;
               if (isRoute) {
                 return (
-                  <Link
-                    key={l.href}
-                    to={l.href}
-                    className="relative text-sm font-medium text-slate-700 hover:text-emerald-600 transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 after:transition-all hover:after:w-full"
-                  >
+                  <Link key={l.href} to={l.href} className={linkCls}>
                     {l.label}
                   </Link>
                 );
               }
               return (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  onClick={handleNavClick}
-                  className="relative text-sm font-medium text-slate-700 hover:text-emerald-600 transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-emerald-600 after:transition-all hover:after:w-full"
-                >
+                <a key={l.href} href={l.href} onClick={handleNavClick} className={linkCls}>
                   {l.label}
                 </a>
               );

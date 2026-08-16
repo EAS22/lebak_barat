@@ -48,10 +48,10 @@ export default function Contact() {
     <section id="kontak" className={`py-16 md:py-24 transition-colors duration-700 ${isDark ? "bg-[#0a1210]" : "bg-white"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-brown">
+          <h2 className={`text-3xl md:text-4xl font-bold ${isDark ? "text-emerald-50" : "text-brown"}`}>
             Kontak & Lokasi
           </h2>
-          <p className="mt-3 text-slate-600">
+          <p className={`mt-3 ${isDark ? "text-emerald-200/70" : "text-slate-600"}`}>
             Hubungi admin booking kami dan lihat denah lokasi Buper.
           </p>
         </div>
@@ -60,11 +60,11 @@ export default function Contact() {
           {/* Card Denah */}
           <div
             ref={denah.ref}
-            className={`flex flex-col bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-4 md:p-5 reveal ${denah.visible ? "is-visible" : ""}`}
+            className={`flex flex-col rounded-2xl shadow-lg border-2 border-dashed p-4 md:p-5 reveal transition-colors ${isDark ? "bg-[#132a1a] border-emerald-800" : "bg-white border-emerald-300"} ${denah.visible ? "is-visible" : ""}`}
           >
             <div className="flex items-center justify-between mb-3 shrink-0">
-              <h3 className="flex items-center gap-2 text-base font-bold text-brown">
-                <MapPin size={18} className="text-emerald-600" />
+              <h3 className={`flex items-center gap-2 text-base font-bold ${isDark ? "text-emerald-100" : "text-brown"}`}>
+                <MapPin size={18} className={isDark ? "text-emerald-400" : "text-emerald-600"} />
                 Denah Buper Lebak Barat
               </h3>
               <button
@@ -112,7 +112,7 @@ export default function Contact() {
           {/* Card Kontak */}
           <div
             ref={card.ref}
-            className={`flex flex-col bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 sm:p-8 text-center reveal ${card.visible ? "is-visible" : ""}`}
+            className={`flex flex-col rounded-2xl shadow-lg border-2 border-dashed p-6 sm:p-8 text-center reveal transition-colors ${isDark ? "bg-[#132a1a] border-emerald-800" : "bg-white border-amber-300"} ${card.visible ? "is-visible" : ""}`}
           >
             <div className="flex justify-center mb-4 shrink-0">
               <CampfireFlame size={56} />
