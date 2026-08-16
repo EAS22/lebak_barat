@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Share2, Copy, Check, X, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 const SITE_URL = "https://lebakbarat.girimulya.com";
 const SITE_TITLE = "Bumi Perkemahan Lebak Barat";
@@ -9,6 +10,7 @@ const SITE_DESC = "Bumi perkemahan eksklusif di Majalengka untuk school camp 3H2
 export default function ShareFloat() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { isDark } = useLandingTheme();
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(open ? "sharefloat:open" : "sharefloat:close"));
@@ -36,22 +38,22 @@ export default function ShareFloat() {
 
       <div className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 flex flex-col items-end gap-2 max-w-[calc(100vw-32px)] ${open ? "z-[92]" : "z-[88]"}`}>
         {open && (
-          <div className="bg-white rounded-2xl shadow-2xl border-2 border-dashed border-amber-300 p-3 w-[min(300px,calc(100vw-32px))] max-w-[calc(100vw-32px)] animate-in slide-in-from-bottom-2 fade-in duration-200 pointer-events-auto">
+          <div className={`rounded-2xl shadow-2xl border-2 border-dashed p-3 w-[min(300px,calc(100vw-32px))] max-w-[calc(100vw-32px)] animate-in slide-in-from-bottom-2 fade-in duration-200 pointer-events-auto transition-colors ${isDark ? "bg-[#132a1a] border-emerald-800" : "bg-white border-amber-300"}`}>
             <div className="flex items-center justify-between mb-2.5">
-              <p className="text-xs font-bold text-brown flex items-center gap-1.5">
-                <Share2 size={14} className="text-emerald-600" />
+              <p className={`text-xs font-bold flex items-center gap-1.5 ${isDark ? "text-emerald-100" : "text-brown"}`}>
+                <Share2 size={14} className={isDark ? "text-emerald-400" : "text-emerald-600"} />
                 Bagikan Website
               </p>
               <button
                 onClick={() => setOpen(false)}
-                className="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"
+                className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? "bg-[#1e3a2a] hover:bg-[#14301c] text-emerald-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"}`}
               >
                 <X size={12} />
               </button>
             </div>
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 flex items-center gap-2 mb-3">
-              <p className="text-[11px] font-mono text-slate-600 truncate flex-1">{SITE_URL}</p>
+            <div className={`rounded-xl border px-3 py-2 flex items-center gap-2 mb-3 ${isDark ? "bg-[#0a1210] border-emerald-800" : "bg-slate-50 border-slate-200"}`}>
+              <p className={`text-[11px] font-mono truncate flex-1 ${isDark ? "text-emerald-200/60" : "text-slate-600"}`}>{SITE_URL}</p>
               <button
                 onClick={handleCopy}
                 className="shrink-0 w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center"
@@ -113,14 +115,14 @@ export default function ShareFloat() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white border-2 border-dashed border-amber-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-emerald-300 hover:rotate-[-2deg] transition-all duration-300 flex items-center justify-center group pointer-events-auto"
+          className={`w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-dashed shadow-xl hover:shadow-2xl hover:scale-105 hover:rotate-[-2deg] transition-all duration-300 flex items-center justify-center group pointer-events-auto ${isDark ? "bg-[#132a1a] border-emerald-800 hover:border-emerald-600" : "bg-white border-amber-300 hover:border-emerald-300"}`}
           title="Bagikan website"
           aria-label="Bagikan website"
         >
           {open ? (
-            <X size={22} className="text-slate-600" />
+            <X size={22} className={isDark ? "text-emerald-200" : "text-slate-600"} />
           ) : (
-            <Share2 size={22} className="text-emerald-700 group-hover:scale-110 transition-transform" />
+            <Share2 size={22} className={`${isDark ? "text-emerald-300" : "text-emerald-700"} group-hover:scale-110 transition-transform`} />
           )}
         </button>
       </div>

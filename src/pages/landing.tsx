@@ -129,7 +129,7 @@ export default function Landing({
           <PineDivider color={isDark ? "#0a1210" : "#ffffff"} />
         </div>
         <Contact />
-        <div className="bg-white">
+        <div className={isDark ? "bg-[#0a1210]" : "bg-white"}>
           <PineDivider color="#14301c" />
         </div>
         <Footer buperName={settings.buper_name} />

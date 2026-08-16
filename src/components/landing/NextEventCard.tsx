@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import { useReveal } from "@/hooks/useReveal";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 type Unified = (PublicYearBooking & { _kind: "booking" }) | (PublicEvent & { _kind: "event" });
 
@@ -34,6 +35,7 @@ function fmtRange(startStr: string, endStr: string): string {
 
 export default function NextEventCard() {
   const reveal = useReveal<HTMLDivElement>(0.05);
+  const { isDark } = useLandingTheme();
   const [next, setNext] = useState<(Unified & { _isOngoing?: boolean }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [forcedVisible, setForcedVisible] = useState(false);
@@ -147,10 +149,10 @@ export default function NextEventCard() {
       <div className="fixed bottom-4 left-4 z-[90] md:bottom-6 md:left-6">
         <button
           onClick={() => setDismissed(false)}
-          className="group relative w-11 h-11 md:w-10 md:h-10 rounded-full bg-white border-2 border-dashed border-amber-300 shadow-xl flex items-center justify-center hover:scale-110 hover:border-emerald-300 transition-all duration-300"
+          className={`group relative w-11 h-11 md:w-10 md:h-10 rounded-full border-2 border-dashed shadow-xl flex items-center justify-center hover:scale-110 transition-all duration-300 ${isDark ? "bg-[#132a1a] border-emerald-800 hover:border-emerald-600" : "bg-white border-amber-300 hover:border-emerald-300"}`}
           aria-label="Tampilkan jadwal selanjutnya"
         >
-          <Tent size={18} className="text-emerald-700 group-hover:rotate-6 transition-transform" />
+          <Tent size={18} className={`${isDark ? "text-emerald-300" : "text-emerald-700"} group-hover:rotate-6 transition-transform`} />
           <span className="absolute -top-1 -right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600 border-2 border-white" />
@@ -162,10 +164,10 @@ export default function NextEventCard() {
 
   if (loading) {
     return (
-      <div className="fixed bottom-4 left-4 z-[60] md:bottom-6 md:left-6 w-[calc(100vw-32px)] max-w-[280px] md:max-w-[300px] rounded-xl border-2 border-dashed border-amber-200/60 bg-white/70 p-3 animate-pulse backdrop-blur-xl">
-        <div className="h-3 w-20 bg-slate-100 rounded mb-2" />
-        <div className="h-4 w-36 bg-slate-100 rounded mb-1.5" />
-        <div className="h-2.5 w-24 bg-slate-100 rounded" />
+      <div className={`fixed bottom-4 left-4 z-[60] md:bottom-6 md:left-6 w-[calc(100vw-32px)] max-w-[280px] md:max-w-[300px] rounded-xl border-2 border-dashed p-3 animate-pulse backdrop-blur-xl ${isDark ? "border-emerald-800/60 bg-[#132a1a]/70" : "border-amber-200/60 bg-white/70"}`}>
+        <div className={`h-3 w-20 rounded mb-2 ${isDark ? "bg-emerald-900/50" : "bg-slate-100"}`} />
+        <div className={`h-4 w-36 rounded mb-1.5 ${isDark ? "bg-emerald-900/50" : "bg-slate-100"}`} />
+        <div className={`h-2.5 w-24 rounded ${isDark ? "bg-emerald-900/50" : "bg-slate-100"}`} />
       </div>
     );
   }
@@ -214,7 +216,7 @@ export default function NextEventCard() {
     >
       <div
         onClick={handleClick}
-        className="group relative cursor-pointer rounded-xl bg-white/95 backdrop-blur-xl border-2 border-dashed border-amber-300 p-3 pr-3 shadow-xl hover:shadow-2xl hover:-translate-y-0.5 hover:rotate-[-0.5deg] hover:border-emerald-300 transition-all duration-300"
+        className={`group relative cursor-pointer rounded-xl backdrop-blur-xl border-2 border-dashed p-3 pr-3 shadow-xl hover:shadow-2xl hover:-translate-y-0.5 hover:rotate-[-0.5deg] transition-all duration-300 ${isDark ? "bg-[#132a1a]/95 border-emerald-800 hover:border-emerald-600" : "bg-white/95 border-amber-300 hover:border-emerald-300"}`}
       >
         <button
           type="button"
@@ -222,7 +224,7 @@ export default function NextEventCard() {
             e.stopPropagation();
             setDismissed(true);
           }}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors z-10"
+          className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border shadow-md flex items-center justify-center transition-colors z-10 ${isDark ? "bg-[#1e3a2a] border-emerald-800 text-emerald-300 hover:text-emerald-100 hover:bg-[#14301c]" : "bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
           aria-label="Sembunyikan"
         >
           <X size={12} />
@@ -261,10 +263,10 @@ export default function NextEventCard() {
               </span>
             </div>
 
-            <h4 className="font-bold text-brown text-[12.5px] leading-tight truncate group-hover:text-emerald-700 transition-colors">
+            <h4 className={`font-bold text-[12.5px] leading-tight truncate transition-colors ${isDark ? "text-emerald-100 group-hover:text-emerald-200" : "text-brown group-hover:text-emerald-700"}`}>
               {title}
             </h4>
-            <p className="text-[11px] text-slate-500 truncate flex items-center gap-1 mt-0.5">
+            <p className={`text-[11px] truncate flex items-center gap-1 mt-0.5 ${isDark ? "text-emerald-200/60" : "text-slate-500"}`}>
               {isEvent ? (
                 <>
                   <MapPin size={10} className="shrink-0" />
@@ -279,10 +281,10 @@ export default function NextEventCard() {
             </p>
 
             <div className="mt-1.5 flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-brown bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-2 py-0.5 ${isDark ? "text-amber-200 bg-amber-900/40 border border-amber-800" : "text-brown bg-amber-50 border border-amber-200"}`}>
                 {range}
               </span>
-              <span className="ml-auto hidden md:inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-300">
+              <span className={`ml-auto hidden md:inline-flex items-center gap-0.5 text-[10px] font-medium opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-300 ${isDark ? "text-emerald-300" : "text-emerald-700"}`}>
                 Lihat
                 <ArrowRight size={10} />
               </span>
