@@ -15,6 +15,7 @@ import PineDivider from "@/components/landing/ornaments/PineDivider";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import NextEventCard from "@/components/landing/NextEventCard";
 import ShareFloat from "@/components/landing/ShareFloat";
+import ThemeDebugToggle from "@/components/landing/ThemeDebugToggle";
 
 const DEFAULT_SETTINGS: PublicSettings = {
   landing_wa_number: "6280000000000",
@@ -28,7 +29,8 @@ export default function Landing({
   sharedSettings?: PublicSettings;
 }) {
   const settings = sharedSettings ?? DEFAULT_SETTINGS;
-  const isDark = useAutoDarkMode();
+  const theme = useAutoDarkMode();
+  const isDark = theme.isDark;
 
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
@@ -69,7 +71,7 @@ export default function Landing({
   const whiteBg = isDark ? "bg-[#0a1210]" : "bg-white";
 
   return (
-    <LandingThemeContext.Provider value={{ isDark }}>
+    <LandingThemeContext.Provider value={theme}>
       <div
         className={`min-h-screen overflow-x-clip max-w-[100vw] transition-colors duration-700 ${isDark ? "bg-[#080e0a] text-emerald-100" : "bg-white text-slate-900"}`}
       >
@@ -135,6 +137,7 @@ export default function Landing({
         <Footer buperName={settings.buper_name} />
         <NextEventCard />
         <ShareFloat />
+        <ThemeDebugToggle />
       </div>
     </LandingThemeContext.Provider>
   );
