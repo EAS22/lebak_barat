@@ -100,7 +100,7 @@ function YearBookingList({ year, onSelectDate }: { year: number; onSelectDate?: 
   }, [year]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-6 flex flex-col h-full min-h-[560px] lg:min-h-0">
+    <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-emerald-300 p-3 sm:p-6 flex flex-col w-full max-w-full overflow-hidden min-h-[400px] sm:min-h-[560px] lg:min-h-0 lg:h-full">
       <div className="flex items-center gap-3 mb-1 shrink-0">
         <ScoutBadge
           icon={<CalendarCheck size={18} />}
@@ -207,13 +207,16 @@ export default function CalendarStatus() {
   const monthStr = format(currentMonth, "yyyy-MM");
   const currentYear = getYear(currentMonth);
 
-  // Sync right card height to left card on desktop
   useEffect(() => {
     const left = document.getElementById("kalender-card");
     const right = rightCardRef.current;
-    if (!left || !right || window.innerWidth < 1024) return;
+    if (!left || !right) return;
 
     const sync = () => {
+      if (window.innerWidth < 1024) {
+        if (right) right.style.height = "";
+        return;
+      }
       const h = left.getBoundingClientRect().height;
       if (h > 0) {
         right.style.height = `${h}px`;
@@ -227,6 +230,7 @@ export default function CalendarStatus() {
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", sync);
+      if (right) right.style.height = "";
     };
   }, [bookings, loading]);
 
@@ -307,8 +311,8 @@ export default function CalendarStatus() {
   )}.`;
 
   return (
-    <section id="kalender" className="py-16 md:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="kalender" className="py-16 md:py-24 bg-white overflow-x-clip">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full max-w-[100vw] sm:max-w-7xl box-border">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold mb-4">
             <Tent size={16} />
@@ -327,7 +331,7 @@ export default function CalendarStatus() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto lg:items-stretch items-start w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 max-w-5xl mx-auto lg:items-stretch items-start w-full max-w-full">
           {/* Kalender - patokan tinggi */}
           <div
             ref={wrap.ref}
@@ -508,7 +512,7 @@ export default function CalendarStatus() {
             </div>
           </div>
 
-          {/* Daftar booking tahun berjalan - tinggi ikut kalender */}
+          {/* Daftar booking tahun berjalan - tinggi ikut kalender desktop */}
           <div
             ref={(node) => {
               if (node) {
@@ -516,7 +520,7 @@ export default function CalendarStatus() {
                 rightCardRef.current = node;
               }
             }}
-            className={`reveal reveal-right lg:flex lg:flex-col lg:h-full ${listReveal.visible ? "is-visible" : ""}`}
+            className={`reveal reveal-right w-full max-w-full lg:flex lg:flex-col lg:h-full ${listReveal.visible ? "is-visible" : ""}`}
           >
             <YearBookingList year={currentYear} onSelectDate={(d) => setCurrentMonth(d)} />
           </div>
