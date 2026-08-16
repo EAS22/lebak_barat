@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, LogIn } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 interface NavbarProps {
   buperName: string;
@@ -31,6 +32,7 @@ export default function Navbar({ buperName }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDark } = useLandingTheme();
 
   useEffect(() => {
     function onScroll() {
@@ -70,7 +72,9 @@ export default function Navbar({ buperName }: NavbarProps) {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled || open
-          ? "bg-white/90 backdrop-blur-lg shadow-md"
+          ? isDark
+            ? "bg-[#0a1210]/90 backdrop-blur-lg shadow-md border-b border-emerald-900/30"
+            : "bg-white/90 backdrop-blur-lg shadow-md"
           : "bg-transparent"
       }`}
     >

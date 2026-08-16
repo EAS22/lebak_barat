@@ -2,6 +2,7 @@ import { Landmark, Waves, Trees } from "lucide-react";
 import { useReveal } from "@/hooks/useReveal";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 const MILESTONES = [
   {
@@ -24,9 +25,10 @@ const MILESTONES = [
 export default function History() {
   const left = useReveal<HTMLDivElement>();
   const right = useReveal<HTMLDivElement>();
+  const { isDark } = useLandingTheme();
 
   return (
-    <section id="profil" className="relative py-16 md:py-24 bg-cream">
+    <section id="profil" className={`relative py-16 md:py-24 transition-colors duration-700 ${isDark ? "bg-[#0e1a12]" : "bg-cream"}`}>
       <TopoPattern />
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">

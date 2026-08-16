@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import type { PublicSettings } from "@/lib/api";
+import { useAutoDarkMode } from "@/hooks/useAutoDarkMode";
+import { LandingThemeContext } from "@/components/landing/ThemeContext";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import About from "@/components/landing/About";
@@ -26,6 +28,7 @@ export default function Landing({
   sharedSettings?: PublicSettings;
 }) {
   const settings = sharedSettings ?? DEFAULT_SETTINGS;
+  const isDark = useAutoDarkMode();
 
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
@@ -62,40 +65,77 @@ export default function Landing({
     }
   }, [settings.buper_name]);
 
+  const creamBg = isDark ? "bg-[#0e1a12]" : "bg-cream";
+  const whiteBg = isDark ? "bg-[#0a1210]" : "bg-white";
+
   return (
-    <div className="min-h-screen bg-white text-slate-900 overflow-x-clip max-w-[100vw]">
-      <Navbar buperName={settings.buper_name} />
-      <Hero />
-      <About />
-      <div className="bg-cream">
-        <PineDivider color="#ffffff" />
+    <LandingThemeContext.Provider value={{ isDark }}>
+      <div
+        className={`min-h-screen overflow-x-clip max-w-[100vw] transition-colors duration-700 ${isDark ? "bg-[#080e0a] text-emerald-100" : "bg-white text-slate-900"}`}
+      >
+        <Navbar buperName={settings.buper_name} />
+        <Hero />
+        <div className={creamBg}>
+          <PineDivider color={isDark ? "#0a1210" : "#ffffff"} />
+        </div>
+        <div className={whiteBg}>
+          <MountainDivider
+            colors={
+              isDark
+                ? ["#1a3a26", "#14301c", "#0e1a12"]
+                : ["#A5D6A7", "#66BB6A", "#FFF8E1"]
+            }
+          />
+        </div>
+        <About />
+        <div className={creamBg}>
+          <PineDivider color={isDark ? "#0a1210" : "#ffffff"} />
+        </div>
+        <div className={whiteBg}>
+          <MountainDivider
+            colors={
+              isDark
+                ? ["#1e4a2e", "#1a3a26", "#0e1a12"]
+                : ["#FFECB3", "#FFE082", "#FFF8E1"]
+            }
+          />
+        </div>
+        <History />
+        <div className={creamBg}>
+          <PineDivider color={isDark ? "#0a1210" : "#ffffff"} />
+        </div>
+        <CalendarStatus />
+        <div className={whiteBg}>
+          <MountainDivider
+            colors={
+              isDark
+                ? ["#1a3a26", "#14301c", "#0a1210"]
+                : ["#FFECB3", "#FFE082", "#FFF8E1"]
+            }
+          />
+        </div>
+        <Facilities />
+        <div className={whiteBg}>
+          <MountainDivider
+            colors={
+              isDark
+                ? ["#1e4a2e", "#14301c", "#121a0f"]
+                : ["#FFECB3", "#FFE082", "#FFF8E1"]
+            }
+          />
+        </div>
+        <Gallery />
+        <div className={creamBg}>
+          <PineDivider color={isDark ? "#0a1210" : "#ffffff"} />
+        </div>
+        <Contact />
+        <div className="bg-white">
+          <PineDivider color="#14301c" />
+        </div>
+        <Footer buperName={settings.buper_name} />
+        <NextEventCard />
+        <ShareFloat />
       </div>
-      <div className="bg-white">
-        <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
-      </div>
-      <History />
-      <div className="bg-cream">
-        <PineDivider color="#ffffff" />
-      </div>
-      <CalendarStatus />
-      <div className="bg-white">
-        <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
-      </div>
-      <Facilities />
-      <div className="bg-white">
-        <MountainDivider colors={["#FFECB3", "#FFE082", "#FFF8E1"]} />
-      </div>
-      <Gallery />
-      <div className="bg-cream">
-        <PineDivider color="#ffffff" />
-      </div>
-      <Contact />
-      <div className="bg-white">
-        <PineDivider color="#14301c" />
-      </div>
-      <Footer buperName={settings.buper_name} />
-      <NextEventCard />
-      <ShareFloat />
-    </div>
+    </LandingThemeContext.Provider>
   );
 }

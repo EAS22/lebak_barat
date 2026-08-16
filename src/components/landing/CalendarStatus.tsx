@@ -16,6 +16,7 @@ import {
 import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 import {
   format,
   startOfMonth,
@@ -197,6 +198,7 @@ export default function CalendarStatus() {
   const wrap = useReveal<HTMLDivElement>();
   const listReveal = useReveal<HTMLDivElement>();
   const { openWaModal } = useWaBooking();
+  const { isDark } = useLandingTheme();
   const [currentMonth, setCurrentMonth] = useState(() =>
     startOfMonth(new Date())
   );
@@ -311,7 +313,7 @@ export default function CalendarStatus() {
   )}.`;
 
   return (
-    <section id="kalender" className="py-16 md:py-24 bg-white overflow-x-clip">
+    <section id="kalender" className={`py-16 md:py-24 overflow-x-clip transition-colors duration-700 ${isDark ? "bg-[#0a1210]" : "bg-white"}`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full max-w-[100vw] sm:max-w-7xl box-border">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold mb-4">

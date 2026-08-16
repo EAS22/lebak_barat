@@ -3,6 +3,7 @@ import { MapPin, Clock, MessageCircle, Mail, Instagram, Youtube, Maximize2 } fro
 import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 import CampfireFlame from "@/components/landing/ornaments/CampfireFlame";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 const MAP_URL = "https://maps.app.goo.gl/K9xTHjgc4boF3YQu5";
 const MAP_COORDS = "-6.943210, 108.325651";
@@ -40,10 +41,11 @@ export default function Contact() {
   const card = useReveal<HTMLDivElement>();
   const denah = useReveal<HTMLDivElement>();
   const { openWaModal } = useWaBooking();
+  const { isDark } = useLandingTheme();
   const [showDenahFull, setShowDenahFull] = useState(false);
 
   return (
-    <section id="kontak" className="py-16 md:py-24 bg-white">
+    <section id="kontak" className={`py-16 md:py-24 transition-colors duration-700 ${isDark ? "bg-[#0a1210]" : "bg-white"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-brown">

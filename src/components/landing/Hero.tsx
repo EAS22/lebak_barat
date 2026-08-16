@@ -3,9 +3,11 @@ import { CalendarDays, Phone, Tent } from "lucide-react";
 import { useReveal } from "@/hooks/useReveal";
 import { useWaBooking } from "@/components/landing/WaBookingModal";
 import CloudsSun from "@/components/landing/ornaments/CloudsSun";
+import MoonStars from "@/components/landing/ornaments/MoonStars";
 import TentIllustration from "@/components/landing/ornaments/TentIllustration";
 import MountainDivider from "@/components/landing/ornaments/MountainDivider";
 import ScoutBadge from "@/components/landing/ornaments/ScoutBadge";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const { ref, visible } = useReveal<HTMLSpanElement>();
   const [count, setCount] = useState(0);
@@ -40,6 +42,7 @@ function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
 export default function Hero() {
   const [offsetX, setOffsetX] = useState(0);
   const { openWaModal } = useWaBooking();
+  const { isDark } = useLandingTheme();
 
   function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -49,10 +52,10 @@ export default function Hero() {
 
   return (
     <section
-      className="relative overflow-hidden pt-24 pb-28 md:pt-32 md:pb-40 bg-gradient-to-b from-sky-100 to-amber-50"
+      className={`relative overflow-hidden pt-24 pb-28 md:pt-32 md:pb-40 transition-colors duration-700 ${isDark ? "bg-gradient-to-b from-[#060e09] to-[#0f2418]" : "bg-gradient-to-b from-sky-100 to-amber-50"}`}
       onMouseMove={handleMouseMove}
     >
-      <CloudsSun />
+      {isDark ? <MoonStars /> : <CloudsSun />}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -64,11 +67,11 @@ export default function Hero() {
                 colorClass="text-emerald-700"
               />
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-brown leading-tight">
+            <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold leading-tight ${isDark ? "text-emerald-50" : "text-brown"}`}>
               Bumi Perkemahan{" "}
-              <span className="text-emerald-600">Lebak Barat</span>
+              <span className={isDark ? "text-emerald-300" : "text-emerald-600"}>Lebak Barat</span>
             </h1>
-            <p className="mt-4 text-lg text-slate-700 leading-relaxed">
+            <p className={`mt-4 text-lg leading-relaxed ${isDark ? "text-emerald-200/70" : "text-slate-700"}`}>
               Terletak di Desa Girimulya, Kecamatan Banjaran, Kabupaten
               Majalengka. Fasilitas lengkap untuk kegiatan kemah, school camp,
               dan gathering.
@@ -106,22 +109,22 @@ export default function Hero() {
             </div>
             <div className="mt-12 grid grid-cols-3 gap-6">
               <div>
-                <div className="text-2xl md:text-3xl font-bold text-brown">
+                <div className={`text-2xl md:text-3xl font-bold ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   <Counter target={20} suffix="+" />
                 </div>
-                <div className="text-sm text-slate-600">Fasilitas</div>
+                <div className={`text-sm ${isDark ? "text-emerald-300/60" : "text-slate-600"}`}>Fasilitas</div>
               </div>
               <div>
-                <div className="text-2xl md:text-3xl font-bold text-brown">
+                <div className={`text-2xl md:text-3xl font-bold ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   <Counter target={600} />
                 </div>
-                <div className="text-sm text-slate-600">Kapasitas Peserta</div>
+                <div className={`text-sm ${isDark ? "text-emerald-300/60" : "text-slate-600"}`}>Kapasitas Peserta</div>
               </div>
               <div>
-                <div className="text-2xl md:text-3xl font-bold text-brown">
+                <div className={`text-2xl md:text-3xl font-bold ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   <Counter target={1} />
                 </div>
-                <div className="text-sm text-slate-600">Akses Aman</div>
+                <div className={`text-sm ${isDark ? "text-emerald-300/60" : "text-slate-600"}`}>Akses Aman</div>
               </div>
             </div>
 
@@ -143,7 +146,7 @@ export default function Hero() {
           transform: `translateX(${offsetX}px)`,
         }}
       >
-        <MountainDivider colors={["#A5D6A7", "#66BB6A", "#FFF8E1"]} />
+        <MountainDivider colors={isDark ? ["#1a3a26", "#14301c", "#0e1a12"] : ["#A5D6A7", "#66BB6A", "#FFF8E1"]} />
       </div>
     </section>
   );

@@ -100,6 +100,7 @@ import type { CSSProperties } from "react";
 import { useReveal } from "@/hooks/useReveal";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 import { fetchPublicFacilities, type PublicFacility } from "@/lib/api";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 export const ICON_MAP: Record<string, LucideIcon> = {
   tent: Tent,
@@ -363,6 +364,7 @@ function FacilityCard({
 
 export default function Facilities() {
   const grid = useReveal<HTMLDivElement>(0.05);
+  const { isDark } = useLandingTheme();
   const [facilities, setFacilities] = useState<PublicFacility[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -387,7 +389,7 @@ export default function Facilities() {
     .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <section id="fasilitas" className="relative py-16 md:py-24 bg-cream">
+    <section id="fasilitas" className={`relative py-16 md:py-24 transition-colors duration-700 ${isDark ? "bg-[#0e1a12]" : "bg-cream"}`}>
       <TopoPattern />
       <div
         ref={grid.ref}

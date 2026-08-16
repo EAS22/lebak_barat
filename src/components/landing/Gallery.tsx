@@ -3,6 +3,7 @@ import { Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useReveal } from "@/hooks/useReveal";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
 import { fetchPublicGallery, type PublicGalleryItem } from "@/lib/api";
+import { useLandingTheme } from "@/components/landing/ThemeContext";
 
 type GalleryItem = PublicGalleryItem;
 
@@ -63,10 +64,12 @@ function PolaroidCard({
   item,
   index,
   onClick,
+  isDark,
 }: {
   item: GalleryItem;
   index: number;
   onClick: () => void;
+  isDark?: boolean;
 }) {
   const rot = ROTATIONS[index % ROTATIONS.length]!;
   const tapeRot = index % 2 === 0 ? -3 : 3;
@@ -76,12 +79,17 @@ function PolaroidCard({
       style={{ transform: `rotate(${rot}deg)`, transformOrigin: "center" }}
       onClick={onClick}
     >
-      <div className="relative bg-[#FFF8E1] rounded-[2px] p-3 pb-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.1)] transition-all duration-300 group-hover:shadow-[0_16px_40px_rgba(0,0,0,0.18),0_2px_8px_rgba(0,0,0,0.12)] group-hover:rotate-0 group-hover:scale-[1.03] group-hover:z-10">
+      <div
+        className={`relative rounded-[2px] p-3 pb-12 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.1)] transition-all duration-300 group-hover:shadow-[0_16px_40px_rgba(0,0,0,0.18),0_2px_8px_rgba(0,0,0,0.12)] group-hover:rotate-0 group-hover:scale-[1.03] group-hover:z-10 ${isDark ? "bg-[#2a2418]" : "bg-[#FFF8E1]"}`}
+      >
         <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-6 bg-amber-200/60 rounded-sm shadow-sm"
-          style={{ transform: `translateX(-50%) rotate(${tapeRot}deg)` }}
+          className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-6 rounded-sm shadow-sm"
+          style={{
+            transform: `translateX(-50%) rotate(${tapeRot}deg)`,
+            background: isDark ? "rgba(251,191,36,0.35)" : "rgba(253,224,71,0.6)",
+          }}
         >
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.04)_3px,rgba(0,0,0,0.04)_6px)]" />
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(0,0,0,0.08)_3px,rgba(0,0,0,0.08)_6px)]" />
         </div>
         <div className="aspect-square overflow-hidden bg-slate-100">
           <img
@@ -93,13 +101,13 @@ function PolaroidCard({
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-3 pt-2 pb-3 flex items-end justify-between">
           <span
-            className="font-bold text-brown text-[13px] leading-tight"
+            className={`font-bold text-[13px] leading-tight ${isDark ? "text-amber-100" : "text-brown"}`}
             style={{ fontFamily: "'Caveat', cursive" }}
           >
             {item.caption}
           </span>
           {item.year && (
-            <span className="font-mono text-[11px] font-semibold text-slate-500">
+            <span className={`font-mono text-[11px] font-semibold ${isDark ? "text-amber-200/60" : "text-slate-500"}`}>
               {item.year}
             </span>
           )}
@@ -156,6 +164,7 @@ function Lightbox({
 
 export default function Gallery() {
   const reveal = useReveal<HTMLDivElement>(0.05);
+  const { isDark } = useLandingTheme();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
@@ -191,7 +200,7 @@ export default function Gallery() {
   }
 
   return (
-    <section id="galeri" className="relative py-16 md:py-24 bg-cream overflow-x-clip">
+    <section id="galeri" className={`relative py-16 md:py-24 overflow-x-clip transition-colors duration-700 ${isDark ? "bg-[#121a0f]" : "bg-cream"}`}>
       <TopoPattern />
       <div
         ref={reveal.ref}
@@ -217,7 +226,7 @@ export default function Gallery() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-7 lg:gap-8 max-w-5xl mx-auto overflow-visible md:overflow-visible py-2 px-1">
             {items.map((item, i) => (
-              <PolaroidCard key={item.slot_number} item={item} index={i} onClick={() => setSelected(item.slot_number)} />
+              <PolaroidCard key={item.slot_number} item={item} index={i} onClick={() => setSelected(item.slot_number)} isDark={isDark} />
             ))}
           </div>
         )}
