@@ -327,16 +327,16 @@ export default function CalendarStatus() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto lg:items-stretch items-start">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto lg:items-stretch items-start w-full">
           {/* Kalender - patokan tinggi */}
           <div
             ref={wrap.ref}
             id="kalender-grid"
-            className={`reveal lg:flex lg:flex-col lg:h-full ${wrap.visible ? "is-visible" : ""}`}
+            className={`reveal w-full max-w-full lg:flex lg:flex-col lg:h-full ${wrap.visible ? "is-visible" : ""}`}
           >
             <div
               id="kalender-card"
-              className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 lg:flex lg:flex-col lg:h-full lg:min-h-[560px]"
+              className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-3 sm:p-6 w-full max-w-full overflow-hidden lg:flex lg:flex-col lg:h-full lg:min-h-[560px]"
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -390,11 +390,11 @@ export default function CalendarStatus() {
               </div>
 
               {/* Day headers */}
-              <div className="grid grid-cols-7 gap-1.5 mb-2">
+              <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2">
                 {DAY_LABELS.map((d) => (
                   <div
                     key={d}
-                    className="text-center text-xs font-bold text-brown/70 py-1"
+                    className="text-center text-[10px] sm:text-xs font-bold text-brown/70 py-1"
                   >
                     {d}
                   </div>
@@ -403,18 +403,18 @@ export default function CalendarStatus() {
 
               {/* Days grid */}
               {loading ? (
-                <div className="grid grid-cols-7 gap-1.5">
+                <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
                   {Array.from({ length: 35 }).map((_, i) => (
                     <div
                       key={i}
-                      className="h-11 rounded-xl bg-slate-100 animate-pulse"
+                      className="h-10 sm:h-11 rounded-xl bg-slate-100 animate-pulse"
                     />
                   ))}
                 </div>
               ) : (
                 <div
                   key={monthStr}
-                  className="grid grid-cols-7 gap-1.5 anim-fade-slide"
+                  className="grid grid-cols-7 gap-1 sm:gap-1.5 anim-fade-slide"
                 >
                   {Array.from({ length: firstDayOffset }).map((_, i) => (
                     <div key={`empty-${i}`} />
@@ -423,12 +423,13 @@ export default function CalendarStatus() {
                     const status = dayStatus(day);
                     const past =
                       isBefore(day, today) && !isSameDay(day, today);
-                    const isToday = isSameDay(day, today);
+                    const todayCell = isSameDay(day, today);
                     return (
                       <div
                         key={day.toISOString()}
                         className={`
-                          relative h-11 flex flex-col items-center justify-center rounded-xl cursor-default transition-transform hover:scale-105
+                          relative h-10 sm:h-11 flex flex-col items-center justify-center rounded-lg sm:rounded-xl cursor-default transition-transform hover:scale-105 min-w-0
+                          ${todayCell ? "ring-1 sm:ring-2 ring-amber-400 ring-offset-1" : ""}
                           ${
                             status === "event"
                               ? "bg-blue-900 text-white font-bold group shadow-sm"
@@ -440,24 +441,23 @@ export default function CalendarStatus() {
                                     ? "bg-slate-50 text-slate-300"
                                     : "bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
                           }
-                          ${isToday ? "ring-2 ring-amber-400 ring-offset-1" : ""}
                         `}
                       >
-                        <span className="text-sm leading-none">
+                        <span className="text-xs sm:text-sm leading-none">
                           {day.getDate()}
                         </span>
                         {status === "final" && (
-                          <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">
+                          <span className="text-[8px] sm:text-[9px] leading-none mt-0.5 font-semibold uppercase">
                             Penuh
                           </span>
                         )}
                         {status === "negosiasi" && (
-                          <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">
+                          <span className="text-[8px] sm:text-[9px] leading-none mt-0.5 font-semibold uppercase">
                             Nego
                           </span>
                         )}
                         {status === "event" && (
-                          <span className="text-[9px] leading-none mt-0.5 font-semibold uppercase">
+                          <span className="text-[8px] sm:text-[9px] leading-none mt-0.5 font-semibold uppercase">
                             Event
                           </span>
                         )}
