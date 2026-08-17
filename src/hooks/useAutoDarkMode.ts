@@ -21,8 +21,7 @@ function computeDark(override: ThemeOverride): boolean {
   if (override === "dark") return true;
   const h = new Date().getHours();
   const isNight = h >= 18 || h < 6;
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  return prefersDark || isNight;
+  return isNight;
 }
 
 export function useAutoDarkMode() {
