@@ -19,7 +19,10 @@ import Footer from "@/components/landing/Footer";
 import { useReveal } from "@/hooks/useReveal";
 import PineDivider from "@/components/landing/ornaments/PineDivider";
 import CloudsSun from "@/components/landing/ornaments/CloudsSun";
+import MoonStars from "@/components/landing/ornaments/MoonStars";
 import TopoPattern from "@/components/landing/ornaments/TopoPattern";
+import { LandingThemeContext } from "@/components/landing/ThemeContext";
+import { useAutoDarkMode } from "@/hooks/useAutoDarkMode";
 import type { PublicSettings } from "@/lib/api";
 
 interface VerifyResult {
@@ -48,6 +51,8 @@ export default function VerificationPage({
   sharedSettings?: PublicSettings;
 }) {
   const settings = sharedSettings ?? DEFAULT_SETTINGS;
+  const theme = useAutoDarkMode();
+  const isDark = theme.isDark;
   const [searchParams, setSearchParams] = useSearchParams();
   const [input, setInput] = useState(() => searchParams.get("invoice") || "");
   const [result, setResult] = useState<VerifyResult | null>(null);
@@ -313,39 +318,40 @@ export default function VerificationPage({
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col overflow-x-clip max-w-[100vw]">
-      <Navbar buperName={settings.buper_name} />
+    <LandingThemeContext.Provider value={theme}>
+      <div className={`min-h-screen flex flex-col overflow-x-clip max-w-[100vw] transition-colors duration-700 ${isDark ? "bg-[#080e0a] text-emerald-100" : "bg-white text-slate-900"}`}>
+        <Navbar buperName={settings.buper_name} />
 
-      {/* Hero compact */}
-      <section className="relative overflow-hidden pt-20 pb-6 md:pt-24 md:pb-8 bg-gradient-to-b from-sky-100 to-amber-50">
-        <CloudsSun />
-        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <div
-            ref={heroReveal.ref}
-            className={`reveal ${heroReveal.visible ? "is-visible" : ""}`}
-          >
-            <div className="mx-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold mb-2">
-              <BadgeCheck size={13} />
-              Keaslian Dokumen
+        {/* Hero compact */}
+        <section className={`relative overflow-hidden pt-20 pb-6 md:pt-24 md:pb-8 transition-colors duration-700 ${isDark ? "bg-gradient-to-b from-[#060e09] to-[#0f2418]" : "bg-gradient-to-b from-sky-100 to-amber-50"}`}>
+          {isDark ? <MoonStars /> : <CloudsSun />}
+          <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
+            <div
+              ref={heroReveal.ref}
+              className={`reveal ${heroReveal.visible ? "is-visible" : ""}`}
+            >
+              <div className={`mx-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2 ${isDark ? "bg-emerald-900/50 text-emerald-200 border border-emerald-800" : "bg-emerald-100 text-emerald-800"}`}>
+                <BadgeCheck size={13} />
+                Keaslian Dokumen
+              </div>
+              <h1 className={`text-xl md:text-2xl font-bold leading-snug ${isDark ? "text-emerald-50" : "text-brown"}`}>
+                Verifikasi <span className={isDark ? "text-emerald-300" : "text-emerald-600"}>Invoice</span>
+              </h1>
+              <p className={`mt-1.5 text-sm max-w-lg mx-auto ${isDark ? "text-emerald-200/70" : "text-slate-600"}`}>
+                Scan QR Code atau masukkan nomor invoice untuk memastikan keaslian booking.
+              </p>
             </div>
-            <h1 className="text-xl md:text-2xl font-bold text-brown leading-snug">
-              Verifikasi <span className="text-emerald-600">Invoice</span>
-            </h1>
-            <p className="mt-1.5 text-sm text-slate-600 max-w-lg mx-auto">
-              Scan QR Code atau masukkan nomor invoice untuk memastikan keaslian booking.
-            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Main */}
-      <section className="relative py-6 md:py-10 bg-white">
-        <TopoPattern />
-        <div className="relative z-10 max-w-2xl w-full mx-auto px-4 sm:px-6">
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-dashed border-amber-300 p-6 space-y-5">
+        {/* Main */}
+        <section className={`relative py-6 md:py-10 transition-colors duration-700 ${isDark ? "bg-[#0a1210]" : "bg-white"}`}>
+          <TopoPattern />
+          <div className="relative z-10 max-w-2xl w-full mx-auto px-4 sm:px-6">
+            <div className={`rounded-2xl shadow-lg border-2 border-dashed p-6 space-y-5 transition-colors ${isDark ? "bg-[#132a1a] border-emerald-800" : "bg-white border-amber-300"}`}>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-brown">Nomor Invoice</label>
+                <label className={`text-sm font-semibold ${isDark ? "text-emerald-100" : "text-brown"}`}>Nomor Invoice</label>
                 <div className="relative">
                   <Search
                     size={16}
@@ -358,7 +364,7 @@ export default function VerificationPage({
                       if (e.key === "Enter") doVerify(input);
                     }}
                     placeholder="Contoh: INV-LB-202607-AB12CD"
-                    className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-slate-50/60 text-sm font-mono tracking-wide focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                    className={`w-full h-11 pl-9 pr-3 rounded-xl border text-sm font-mono tracking-wide focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors ${isDark ? "border-emerald-800 bg-[#0a1210] text-emerald-100 placeholder:text-emerald-200/40 focus:bg-[#0e1a12] focus:border-emerald-700" : "border-slate-200 bg-slate-50/60 focus:bg-white focus:border-emerald-500"}`}
                   />
                 </div>
               </div>
@@ -540,11 +546,12 @@ export default function VerificationPage({
         </div>
       </section>
 
-      <div className="bg-white">
-        <PineDivider color="#14301c" />
+        <div className={isDark ? "bg-[#0a1210]" : "bg-white"}>
+          <PineDivider color="#14301c" />
+        </div>
+        <Footer buperName={settings.buper_name} />
       </div>
-      <Footer buperName={settings.buper_name} />
-    </div>
+    </LandingThemeContext.Provider>
   );
 }
 
