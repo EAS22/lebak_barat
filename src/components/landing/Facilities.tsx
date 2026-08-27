@@ -427,7 +427,7 @@ export default function Facilities() {
           <div className="space-y-10">
             {utama.length > 0 && (
               <div>
-                <h3 className="text-lg font-bold text-brown mb-4 text-center md:text-left">
+                <h3 className={`text-lg font-bold mb-4 text-center md:text-left ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   Fasilitas Utama &amp; Area
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 items-stretch">
@@ -444,7 +444,7 @@ export default function Facilities() {
             )}
             {opsional.length > 0 && (
               <div>
-                <h3 className="text-lg font-bold text-brown mb-4 text-center md:text-left">
+                <h3 className={`text-lg font-bold mb-4 text-center md:text-left ${isDark ? "text-emerald-100" : "text-brown"}`}>
                   Layanan &amp; Fasilitas Opsional
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 items-stretch">
