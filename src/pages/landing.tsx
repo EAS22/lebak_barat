@@ -77,16 +77,7 @@ export default function Landing({
         <Navbar buperName={settings.buper_name} />
         <Hero />
         <div className={creamBg}>
-          <PineDivider color={isDark ? "#0a1210" : "#ffffff"} />
-        </div>
-        <div className={whiteBg}>
-          <MountainDivider
-            colors={
-              isDark
-                ? ["#1a3a26", "#14301c", "#0e1a12"]
-                : ["#A5D6A7", "#66BB6A", "#FFF8E1"]
-            }
-          />
+          <PineDivider color={isDark ? "#0e1a12" : "#FFF8E1"} />
         </div>
         <About />
         <div className={creamBg}>
