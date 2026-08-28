@@ -1096,6 +1096,65 @@ app.get("/api/letter/next-number-preview", requireAuth, async (c) => {
   }
 });
 
+app.get("/api/arsip", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const invoices = await sql`SELECT id, invoice_number as nomor, 'invoice' as tipe, invoice_generated_at as tanggal, school_name as perihal, invoice_generated_by as created_by, participant_count as item_count FROM bookings WHERE invoice_number IS NOT NULL ORDER BY invoice_generated_at DESC`;
+    const surats = await sql`SELECT id, nomor, 'surat_pemberitahuan' as tipe, tanggal_surat as tanggal, kepada as perihal, created_by, item_count FROM letter_archives ORDER BY seq DESC`;
+    const combined = [...invoices.map((r: Record<string, unknown>) => ({ ...r, tipe: "invoice" })), ...surats.map((r: Record<string, unknown>) => ({ ...r, tipe: "surat_pemberitahuan" }))].sort((a: Record<string, unknown>, b: Record<string, unknown>) => new Date(b.tanggal as string).getTime() - new Date(a.tanggal as string).getTime());
+    return c.json(combined);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.delete("/api/arsip/:id", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    const tipe = c.req.query("tipe");
+    if (tipe === "invoice") {
+      const latest = await sql`SELECT id FROM bookings WHERE invoice_number IS NOT NULL ORDER BY invoice_generated_at DESC LIMIT 1`;
+      if (!latest[0] || (latest[0] as { id: string }).id !== id) {
+        return c.json({ error: "Hanya arsip terbaru yang boleh dihapus. Hapus berurutan dari yang terbaru." }, 400);
+      }
+      await sql`UPDATE bookings SET invoice_number = NULL, invoice_generated_at = NULL, invoice_generated_by = NULL WHERE id = ${id}`;
+      return c.json({ ok: true, message: "Invoice dibatalkan, nomor dapat dipergunakan kembali" });
+    } else if (tipe === "surat_pemberitahuan") {
+      const row = await sql`SELECT seq FROM letter_archives WHERE id = ${id}`;
+      if (!row[0]) return c.json({ error: "Arsip surat tidak ditemukan" }, 404);
+      const maxSeq = await sql`SELECT MAX(seq)::int as mx FROM letter_archives`;
+      const mx = (maxSeq[0] as { mx: number | null }).mx;
+      if ((row[0] as { seq: number }).seq !== mx) {
+        return c.json({ error: "Hanya surat terbaru yang boleh dihapus. Hapus berurutan dari yang terbaru." }, 400);
+      }
+      await sql`DELETE FROM letter_archives WHERE id = ${id}`;
+      await sql`UPDATE settings SET letter_seq = letter_seq - 1 WHERE id = 1`;
+      return c.json({ ok: true, message: "Surat dihapus, nomor dapat dipergunakan kembali" });
+    } else {
+      return c.json({ error: "Tipe harus invoice atau surat_pemberitahuan" }, 400);
+    }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.post("/api/letter/archive", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const body = await c.req.json() as { nomor?: string; seq?: number; kepada?: string; item_count?: number; tanggal_surat?: string };
+    if (!body.nomor || !body.seq) return c.json({ error: "nomor dan seq wajib" }, 400);
+    const user = c.get("user") as { id: string };
+    const rows = await sql`INSERT INTO letter_archives (nomor, seq, kepada, item_count, tanggal_surat, created_by) VALUES (${body.nomor}, ${body.seq}, ${body.kepada ?? ""}, ${body.item_count ?? 0}, ${body.tanggal_surat ?? new Date().toISOString().slice(0,10)}, ${user.id}) RETURNING *`;
+    return c.json(rows[0], 201);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 app.get("/api/public/gallery", async (c) => {
   try {
     const sql = getSql();

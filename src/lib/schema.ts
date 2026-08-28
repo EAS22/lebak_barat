@@ -104,3 +104,14 @@ export const letterRecipients = pgTable("letter_recipients", {
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const letterArchives = pgTable("letter_archives", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  nomor: varchar("nomor", { length: 100 }).notNull(),
+  seq: integer("seq").notNull(),
+  kepada: text("kepada"),
+  itemCount: integer("item_count").default(0).notNull(),
+  tanggalSurat: date("tanggal_surat").notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});

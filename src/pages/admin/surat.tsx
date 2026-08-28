@@ -160,6 +160,18 @@ export default function SuratPage() {
           endDate: r.end_date,
           participantCount: r.participant_count,
         }));
+      await fetch("/api/letter/archive", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomor: res.nomor,
+          seq: res.seq,
+          kepada: kepadaList.join(", "),
+          item_count: items.length,
+          tanggal_surat: tglSurat,
+        }),
+      });
       const { doc } = await generateSuratPdf({
         nomor: res.nomor,
         lampiran,
@@ -178,7 +190,7 @@ export default function SuratPage() {
       });
       const safeNomor = res.nomor.replace(/\//g, "-");
       doc.save(`Surat-Pemberitahuan-${safeNomor}.pdf`);
-      toast.success(`Surat ${res.nomor} diunduh — nomor auto naik`);
+      toast.success(`Surat ${res.nomor} diarsipkan & diunduh — nomor auto naik`);
       setPreviewUri(null);
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal download"); }
   }
