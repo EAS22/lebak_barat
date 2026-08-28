@@ -179,7 +179,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     y += 5;
   }
   doc.text("di", contentX, y); y += 5;
-  doc.text("Tempat", contentX, y); y += 5;
+  doc.text("Tempat", contentX, y); y += 10;
   doc.text("Dengan hormat,", contentX, y); y += 5;
 
   const bodyRaw = data.redaksiBody.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -247,9 +247,9 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   for (let i = 0; i < 2; i++) {
     const s = sigsTop[i]!; const x = i === 0 ? leftX : rightX;
     const parts = s.label.split("\n"); let ty = yTop;
-    for (const p of parts) { doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.text(p, x, ty, { align: "center" }); ty += 4; }
+    for (const p of parts) { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(p, x, ty, { align: "center" }); ty += 5; }
   }
-  const yNameTop = yTop + 20;
+  const yNameTop = yTop + 25;
   for (let i = 0; i < 2; i++) {
     const s = sigsTop[i]!; const x = i === 0 ? leftX : rightX;
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text(s.name, x, yNameTop, { align: "center" });
@@ -260,9 +260,9 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   for (let i = 0; i < 2; i++) {
     const s = sigsBottom[i]!; const x = i === 0 ? leftX : rightX;
     const parts = s.label.split("\n"); let ty = yBottom;
-    for (const p of parts) { doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.text(p, x, ty, { align: "center" }); ty += 4; }
+    for (const p of parts) { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(p, x, ty, { align: "center" }); ty += 5; }
   }
-  const yNameBottom = yBottom + 20;
+  const yNameBottom = yBottom + 25;
   for (let i = 0; i < 2; i++) {
     const s = sigsBottom[i]!; const x = i === 0 ? leftX : rightX;
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text(s.name, x, yNameBottom, { align: "center" });
@@ -274,8 +274,8 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
 
   doc.setFont("helvetica", "bold"); doc.setFontSize(10);
   doc.text("LAMPIRAN", pageW / 2, y, { align: "center" }); y += 6;
-  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-  doc.text(`Lampiran Surat Nomor: ${nomor}`, pageW / 2, y, { align: "center" }); y += 5;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  doc.text(`Lampiran Surat Nomor: ${nomor}`, pageW / 2, y, { align: "center" }); y += 6;
   doc.setFont("helvetica", "bold"); doc.setFontSize(10);
   doc.text("DAFTAR JADWAL KEGIATAN KEMAH DI BUPER LEBAK BARAT", pageW / 2, y, { align: "center" }); y += 10;
 
