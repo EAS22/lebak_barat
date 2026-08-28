@@ -117,7 +117,7 @@ export default function SuratPage() {
 
     setGenerating(true);
     try {
-      const { dataUri } = await generateSuratPdf({
+      const { blobUrl } = await generateSuratPdf({
         nomor: nomor.trim(),
         lampiran,
         perihal,
@@ -133,10 +133,7 @@ export default function SuratPage() {
         headerBase64: null,
         footerBase64: null,
       });
-      if (!dataUri || !dataUri.startsWith("data:application/pdf")) {
-        throw new Error("Preview dataUri kosong — coba refresh dan preview lagi");
-      }
-      setPreviewUri(dataUri);
+      setPreviewUri(blobUrl);
       toast.success("Preview siap — cek di bawah, jika pas klik Download PDF");
     } catch (e: unknown) {
       console.error("preview err", e);
