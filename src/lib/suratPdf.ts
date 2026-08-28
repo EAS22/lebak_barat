@@ -148,7 +148,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   ];
   const labelW = 22; const colonW = 4;
   for (const [label, value] of infoRows) {
-    ensureSpace(6);
+    ensureSpace(5);
     doc.setFont("helvetica", "normal");
     doc.text(label, contentX, y);
     doc.text(":", contentX + labelW, y);
@@ -158,7 +158,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       doc.text(valLines[i]!, contentX + labelW + colonW, y);
       if (i < valLines.length - 1) y += 5;
     }
-    y += 6;
+    y += 5;
   }
   y += 2;
 
@@ -199,9 +199,11 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     const lines = wrapText(doc, para, contentW);
     const paraH = lines.length * 5 + 3;
     ensureSpace(paraH);
-    for (const line of lines) {
+    for (let li = 0; li < lines.length; li++) {
       ensureSpace(5);
-      doc.text(line, contentX, y, { align: "justify", maxWidth: contentW } as never);
+      const isLast = li === lines.length - 1;
+      if (isLast) doc.text(lines[li]!, contentX, y);
+      else doc.text(lines[li]!, contentX, y, { align: "justify", maxWidth: contentW } as never);
       y += 5;
     }
     y += 3;
