@@ -228,15 +228,15 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   const tglStr = data.tanggalSurat ? fmtTgl(data.tanggalSurat) : format(new Date(), "d MMMM yyyy", { locale: localeId });
   doc.setFont("helvetica", "normal");
   doc.text(`Girimulya, ${tglStr}`, pageW / 2, y, { align: "center" }); y += 6;
-  doc.text("Hormat Kami,", pageW / 2, y, { align: "center" }); y += 20;
+  doc.text("Hormat Kami,", pageW / 2, y, { align: "center" }); y += 10;
 
   const sigsTop = [
-    { label: "Ketua Pengelola\nBuper Lebak Barat", name: data.signKetua || "(___________________)" },
+    { label: "Ketua Pengelola Buper Lebak Barat", name: data.signKetua || "(___________________)" },
     { label: "Sekretaris", name: data.signSekretaris || "(___________________)" },
   ];
   const sigsBottom = [
     { label: "Mengetahui,\nKepala Desa Girimulya", name: data.signKades || "(___________________)" },
-    { label: "Direktur\nBUMDes Gunung Sembung", name: data.signDirBumdes || "(___________________)" },
+    { label: "Direktur BUMDes Gunung Sembung", name: data.signDirBumdes || "(___________________)" },
   ];
   const colW = contentW / 2;
   const leftX = contentX + colW / 2;
@@ -350,8 +350,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     const ttdX = contentX + contentW / 2;
     doc.text(`Girimulya, ${tglStr}`, ttdX + contentW / 4, y, { align: "center" }); y += 6;
-    doc.text("Ketua Pengelola", ttdX + contentW / 4, y, { align: "center" }); y += 5;
-    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 20;
+    doc.text("Ketua Pengelola Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 15;
     doc.setFont("helvetica", "bold");
     doc.text(data.signKetua || "(___________________)", ttdX + contentW / 4, y, { align: "center" });
   }

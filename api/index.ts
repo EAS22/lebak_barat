@@ -1155,6 +1155,32 @@ app.post("/api/letter/archive", requireAuth, async (c) => {
   }
 });
 
+app.get("/api/letter-archives/:id", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    const rows = await sql`SELECT * FROM letter_archives WHERE id = ${id}`;
+    if (!rows[0]) return c.json({ error: "Not found" }, 404);
+    return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.get("/api/bookings/:id", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    const rows = await sql`SELECT * FROM bookings WHERE id = ${id}`;
+    if (!rows[0]) return c.json({ error: "Booking not found" }, 404);
+    return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 app.get("/api/public/gallery", async (c) => {
   try {
     const sql = getSql();

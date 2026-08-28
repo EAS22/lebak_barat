@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Trash2, Archive, FileText, Mail } from "lucide-react";
+import { Search, Trash2, Archive, FileText, Mail, Download } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useAuth } from "@/lib/authContext";
+import { getSettings } from "@/lib/adminApi";
+import { generateSuratPdf } from "@/lib/suratPdf";
+import { generateInvoicePdf } from "@/lib/invoicePdf";
 
 interface ArsipRow {
   id: string;
@@ -75,6 +78,69 @@ export default function ArsipPage() {
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal hapus"); } finally { setDeleting(null); }
   }
 
+  async function handleDownload(row: ArsipRow) {
+    try {
+      if (row.tipe === "invoice") {
+        const res = await fetch(`/api/bookings/${row.id}`, { credentials: "include" });
+        if (!res.ok) throw new Error("Gagal ambil data invoice");
+        const b = await res.json() as Record<string, unknown>;
+        const sRes = await getSettings();
+        const s = sRes as unknown as Record<string, unknown>;
+        await generateInvoicePdf({
+          invoice_number: String(b.invoice_number || row.nomor),
+          school_name: String(b.school_name || ""),
+          participant_count: Number(b.participant_count || 0),
+          pic_name: String(b.pic_name || ""),
+          pic_wa: String(b.pic_wa || ""),
+          start_date: String(b.start_date || ""),
+          end_date: String(b.end_date || ""),
+          price: Number(b.price || 0),
+          status: String(b.status || "final"),
+          created_at: String(b.created_at || ""),
+          buperName: String(s.buper_name || "Bumi Perkemahan Lebak Barat"),
+        } as never);
+        toast.success("Invoice diunduh");
+      } else {
+        const res = await fetch(`/api/letter-archives/${row.id}`, { credentials: "include" });
+        let letterBody = "";
+        let signKetua = "", signSek = "", signKades = "", signDir = "";
+        try {
+          const sRes = await getSettings();
+          const s = sRes as unknown as Record<string, unknown>;
+          letterBody = String(s.letter_body || "");
+          signKetua = String(s.sign_ketua || "");
+          signSek = String(s.sign_sekretaris || "");
+          signKades = String(s.sign_kades || "");
+          signDir = String(s.sign_dirbumdes || "");
+        } catch {}
+        let items: never[] = [];
+        let tanggal = row.tanggal.slice(0, 10);
+        let kepada: string[] = [];
+        if (res.ok) {
+          const d = await res.json() as Record<string, unknown>;
+          if (d.kepada) kepada = String(d.kepada).split(",").map((s) => s.trim()).filter(Boolean);
+          if (d.tanggal_surat) tanggal = String(d.tanggal_surat).slice(0, 10);
+        }
+        if (kepada.length === 0) kepada = [row.perihal || "Penerima"];
+        // Fetch all bookings/events for lampiran fallback - empty if not found, user can regenerate
+        const { doc } = await generateSuratPdf({
+          nomor: row.nomor,
+          lampiran: "1 (Satu) Berkas",
+          perihal: "Pemberitahuan Kegiatan Perkemahan",
+          kepada,
+          redaksiBody: letterBody || "Sehubungan dengan akan dilaksanakannya kegiatan perkemahan...",
+          tanggalSurat: tanggal,
+          pageSize: "f4",
+          items: items as never,
+          signKetua, signSekretaris: signSek, signKades, signDirBumdes: signDir,
+          headerBase64: null, footerBase64: null,
+        });
+        doc.save(`Surat-${row.nomor.replace(/\//g, "-")}.pdf`);
+        toast.success("Surat diunduh");
+      }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal download"); }
+  }
+
   if (loading) return <div className="p-8 text-center text-slate-500">Memuat arsip...</div>;
 
   return (
@@ -127,15 +193,20 @@ export default function ArsipPage() {
                       <td className="px-3 py-2 text-xs">{row.tanggal ? format(new Date(row.tanggal.slice(0, 10) + "T00:00:00"), "d MMM yyyy", { locale: localeId }) : "-"}</td>
                       <td className="px-3 py-2 text-xs truncate max-w-[220px]">{row.perihal || "-"}</td>
                       <td className="px-3 py-2 text-center">
-                        {canDelete ? (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:bg-red-50" disabled={deleting === row.id} onClick={() => handleDelete(row)}>
-                            <Trash2 size={14} />
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:bg-emerald-50" onClick={() => handleDownload(row)} title="Download ulang">
+                            <Download size={14} />
                           </Button>
-                        ) : isSuper ? (
-                          <span className="text-[10px] text-slate-400">Bukan terbaru</span>
-                        ) : (
-                          <span className="text-[10px] text-slate-400">Hanya lihat</span>
-                        )}
+                          {canDelete ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:bg-red-50" disabled={deleting === row.id} onClick={() => handleDelete(row)}>
+                              <Trash2 size={14} />
+                            </Button>
+                          ) : isSuper ? (
+                            <span className="text-[10px] text-slate-400">Bukan terbaru</span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">Hanya lihat</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
