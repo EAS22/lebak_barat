@@ -170,6 +170,9 @@ export default function SuratPage() {
           kepada: kepadaList.join(", "),
           item_count: items.length,
           tanggal_surat: tglSurat,
+          lampiran,
+          perihal,
+          items_json: JSON.stringify(items),
         }),
       });
       const { doc } = await generateSuratPdf({

@@ -116,17 +116,23 @@ export default function ArsipPage() {
         let items: never[] = [];
         let tanggal = row.tanggal.slice(0, 10);
         let kepada: string[] = [];
+        let lampiran = "1 (Satu) Berkas";
+        let perihal = "Pemberitahuan Kegiatan Perkemahan";
         if (res.ok) {
           const d = await res.json() as Record<string, unknown>;
           if (d.kepada) kepada = String(d.kepada).split(",").map((s) => s.trim()).filter(Boolean);
           if (d.tanggal_surat) tanggal = String(d.tanggal_surat).slice(0, 10);
+          if (d.lampiran) lampiran = String(d.lampiran);
+          if (d.perihal) perihal = String(d.perihal);
+          if (d.items_json) {
+            try { items = JSON.parse(String(d.items_json)) as never[]; } catch {}
+          }
         }
         if (kepada.length === 0) kepada = [row.perihal || "Penerima"];
-        // Fetch all bookings/events for lampiran fallback - empty if not found, user can regenerate
         const { doc } = await generateSuratPdf({
           nomor: row.nomor,
-          lampiran: "1 (Satu) Berkas",
-          perihal: "Pemberitahuan Kegiatan Perkemahan",
+          lampiran,
+          perihal,
           kepada,
           redaksiBody: letterBody || "Sehubungan dengan akan dilaksanakannya kegiatan perkemahan...",
           tanggalSurat: tanggal,

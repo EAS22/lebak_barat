@@ -112,6 +112,9 @@ export const letterArchives = pgTable("letter_archives", {
   kepada: text("kepada"),
   itemCount: integer("item_count").default(0).notNull(),
   tanggalSurat: date("tanggal_surat").notNull(),
+  lampiran: varchar("lampiran", { length: 50 }).default("1 (Satu) Berkas"),
+  perihal: varchar("perihal", { length: 200 }).default("Pemberitahuan Kegiatan Perkemahan"),
+  itemsJson: text("items_json"),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });

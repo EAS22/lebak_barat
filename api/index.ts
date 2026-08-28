@@ -1144,10 +1144,10 @@ app.delete("/api/arsip/:id", requireAuth, requireSuper, async (c) => {
 app.post("/api/letter/archive", requireAuth, async (c) => {
   try {
     const sql = getSql();
-    const body = await c.req.json() as { nomor?: string; seq?: number; kepada?: string; item_count?: number; tanggal_surat?: string };
+    const body = await c.req.json() as { nomor?: string; seq?: number; kepada?: string; item_count?: number; tanggal_surat?: string; lampiran?: string; perihal?: string; items_json?: string };
     if (!body.nomor || !body.seq) return c.json({ error: "nomor dan seq wajib" }, 400);
     const user = c.get("user") as { id: string };
-    const rows = await sql`INSERT INTO letter_archives (nomor, seq, kepada, item_count, tanggal_surat, created_by) VALUES (${body.nomor}, ${body.seq}, ${body.kepada ?? ""}, ${body.item_count ?? 0}, ${body.tanggal_surat ?? new Date().toISOString().slice(0,10)}, ${user.id}) RETURNING *`;
+    const rows = await sql`INSERT INTO letter_archives (nomor, seq, kepada, item_count, tanggal_surat, lampiran, perihal, items_json, created_by) VALUES (${body.nomor}, ${body.seq}, ${body.kepada ?? ""}, ${body.item_count ?? 0}, ${body.tanggal_surat ?? new Date().toISOString().slice(0,10)}, ${body.lampiran ?? "1 (Satu) Berkas"}, ${body.perihal ?? "Pemberitahuan Kegiatan Perkemahan"}, ${body.items_json ?? "[]"}, ${user.id}) RETURNING *`;
     return c.json(rows[0], 201);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
