@@ -178,6 +178,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     }
     y += 5;
   }
+  y += 5;
   doc.text("di", contentX, y); y += 5;
   doc.text("Tempat", contentX, y); y += 10;
   doc.text("Dengan hormat,", contentX, y); y += 5;
@@ -256,13 +257,18 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   }
 
   const yBottom = yNameTop + 14;
-  ensureSpace(36);
+  ensureSpace(44);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  doc.text("Mengetahui,", pageW / 2, yBottom, { align: "center" });
+  const yBottomLabels = yBottom + 8;
   for (let i = 0; i < 2; i++) {
-    const s = sigsBottom[i]!; const x = i === 0 ? leftX : rightX;
-    const parts = s.label.split("\n"); let ty = yBottom;
+    const s = sigsBottom[i]!;
+    const label = s.label.replace("Mengetahui,\n", "");
+    const x = i === 0 ? leftX : rightX;
+    const parts = label.split("\n"); let ty = yBottomLabels;
     for (const p of parts) { doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.text(p, x, ty, { align: "center" }); ty += 5; }
   }
-  const yNameBottom = yBottom + 25;
+  const yNameBottom = yBottomLabels + 25;
   for (let i = 0; i < 2; i++) {
     const s = sigsBottom[i]!; const x = i === 0 ? leftX : rightX;
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text(s.name, x, yNameBottom, { align: "center" });
@@ -343,11 +349,10 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     y = tableY + 12;
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     const ttdX = contentX + contentW / 2;
-    const isCenter = true;
-    void isCenter;
     doc.text(`Girimulya, ${tglStr}`, ttdX + contentW / 4, y, { align: "center" }); y += 6;
-    doc.text("Ketua Pengelola", ttdX + contentW / 4, y, { align: "center" }); y += 4;
-    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 16;
+    doc.text("Ketua Pengelola", ttdX + contentW / 4, y, { align: "center" }); y += 5;
+    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 5;
+    y += 5;
     doc.setFont("helvetica", "bold");
     doc.text(data.signKetua || "(___________________)", ttdX + contentW / 4, y, { align: "center" });
   }
