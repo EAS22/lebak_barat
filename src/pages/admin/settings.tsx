@@ -4,19 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSettings, updateSettings, type SettingsRecord } from "@/lib/adminApi";
-import { Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { getSettings, updateSettings, type SettingsRecord, getLetterRecipients, createLetterRecipient, updateLetterRecipient, deleteLetterRecipient, type LetterRecipient } from "@/lib/adminApi";
+import { Save, Plus, Trash2, Check } from "lucide-react";
 import { formatDateTimeWIB } from "@/lib/utils";
 
-interface AuthUser {
-  id: string;
-  username: string;
-  role: string;
-}
-
-interface Props {
-  currentUser: AuthUser | null;
-}
+interface AuthUser { id: string; username: string; role: string; }
+interface Props { currentUser: AuthUser | null; }
 
 export default function SettingsPage({ currentUser }: Props) {
   const [settings, setSettings] = useState<SettingsRecord | null>(null);
@@ -24,113 +18,148 @@ export default function SettingsPage({ currentUser }: Props) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [form, setForm] = useState({
     buperName: "",
+    letterBody: "",
+    signKetua: "",
+    signSekretaris: "",
+    signKades: "",
+    signDirBumdes: "",
   });
+  const [recipients, setRecipients] = useState<LetterRecipient[]>([]);
+  const [newRecName, setNewRecName] = useState("");
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
-        const data = await getSettings();
+        const [data, recs] = await Promise.all([getSettings(), getLetterRecipients()]);
         setSettings(data);
+        setRecipients(recs);
         setForm({
           buperName: data.buper_name || "",
+          letterBody: (data.letter_body as string) || "",
+          signKetua: (data.sign_ketua as string) || "",
+          signSekretaris: (data.sign_sekretaris as string) || "",
+          signKades: (data.sign_kades as string) || "",
+          signDirBumdes: (data.sign_dirbumdes as string) || "",
         });
-      } catch {
-        toast.error("Gagal memuat pengaturan");
-      } finally {
-        setLoading(false);
-      }
+      } catch { toast.error("Gagal memuat pengaturan"); } finally { setLoading(false); }
     }
     load();
   }, []);
 
   async function handleSave() {
-    setSaving(true);
-    setError(null);
-    setSuccess(false);
+    setSaving(true); setError(null); setSuccess(false);
     try {
       const data = await updateSettings({
         buperName: form.buperName || undefined,
-      });
-      setSettings(data);
-      setSuccess(true);
-      toast.success("Pengaturan berhasil disimpan");
+        letterBody: form.letterBody || undefined,
+        signKetua: form.signKetua || undefined,
+        signSekretaris: form.signSekretaris || undefined,
+        signKades: form.signKades || undefined,
+        signDirBumdes: form.signDirBumdes || undefined,
+      } as never);
+      setSettings(data as never); setSuccess(true); toast.success("Pengaturan berhasil disimpan");
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal menyimpan";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err: unknown) { const msg = err instanceof Error ? err.message : "Gagal menyimpan"; setError(msg); toast.error(msg); } finally { setSaving(false); }
+  }
+
+  async function handleAddRecipient() {
+    if (newRecName.trim().length < 2) { toast.error("Nama minimal 2 karakter"); return; }
+    try {
+      const rec = await createLetterRecipient({ name: newRecName.trim() });
+      setRecipients((r) => [...r, rec].sort((a, b) => a.sort_order - b.sort_order));
+      setNewRecName(""); toast.success("Penerima ditambahkan");
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal"); }
+  }
+
+  async function toggleDefault(rec: LetterRecipient) {
+    try {
+      const upd = await updateLetterRecipient(rec.id, { is_default: !rec.is_default });
+      setRecipients((r) => r.map((x) => x.id === rec.id ? upd : x));
+    } catch { toast.error("Gagal update"); }
+  }
+
+  async function handleDeleteRec(id: string) {
+    if (!confirm("Hapus penerima ini?")) return;
+    try {
+      await deleteLetterRecipient(id);
+      setRecipients((r) => r.filter((x) => x.id !== id));
+      toast.success("Dihapus");
+    } catch { toast.error("Gagal hapus"); }
   }
 
   if (currentUser?.role !== "super_admin") {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">403 — Akses Ditolak</h2>
-          <p className="text-gray-500">Halaman ini hanya untuk super_admin.</p>
-        </div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-[400px]"><div className="text-center"><h2 className="text-2xl font-bold text-red-600 mb-2">403 — Akses Ditolak</h2><p className="text-gray-500">Halaman ini hanya untuk super_admin.</p></div></div>;
   }
-
-  if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading...</div>;
-  }
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Pengaturan</h2>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-          {error}
-          <button className="ml-2 underline" onClick={() => setError(null)}>
-            Tutup
-          </button>
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-md text-sm">
-          Pengaturan berhasil disimpan.
-        </div>
-      )}
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">{error} <button className="ml-2 underline" onClick={() => setError(null)}>Tutup</button></div>}
+      {success && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-md text-sm">Pengaturan berhasil disimpan.</div>}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Informasi Buper</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Informasi Buper</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Nama Buper</Label>
-            <Input
-              value={form.buperName}
-              onChange={(e) => setForm((f) => ({ ...f, buperName: e.target.value }))}
-              placeholder="Bumi Perkemahan Lebak Barat"
-            />
-          </div>
-          <p className="text-xs text-gray-500">
-            Kontak WhatsApp landing page diambil dari daftar <span className="font-semibold">Users → Admin Booking</span> yang aktif dan punya nomor WA.
-          </p>
+          <div className="space-y-1.5"><Label>Nama Buper</Label><Input value={form.buperName} onChange={(e) => setForm((f) => ({ ...f, buperName: e.target.value }))} placeholder="Bumi Perkemahan Lebak Barat" /></div>
+          <p className="text-xs text-gray-500">Kontak WhatsApp landing page diambil dari daftar <span className="font-semibold">Users → Admin Booking</span> yang aktif dan punya nomor WA.</p>
         </CardContent>
       </Card>
 
-      {settings && (
-        <p className="text-xs text-gray-400">
-          Terakhir diperbarui: {settings.updated_at ? formatDateTimeWIB(settings.updated_at) : "—"}
-        </p>
-      )}
+      <Card>
+        <CardHeader><CardTitle>Redaksi Surat Pemberitahuan</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <Label>Isi Redaksi (editable, default dari pemberitahuan.md)</Label>
+          <Textarea value={form.letterBody} onChange={(e) => setForm((f) => ({ ...f, letterBody: e.target.value }))} rows={12} placeholder="Ketuk untuk edit redaksi surat..." className="font-mono text-sm leading-relaxed" />
+          <p className="text-xs text-gray-500">Disimpan di DB settings. Saat generate surat, akan pre-filled dan bisa diedit per surat tanpa ubah default.</p>
+        </CardContent>
+      </Card>
 
-      <Button onClick={handleSave} disabled={saving}>
-        <Save className="h-4 w-4 mr-1" />
-        {saving ? "Menyimpan..." : "Simpan Pengaturan"}
-      </Button>
+      <Card>
+        <CardHeader><CardTitle>Penandatangan Surat (4 orang)</CardTitle></CardHeader>
+        <CardContent className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5"><Label>Ketua Pengelola Buper Lebak Barat</Label><Input value={form.signKetua} onChange={(e) => setForm((f) => ({ ...f, signKetua: e.target.value }))} placeholder="Nama lengkap Ketua" /></div>
+          <div className="space-y-1.5"><Label>Sekretaris</Label><Input value={form.signSekretaris} onChange={(e) => setForm((f) => ({ ...f, signSekretaris: e.target.value }))} placeholder="Nama Sekretaris" /></div>
+          <div className="space-y-1.5"><Label>Mengetahui — Kepala Desa Girimulya</Label><Input value={form.signKades} onChange={(e) => setForm((f) => ({ ...f, signKades: e.target.value }))} placeholder="Nama Kades" /></div>
+          <div className="space-y-1.5"><Label>Direktur BUMDes Gunung Sembung</Label><Input value={form.signDirBumdes} onChange={(e) => setForm((f) => ({ ...f, signDirBumdes: e.target.value }))} placeholder="Nama Direktur BUMDes" /></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Penerima Default — Kepada Yth.</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-gray-500">Centang yang default otomatis terpilih saat generate surat. Bisa tambah pihak lain per surat nanti.</p>
+          <div className="space-y-2">
+            {recipients.map((rec) => (
+              <div key={rec.id} className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50/60">
+                <button
+                  type="button"
+                  onClick={() => toggleDefault(rec)}
+                  className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${rec.is_default ? "bg-emerald-600 border-emerald-600 text-white" : "bg-white border-slate-300"}`}
+                >
+                  {rec.is_default && <Check size={12} />}
+                </button>
+                <span className="flex-1 text-sm">{rec.name}</span>
+                <span className="text-xs text-slate-400">{rec.is_default ? "Default" : ""}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDeleteRec(rec.id)}><Trash2 size={14} /></Button>
+              </div>
+            ))}
+            {recipients.length === 0 && <p className="text-sm text-slate-400">Belum ada penerima default</p>}
+          </div>
+          <div className="flex gap-2">
+            <Input value={newRecName} onChange={(e) => setNewRecName(e.target.value)} placeholder="Tambah penerima (contoh: Kapolres Majalengka)" onKeyDown={(e) => e.key === "Enter" && handleAddRecipient()} />
+            <Button onClick={handleAddRecipient}><Plus size={16} className="mr-1" />Tambah</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {settings && <p className="text-xs text-gray-400">Terakhir diperbarui: {settings.updated_at ? formatDateTimeWIB(settings.updated_at) : "—"}</p>}
+      <Button onClick={handleSave} disabled={saving}><Save className="h-4 w-4 mr-1" />{saving ? "Menyimpan..." : "Simpan Pengaturan"}</Button>
     </div>
   );
 }
+
+

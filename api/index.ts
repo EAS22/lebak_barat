@@ -980,11 +980,116 @@ app.put("/api/settings", requireAuth, requireSuper, async (c) => {
     const body = await c.req.json();
     const parsed = settingsSchema.safeParse(body);
     if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
-    const d = parsed.data;
+    const d = parsed.data as Record<string, unknown>;
     const user = c.get("user") as AuthUser;
 
-    const rows = await sql`UPDATE settings SET landing_wa_number = ${d.landingWaNumber}, landing_wa_label = ${d.landingWaLabel ?? "Admin Booking"}, buper_name = ${d.buperName ?? "Bumi Perkemahan Lebak Barat"}, updated_by = ${user.id}, updated_at = now() WHERE id = 1 RETURNING *`;
+    const sets: string[] = [];
+    const vals: unknown[] = [];
+    const add = (col: string, key: string) => {
+      if (d[key] !== undefined) { vals.push(d[key]); sets.push(`${col} = $${vals.length}`); }
+    };
+    add("landing_wa_number", "landingWaNumber");
+    add("landing_wa_label", "landingWaLabel");
+    add("buper_name", "buperName");
+    add("letter_body", "letterBody");
+    add("sign_ketua", "signKetua");
+    add("sign_sekretaris", "signSekretaris");
+    add("sign_kades", "signKades");
+    add("sign_dirbumdes", "signDirBumdes");
+    if (sets.length === 0) {
+      const rows = await sql`SELECT * FROM settings WHERE id=1`;
+      return c.json(rows[0]);
+    }
+    sets.push(`updated_by = $${vals.length + 1}`); vals.push(user.id);
+    sets.push(`updated_at = now()`);
+    const rows = await sql.query(`UPDATE settings SET ${sets.join(", ")} WHERE id=1 RETURNING *`, vals);
     return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.get("/api/letter-recipients", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT * FROM letter_recipients ORDER BY sort_order`;
+    return c.json(rows);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.post("/api/letter-recipients", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const body = await c.req.json() as { name?: string; is_default?: boolean; sort_order?: number };
+    if (!body.name || body.name.trim().length < 2) return c.json({ error: "Nama minimal 2 karakter" }, 400);
+    const rows = await sql`INSERT INTO letter_recipients (name, is_default, sort_order) VALUES (${body.name.trim()}, ${body.is_default ?? true}, ${body.sort_order ?? 99}) RETURNING *`;
+    return c.json(rows[0], 201);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.patch("/api/letter-recipients/:id", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    const body = await c.req.json() as { name?: string; is_default?: boolean; sort_order?: number };
+    const sets: string[] = []; const vals: unknown[] = [];
+    if (body.name !== undefined) { vals.push(body.name.trim()); sets.push(`name = $${vals.length}`); }
+    if (body.is_default !== undefined) { vals.push(body.is_default); sets.push(`is_default = $${vals.length}`); }
+    if (body.sort_order !== undefined) { vals.push(body.sort_order); sets.push(`sort_order = $${vals.length}`); }
+    if (sets.length === 0) return c.json({ error: "Tidak ada perubahan" }, 400);
+    const rows = await sql.query(`UPDATE letter_recipients SET ${sets.join(", ")} WHERE id = $${vals.length + 1} RETURNING *`, [...vals, id]);
+    return c.json(rows[0]);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.delete("/api/letter-recipients/:id", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const id = c.req.param("id");
+    await sql`DELETE FROM letter_recipients WHERE id = ${id}`;
+    return c.json({ ok: true });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.post("/api/letter/next-number", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`UPDATE settings SET letter_seq = letter_seq + 1 WHERE id=1 RETURNING letter_seq`;
+    const seq = (rows[0] as { letter_seq: number }).letter_seq;
+    const now = new Date();
+    const roman = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][now.getMonth()]!;
+    const numStr = String(seq).padStart(3, "0");
+    const nomor = `${numStr}/BPLB/${roman}/${now.getFullYear()}`;
+    return c.json({ seq, nomor });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
+app.get("/api/letter/next-number-preview", requireAuth, async (c) => {
+  try {
+    const sql = getSql();
+    const rows = await sql`SELECT letter_seq FROM settings WHERE id=1`;
+    const seq = ((rows[0] as { letter_seq: number } | undefined)?.letter_seq ?? 12) + 1;
+    const now = new Date();
+    const roman = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][now.getMonth()]!;
+    const numStr = String(seq).padStart(3, "0");
+    const nomor = `${numStr}/BPLB/${roman}/${now.getFullYear()}`;
+    return c.json({ seq, nomor });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     return c.json({ error: msg }, 500);

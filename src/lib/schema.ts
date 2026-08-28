@@ -87,6 +87,20 @@ export const settings = pgTable("settings", {
   buperName: varchar("buper_name", { length: 100 })
     .default("Bumi Perkemahan Lebak Barat")
     .notNull(),
+  letterBody: text("letter_body"),
+  letterSeq: integer("letter_seq").default(12),
+  signKetua: varchar("sign_ketua", { length: 100 }),
+  signSekretaris: varchar("sign_sekretaris", { length: 100 }),
+  signKades: varchar("sign_kades", { length: 100 }),
+  signDirBumdes: varchar("sign_dirbumdes", { length: 100 }),
   updatedBy: uuid("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const letterRecipients = pgTable("letter_recipients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 200 }).notNull(),
+  isDefault: boolean("is_default").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });

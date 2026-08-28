@@ -373,6 +373,12 @@ export interface SettingsRecord {
   landing_wa_number: string;
   landing_wa_label: string;
   buper_name: string;
+  letter_body?: string | null;
+  letter_seq?: number | null;
+  sign_ketua?: string | null;
+  sign_sekretaris?: string | null;
+  sign_kades?: string | null;
+  sign_dirbumdes?: string | null;
   updated_by: string | null;
   updated_at: string;
 }
@@ -394,5 +400,50 @@ export async function updateSettings(data: SettingsInput): Promise<SettingsRecor
     (err as Error & { status?: number }).status = res.status;
     throw err;
   }
+  return res.json();
+}
+
+// ─── Letter Recipients ──────────────────────────────────────────
+
+export interface LetterRecipient {
+  id: string;
+  name: string;
+  is_default: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export async function getLetterRecipients(): Promise<LetterRecipient[]> {
+  const res = await adminFetch("/api/letter-recipients");
+  if (!res.ok) throw new Error(`Failed to fetch recipients: ${res.status}`);
+  return res.json();
+}
+
+export async function createLetterRecipient(data: { name: string; is_default?: boolean; sort_order?: number }): Promise<LetterRecipient> {
+  const res = await adminFetch("/api/letter-recipients", { method: "POST", body: JSON.stringify(data) });
+  if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || `Create failed: ${res.status}`); }
+  return res.json();
+}
+
+export async function updateLetterRecipient(id: string, data: Partial<{ name: string; is_default: boolean; sort_order: number }>): Promise<LetterRecipient> {
+  const res = await adminFetch(`/api/letter-recipients/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+  if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || `Update failed: ${res.status}`); }
+  return res.json();
+}
+
+export async function deleteLetterRecipient(id: string): Promise<void> {
+  const res = await adminFetch(`/api/letter-recipients/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+}
+
+export async function previewLetterNumber(): Promise<{ seq: number; nomor: string }> {
+  const res = await adminFetch("/api/letter/next-number-preview");
+  if (!res.ok) throw new Error(`Failed: ${res.status}`);
+  return res.json();
+}
+
+export async function nextLetterNumber(): Promise<{ seq: number; nomor: string }> {
+  const res = await adminFetch("/api/letter/next-number", { method: "POST" });
+  if (!res.ok) throw new Error(`Failed: ${res.status}`);
   return res.json();
 }

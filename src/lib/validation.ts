@@ -97,6 +97,11 @@ export const settingsSchema = z.object({
   landingWaNumber: z.string().min(8).max(20).optional(),
   landingWaLabel: z.string().max(100).optional(),
   buperName: z.string().max(100).optional(),
+  letterBody: z.string().max(10000).optional(),
+  signKetua: z.string().max(100).optional(),
+  signSekretaris: z.string().max(100).optional(),
+  signKades: z.string().max(100).optional(),
+  signDirBumdes: z.string().max(100).optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

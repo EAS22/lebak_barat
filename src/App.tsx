@@ -44,6 +44,7 @@ import UsersPage from "@/pages/admin/users";
 import SettingsPage from "@/pages/admin/settings";
 import FacilitiesPage from "@/pages/admin/facilities";
 import GalleryAdminPage from "@/pages/admin/gallery";
+import SuratPage from "@/pages/admin/surat";
 import InvoicesPage from "@/pages/admin/invoices";
 import { useOutletContext } from "react-router-dom";
 import type { AdminOutletContext } from "@/pages/admin/layout";
@@ -86,6 +87,7 @@ export default function App() {
             <Route path="invoices" element={<InvoicesPage />} />
             <Route path="facilities" element={<FacilitiesRoute />} />
             <Route path="gallery" element={<GalleryAdminPage />} />
+            <Route path="surat" element={<SuratPage />} />
             <Route path="users" element={<UsersRoute />} />
             <Route path="settings" element={<SettingsRoute />} />
           </Route>
