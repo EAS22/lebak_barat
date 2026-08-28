@@ -178,7 +178,6 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     }
     y += 5;
   }
-  y += 5;
   doc.text("di", contentX, y); y += 5;
   doc.text("Tempat", contentX, y); y += 10;
   doc.text("Dengan hormat,", contentX, y); y += 5;
@@ -298,7 +297,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     const headerH2 = 12;
 
     function drawHeader(atY: number) {
-      doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.25); doc.setFillColor(255, 255, 255);
       doc.rect(tableX, atY, contentW, headerH2, "FD");
       let cx = tableX;
       doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(0, 0, 0);
@@ -317,7 +316,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     let tableY = y;
     tableY += drawHeader(tableY);
     doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2);
+    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.25);
 
     for (let idx = 0; idx < data.items.length; idx++) {
       const it = data.items[idx]!;
@@ -327,19 +326,20 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       const neededH = Math.max(8, maxLines * 4 + 4);
       if (tableY + neededH > bottomY) {
         doc.addPage([pageW, pageH]); drawHeaderFooter(); tableY = topY; tableY += drawHeader(tableY);
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.25);
       }
       let cx = tableX;
       for (let ci = 0; ci < rowData.length; ci++) {
         const w = cols[ci]!;
         doc.rect(cx, tableY, w, neededH, "D");
         const lines = cellLines[ci]!;
-        const align = ci === 0 || ci === 3 ? "center" : ci === 4 ? "center" : "left";
-        const startY2 = tableY + 4.5;
+        const isCenterCol = ci === 0 || ci === 2 || ci === 3 || ci === 4;
+        const vOffset = (neededH - lines.length * 4) / 2;
+        const startY2 = tableY + vOffset + 2.5;
         for (let li = 0; li < lines.length; li++) {
           const ly = startY2 + li * 4;
           const txt = lines[li]!;
-          if (align === "center") doc.text(txt, cx + w / 2, ly, { align: "center" });
+          if (isCenterCol) doc.text(txt, cx + w / 2, ly, { align: "center" });
           else doc.text(txt, cx + 2, ly);
         }
         cx += w;
@@ -351,8 +351,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     const ttdX = contentX + contentW / 2;
     doc.text(`Girimulya, ${tglStr}`, ttdX + contentW / 4, y, { align: "center" }); y += 6;
     doc.text("Ketua Pengelola", ttdX + contentW / 4, y, { align: "center" }); y += 5;
-    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 5;
-    y += 5;
+    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 10;
     doc.setFont("helvetica", "bold");
     doc.text(data.signKetua || "(___________________)", ttdX + contentW / 4, y, { align: "center" });
   }
