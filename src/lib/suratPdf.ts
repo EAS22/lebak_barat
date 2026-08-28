@@ -351,7 +351,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     const ttdX = contentX + contentW / 2;
     doc.text(`Girimulya, ${tglStr}`, ttdX + contentW / 4, y, { align: "center" }); y += 6;
     doc.text("Ketua Pengelola", ttdX + contentW / 4, y, { align: "center" }); y += 5;
-    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 10;
+    doc.text("Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 15;
     doc.setFont("helvetica", "bold");
     doc.text(data.signKetua || "(___________________)", ttdX + contentW / 4, y, { align: "center" });
   }

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { FileText, Eye, Download, Plus, Trash2, Search, CalendarDays, X } from "lucide-react";
+import { FileText, Eye, Download, Plus, Trash2, Search, CalendarDays, X, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { getBookings, getEvents, type BookingRecord, type EventRecord, getSettings, getLetterRecipients, previewLetterNumber, nextLetterNumber } from "@/lib/adminApi";
 import { generateSuratPdf, type SuratItem, type PageSize } from "@/lib/suratPdf";
 
@@ -224,59 +224,67 @@ export default function SuratPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Kepada Yth.</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-2">
-            {kepadaDefault.map((k) => (
-              <label key={k.id} className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50/60 cursor-pointer">
-                <input type="checkbox" checked={k.checked} onChange={(e) => setKepadaDefault((prev) => prev.map((x) => x.id === k.id ? { ...x, checked: e.target.checked } : x))} className="h-4 w-4" />
-                <span className="flex-1 text-sm">{k.name}</span>
-                <span className="text-xs text-slate-400">{k.checked ? "Default" : ""}</span>
-              </label>
-            ))}
-          </div>
-          <div className="space-y-2">
-            <Label>Tambah Penerima Lain (opsional)</Label>
-            {kepadaTambahan.map((val, idx) => (
-              <div key={idx} className="flex gap-2">
-                <Input value={val} onChange={(e) => setKepadaTambahan((prev) => prev.map((v, i) => i === idx ? e.target.value : v))} placeholder={`Penerima ${idx + 1} (contoh: Kepala Sekolah SMAN 1 ...)`} />
-                <Button variant="ghost" size="icon" onClick={() => setKepadaTambahan((prev) => prev.filter((_, i) => i !== idx))}><Trash2 size={16} /></Button>
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={() => setKepadaTambahan((prev) => [...prev, ""])}><Plus size={14} className="mr-1" />Tambah Penerima</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2"><CalendarDays size={16} />Pilih Jadwal untuk Lampiran Tabel <span className="text-xs font-normal text-slate-500">{Object.keys(selected).length} terpilih</span></CardTitle>
-          <Button variant="outline" size="sm" onClick={toggleAll}>{Object.keys(selected).length === filtered.length && filtered.length > 0 ? "Batal Pilih Semua" : "Pilih Semua"}</Button>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari sekolah / institusi / kegiatan..." className="pl-9" />
-          </div>
-          {loading ? <p className="text-sm text-slate-500">Memuat...</p> : (
-            <div className="max-h-[380px] overflow-y-auto border rounded-xl divide-y">
-              {filtered.length === 0 && <p className="p-4 text-sm text-slate-400 text-center">Tidak ada data</p>}
-              {filtered.map((row) => (
-                <label key={row.id} className={`flex items-start gap-3 p-3 cursor-pointer hover:bg-slate-50 ${selected[row.id] ? "bg-emerald-50" : ""}`}>
-                  <input type="checkbox" checked={!!selected[row.id]} onChange={() => toggleRow(row)} className="mt-1 h-4 w-4 shrink-0" />
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-0.5 ${row.kind === "event" ? "bg-blue-900 text-white" : "bg-emerald-100 text-emerald-700"}`}>{row.kind === "event" ? "Event" : "Booking"}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold truncate">{row.institution}</span>
-                    <span className="block text-xs text-slate-500 truncate">{row.eventName} · {row.participant_count} peserta</span>
-                    <span className="block text-xs text-slate-400">{format(new Date(row.start_date.slice(0, 10) + "T00:00:00"), "d MMM yyyy", { locale: localeId })} — {format(new Date(row.end_date.slice(0, 10) + "T00:00:00"), "d MMM yyyy", { locale: localeId })}</span>
-                  </span>
-                </label>
+      <div className="grid lg:grid-cols-2 gap-6 items-start">
+        <Card className="flex flex-col">
+          <CardHeader><CardTitle className="text-base">Kepada Yth. — Urutan dapat diatur</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-slate-500">Centang yang dikirim. Gunakan ↑↓ untuk ubah urutan. Tambahan di bawah.</p>
+            <div className="space-y-2">
+              {kepadaDefault.map((k, idx) => (
+                <div key={k.id} className="flex items-center gap-1 p-2 rounded-lg border bg-slate-50/60">
+                  <input type="checkbox" checked={k.checked} onChange={(e) => setKepadaDefault((prev) => prev.map((x) => x.id === k.id ? { ...x, checked: e.target.checked } : x))} className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 text-sm truncate">{idx + 1}. {k.name}</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" disabled={idx === 0} onClick={() => setKepadaDefault((prev) => { const a = [...prev]; const tmp = a[idx]!; a[idx] = a[idx - 1]!; a[idx - 1] = tmp!; return a; })}><ChevronUp size={14} /></Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" disabled={idx === kepadaDefault.length - 1} onClick={() => setKepadaDefault((prev) => { const a = [...prev]; const tmp = a[idx]!; a[idx] = a[idx + 1]!; a[idx + 1] = tmp!; return a; })}><ChevronDown size={14} /></Button>
+                </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label>Tambah Penerima Lain (opsional — berurutan setelah default)</Label>
+              {kepadaTambahan.map((val, idx) => (
+                <div key={idx} className="flex gap-1 items-center">
+                  <GripVertical size={14} className="text-slate-300 shrink-0" />
+                  <span className="text-xs w-4 shrink-0">{kepadaDefault.filter((k) => k.checked).length + idx + 1}.</span>
+                  <Input value={val} onChange={(e) => setKepadaTambahan((prev) => prev.map((v, i) => i === idx ? e.target.value : v))} placeholder={`Penerima ${kepadaDefault.filter((k) => k.checked).length + idx + 1} (contoh: Kepala Sekolah ...)`} className="h-8 text-sm" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" disabled={idx === 0} onClick={() => setKepadaTambahan((prev) => { const a = [...prev]; const t = a[idx]!; a[idx] = a[idx - 1]!; a[idx - 1] = t!; return a; })}><ChevronUp size={12} /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" disabled={idx === kepadaTambahan.length - 1} onClick={() => setKepadaTambahan((prev) => { const a = [...prev]; const t = a[idx]!; a[idx] = a[idx + 1]!; a[idx + 1] = t!; return a; })}><ChevronDown size={12} /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-red-500" onClick={() => setKepadaTambahan((prev) => prev.filter((_, i) => i !== idx))}><Trash2 size={14} /></Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => setKepadaTambahan((prev) => [...prev, ""])}><Plus size={14} className="mr-1" />Tambah Penerima</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2"><CalendarDays size={16} />Pilih Jadwal untuk Lampiran <span className="text-xs font-normal text-slate-500">{Object.keys(selected).length} terpilih</span></CardTitle>
+            <Button variant="outline" size="sm" onClick={toggleAll}>{Object.keys(selected).length === filtered.length && filtered.length > 0 ? "Batal Pilih Semua" : "Pilih Semua"}</Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari sekolah / institusi..." className="pl-9 h-8" />
+            </div>
+            {loading ? <p className="text-sm text-slate-500">Memuat...</p> : (
+              <div className="max-h-[380px] overflow-y-auto border rounded-xl divide-y">
+                {filtered.length === 0 && <p className="p-4 text-sm text-slate-400 text-center">Tidak ada data</p>}
+                {filtered.map((row) => (
+                  <label key={row.id} className={`flex items-start gap-2 p-2 cursor-pointer hover:bg-slate-50 ${selected[row.id] ? "bg-emerald-50" : ""}`}>
+                    <input type="checkbox" checked={!!selected[row.id]} onChange={() => toggleRow(row)} className="mt-1 h-4 w-4 shrink-0" />
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-0.5 ${row.kind === "event" ? "bg-blue-900 text-white" : "bg-emerald-100 text-emerald-700"}`}>{row.kind === "event" ? "Event" : "Booking"}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold truncate">{row.institution}</span>
+                      <span className="block text-xs text-slate-500 truncate">{row.eventName} · {row.participant_count} peserta</span>
+                      <span className="block text-xs text-slate-400">{format(new Date(row.start_date.slice(0, 10) + "T00:00:00"), "d MMM yyyy", { locale: localeId })} — {format(new Date(row.end_date.slice(0, 10) + "T00:00:00"), "d MMM yyyy", { locale: localeId })}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="flex gap-3">
         <Button onClick={handlePreview} disabled={generating} className="bg-emerald-600 hover:bg-emerald-700"><Eye size={16} className="mr-1" />{generating ? "Memproses..." : "Preview Surat (2 lembar)"}</Button>
