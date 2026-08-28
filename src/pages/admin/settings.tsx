@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getSettings, updateSettings, type SettingsRecord, getLetterRecipients, createLetterRecipient, updateLetterRecipient, deleteLetterRecipient, type LetterRecipient } from "@/lib/adminApi";
-import { Save, Plus, Trash2, Check } from "lucide-react";
+import { Save, Plus, Trash2, Check, ChevronUp, ChevronDown } from "lucide-react";
 import { formatDateTimeWIB } from "@/lib/utils";
 
 interface AuthUser { id: string; username: string; role: string; }
@@ -90,6 +90,20 @@ export default function SettingsPage({ currentUser }: Props) {
     } catch { toast.error("Gagal hapus"); }
   }
 
+  async function moveRecipient(idx: number, dir: -1 | 1) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= recipients.length) return;
+    const a = [...recipients];
+    const tmp = a[idx]!;
+    a[idx] = a[newIdx]!;
+    a[newIdx] = tmp!;
+    setRecipients(a);
+    try {
+      await Promise.all(a.map((r, i) => updateLetterRecipient(r.id, { sort_order: i + 1 })));
+      toast.success("Urutan disimpan");
+    } catch { toast.error("Gagal simpan urutan"); }
+  }
+
   if (currentUser?.role !== "super_admin") {
     return <div className="flex items-center justify-center min-h-[400px]"><div className="text-center"><h2 className="text-2xl font-bold text-red-600 mb-2">403 — Akses Ditolak</h2><p className="text-gray-500">Halaman ini hanya untuk super_admin.</p></div></div>;
   }
@@ -133,8 +147,8 @@ export default function SettingsPage({ currentUser }: Props) {
         <CardContent className="space-y-3">
           <p className="text-xs text-gray-500">Centang yang default otomatis terpilih saat generate surat. Bisa tambah pihak lain per surat nanti.</p>
           <div className="space-y-2">
-            {recipients.map((rec) => (
-              <div key={rec.id} className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50/60">
+            {recipients.map((rec, idx) => (
+              <div key={rec.id} className="flex items-center gap-1 p-2 rounded-lg border bg-slate-50/60">
                 <button
                   type="button"
                   onClick={() => toggleDefault(rec)}
@@ -142,9 +156,11 @@ export default function SettingsPage({ currentUser }: Props) {
                 >
                   {rec.is_default && <Check size={12} />}
                 </button>
-                <span className="flex-1 text-sm">{rec.name}</span>
-                <span className="text-xs text-slate-400">{rec.is_default ? "Default" : ""}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDeleteRec(rec.id)}><Trash2 size={14} /></Button>
+                <span className="flex-1 text-sm">{idx + 1}. {rec.name}</span>
+                <span className="text-xs text-slate-400 hidden sm:inline">{rec.is_default ? "Default" : ""}</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" disabled={idx === 0} onClick={() => moveRecipient(idx, -1)}><ChevronUp size={14} /></Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" disabled={idx === recipients.length - 1} onClick={() => moveRecipient(idx, 1)}><ChevronDown size={14} /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 shrink-0" onClick={() => handleDeleteRec(rec.id)}><Trash2 size={14} /></Button>
               </div>
             ))}
             {recipients.length === 0 && <p className="text-sm text-slate-400">Belum ada penerima default</p>}
