@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { FileText, Eye, Download, Plus, Trash2, Search, CalendarDays } from "lucide-react";
+import { FileText, Eye, Download, Plus, Trash2, Search, CalendarDays, X } from "lucide-react";
 import { getBookings, getEvents, type BookingRecord, type EventRecord, getSettings, getLetterRecipients, previewLetterNumber, nextLetterNumber } from "@/lib/adminApi";
 import { generateSuratPdf, type SuratItem, type PageSize } from "@/lib/suratPdf";
 
@@ -275,13 +275,19 @@ export default function SuratPage() {
       </div>
 
       {previewUri && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Preview — cek sebelum download (header/footer + 2 lembar)</CardTitle></CardHeader>
-          <CardContent>
-            <iframe src={previewUri} className="w-full h-[800px] rounded-xl border" title="Preview Surat Pemberitahuan" />
-            <p className="mt-2 text-xs text-slate-500">Jika sudah pas, klik Download PDF. Nomor akan auto increment setelah download.</p>
-          </CardContent>
-        </Card>
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPreviewUri(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+              <h3 className="font-bold text-sm">Preview Surat — 2 Lembar ({pageSize.toUpperCase()})</h3>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={handleDownload} className="bg-emerald-600 hover:bg-emerald-700"><Download size={14} className="mr-1" />Download PDF</Button>
+                <Button variant="ghost" size="icon" onClick={() => setPreviewUri(null)}><X size={18} /></Button>
+              </div>
+            </div>
+            <iframe src={previewUri} className="flex-1 w-full border-0" title="Preview Surat Pemberitahuan" />
+            <p className="px-4 py-2 text-xs text-slate-500 border-t shrink-0">Jika sudah pas, klik Download PDF. Nomor akan auto increment setelah download.</p>
+          </div>
+        </div>
       )}
     </div>
   );

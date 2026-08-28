@@ -107,7 +107,12 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     }
     if (footerImg) {
       const y = pageH - footerFinalH;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, y, pageW, footerFinalH, "F");
       try { doc.addImage(footerImg.data, footerImg.format, 0, y, pageW, footerFinalH); } catch (e) { console.warn("footer addImage fail", e); }
+      doc.setDrawColor(255, 255, 255);
+      doc.setLineWidth(0.2);
+      doc.line(0, y, pageW, y);
     }
   }
 
@@ -197,16 +202,14 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   for (const para of paragraphs) {
     const lines = wrapText(doc, para, contentW);
     const paraH = lines.length * 5;
-    ensureSpace(paraH + 2);
+    ensureSpace(paraH + 4);
     for (const line of lines) {
       ensureSpace(5);
       doc.text(line, contentX, y, { align: "justify", maxWidth: contentW } as never);
       y += 5;
     }
-    y += 4;
+    y += 8;
   }
-
-  y += 4;
   const tglStr = data.tanggalSurat ? fmtTgl(data.tanggalSurat) : format(new Date(), "d MMMM yyyy", { locale: localeId });
   doc.setFont("helvetica", "normal");
   doc.text(`Girimulya, ${tglStr}`, pageW / 2, y, { align: "center" });
@@ -357,9 +360,17 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       }
       tableY += neededH;
     }
-    y = tableY + 8;
+    y = tableY + 12;
     doc.setFont("helvetica", "normal"); doc.setFontSize(8);
     doc.text(`Total: ${data.items.length} kegiatan`, contentX, y);
+    y += 12;
+    ensureSpace(30);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text(`Girimulya, ${tglStr}`, contentX + contentW, y, { align: "right" }); y += 6;
+    doc.text("Ketua Pengelola", contentX + contentW, y, { align: "right" }); y += 4;
+    doc.text("Buper Lebak Barat,", contentX + contentW, y, { align: "right" }); y += 16;
+    doc.setFont("helvetica", "bold");
+    doc.text(data.signKetua || "(___________________)", contentX + contentW, y, { align: "right" });
   }
 
   let dataUri: string;
