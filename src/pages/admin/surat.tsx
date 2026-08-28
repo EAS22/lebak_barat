@@ -133,9 +133,13 @@ export default function SuratPage() {
         headerBase64: null,
         footerBase64: null,
       });
+      if (!dataUri || !dataUri.startsWith("data:application/pdf")) {
+        throw new Error("Preview dataUri kosong — coba refresh dan preview lagi");
+      }
       setPreviewUri(dataUri);
       toast.success("Preview siap — cek di bawah, jika pas klik Download PDF");
     } catch (e: unknown) {
+      console.error("preview err", e);
       toast.error(e instanceof Error ? e.message : "Gagal generate preview");
     } finally { setGenerating(false); }
   }

@@ -57,11 +57,22 @@ async function imageToBase64(src: string): Promise<{ data: string; w: number; h:
   } catch { return null; }
 }
 
-function fmtDate(dateStr: string): string {
+function fmtTgl(dateStr: string): string {
   try {
     const d = new Date(dateStr.slice(0, 10) + "T00:00:00");
     return format(d, "d MMMM yyyy", { locale: localeId });
   } catch { return dateStr; }
+}
+
+function fmtRange(start: string, end: string): string {
+  try {
+    const s = new Date(start.slice(0, 10) + "T00:00:00");
+    const e = new Date(end.slice(0, 10) + "T00:00:00");
+    if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+      return `${format(s, "d", { locale: localeId })} - ${format(e, "d MMMM yyyy", { locale: localeId })}`;
+    }
+    return `${format(s, "d MMM", { locale: localeId })} - ${format(e, "d MMM yyyy", { locale: localeId })}`;
+  } catch { return `${start} - ${end}`; }
 }
 
 function wrapText(doc: jsPDF, text: string, maxWidth: number): string[] {
@@ -77,289 +88,267 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   const marginLeft = 25.4;
   const marginRight = 25.4;
   const contentW = pageW - marginLeft - marginRight;
+  const contentX = marginLeft;
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageW, pageH] });
-
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
+  doc.setLineHeightFactor(1.15);
 
   const headerImg = data.headerBase64 ? await imageToBase64(data.headerBase64) : await imageToBase64("/images/header.png");
   const footerImg = data.footerBase64 ? await imageToBase64(data.footerBase64) : await imageToBase64("/images/footer.png");
 
-  let headerH = 0;
-  let footerH = 0;
-  void headerH; void footerH;
+  const headerFinalH = 32;
+  const footerFinalH = 18;
 
-  function drawHeaderFooter(pageNum: number) {
-    const total = doc.getNumberOfPages();
+  function drawHeaderFooter() {
     if (headerImg) {
-      const ratio = headerImg.w / headerImg.h;
-      const h = 28;
-      const w = h * ratio;
-      const x = (pageW - w) / 2;
-      try { doc.addImage(headerImg.data, headerImg.format, x, 2, w, h); } catch {}
-      headerH = h + 4;
-    } else {
-      headerH = 0;
+      try { doc.addImage(headerImg.data, headerImg.format, 0, 0, pageW, headerFinalH); } catch (e) { console.warn("header addImage fail", e); }
     }
     if (footerImg) {
-      const ratio = footerImg.w / footerImg.h;
-      const h = 16;
-      const w = h * ratio;
-      const x = (pageW - w) / 2;
-      const y = pageH - h - 2;
-      try { doc.addImage(footerImg.data, footerImg.format, x, y, w, h); } catch {}
-      footerH = h + 4;
-    } else {
-      footerH = 0;
+      const y = pageH - footerFinalH;
+      try { doc.addImage(footerImg.data, footerImg.format, 0, y, pageW, footerFinalH); } catch (e) { console.warn("footer addImage fail", e); }
     }
-    void pageNum; void total;
   }
 
-  const topY = marginTop + (headerImg ? 32 : 0);
-  const bottomY = pageH - marginBottom - (footerImg ? 20 : 0);
+  const topY = marginTop + headerFinalH + 2;
+  const bottomY = pageH - marginBottom - footerFinalH - 2;
 
   let y = topY;
-
-  drawHeaderFooter(1);
+  drawHeaderFooter();
 
   function ensureSpace(needed: number) {
     if (y + needed > bottomY) {
       doc.addPage([pageW, pageH]);
-      drawHeaderFooter(doc.getNumberOfPages());
+      drawHeaderFooter();
       y = topY;
     }
   }
 
-  function addWrapped(text: string, opts?: { bold?: boolean; align?: "left" | "center" | "right" | "justify"; indent?: number }) {
-    const style = opts?.bold ? "bold" : "normal";
-    doc.setFont("helvetica", style);
-    const maxW = contentW - (opts?.indent ?? 0);
-    const lines = wrapText(doc, text, maxW);
-    for (const line of lines) {
-      ensureSpace(5);
-      const x = marginLeft + (opts?.indent ?? 0);
-      if (opts?.align === "center") doc.text(line, pageW / 2, y, { align: "center" });
-      else if (opts?.align === "right") doc.text(line, pageW - marginRight, y, { align: "right" });
-      else if (opts?.align === "justify") doc.text(line, x, y, { align: "justify", maxWidth: maxW } as never);
-      else doc.text(line, x, y);
-      y += 5;
+  const nomor = data.nomor || "___/BPLB/__/____";
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const infoRows: [string, string][] = [
+    ["Nomor", nomor],
+    ["Lampiran", data.lampiran || "1 (Satu) Berkas"],
+    ["Perihal", data.perihal || "Pemberitahuan Kegiatan Perkemahan"],
+  ];
+  const labelW = 22;
+  const colonW = 4;
+  for (const [label, value] of infoRows) {
+    ensureSpace(6);
+    doc.setFont("helvetica", "normal");
+    doc.text(label, contentX, y);
+    doc.text(":", contentX + labelW, y);
+    const valLines = wrapText(doc, value, contentW - labelW - colonW);
+    for (let i = 0; i < valLines.length; i++) {
+      if (i > 0) ensureSpace(5);
+      doc.text(valLines[i]!, contentX + labelW + colonW, y);
+      if (i < valLines.length - 1) y += 5;
     }
+    y += 6;
+  }
+  y += 2;
+
+  doc.setFont("helvetica", "normal");
+  doc.text("Kepada Yth.,", contentX, y);
+  y += 6;
+  for (let i = 0; i < data.kepada.length; i++) {
+    const p = data.kepada[i]!.trim();
+    if (!p) continue;
+    ensureSpace(5);
+    const num = `${i + 1}. `;
+    const maxW = contentW - 8;
+    const lines = wrapText(doc, p, maxW);
+    doc.text(num, contentX + 2, y);
+    for (let li = 0; li < lines.length; li++) {
+      if (li > 0) ensureSpace(5);
+      doc.text(lines[li]!, contentX + 8, y);
+      if (li < lines.length - 1) y += 5;
+    }
+    y += 6;
+  }
+  doc.text("di", contentX, y);
+  y += 5;
+  doc.text("Tempat", contentX, y);
+  y += 8;
+
+  doc.text("Dengan hormat,", contentX, y);
+  y += 6;
+
+  const bodyRaw = data.redaksiBody.split("\n").map((l) => l.trim()).filter(Boolean);
+  const skipSet = new Set([
+    `Nomor: ${nomor}`, `Lampiran: ${data.lampiran}`, `Perihal: ${data.perihal}`,
+    "Kepada Yth.,", "di", "Tempat", "Dengan hormat,", "Hormat Kami,",
+  ]);
+  const paragraphs: string[] = [];
+  for (const line of bodyRaw) {
+    if (skipSet.has(line)) continue;
+    if (line.startsWith("Girimulya,")) continue;
+    if (line.startsWith("Nomor:") || line.startsWith("Lampiran:") || line.startsWith("Perihal:")) continue;
+    if (data.kepada.some((k) => k.trim() === line)) continue;
+    if (line === "Kepada Yth.," || line === "di" || line === "Tempat" || line === "Dengan hormat," || line === "Hormat Kami,") continue;
+    paragraphs.push(line);
   }
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-
-  const nomor = data.nomor || "___/BPLB/__/____";
-  addWrapped(`Nomor    : ${nomor}`, { indent: 0 });
-  addWrapped(`Lampiran : ${data.lampiran || "1 (Satu) Berkas"}`);
-  addWrapped(`Perihal  : ${data.perihal || "Pemberitahuan Kegiatan Perkemahan"}`);
-  y += 3;
-
-  addWrapped("Kepada Yth.,");
-  for (const p of data.kepada) {
-    if (!p.trim()) continue;
-    addWrapped(p);
-  }
-  addWrapped("di");
-  addWrapped("Tempat");
-  y += 2;
-
-  addWrapped("Dengan hormat,", { indent: 0 });
-  y += 1;
-
-  const bodyLines = data.redaksiBody.split("\n").map((l) => l.trim()).filter(Boolean);
-  const skipHeaderLines = new Set([
-    `Nomor: ${nomor}`,
-    `Lampiran: ${data.lampiran}`,
-    `Perihal: ${data.perihal}`,
-    "Kepada Yth.,",
-    "di",
-    "Tempat",
-    "Dengan hormat,",
-    "Hormat Kami,",
-  ]);
-  for (const line of bodyLines) {
-    if (skipHeaderLines.has(line)) continue;
-    if (line.startsWith("Girimulya,")) continue;
-    if (line.startsWith("Nomor:") || line.startsWith("Lampiran:") || line.startsWith("Perihal:")) continue;
-    if (line === "Kepada Yth.," || line === "di" || line === "Tempat" || line === "Dengan hormat," || line === "Hormat Kami,") continue;
-    const isRecipient = data.kepada.some((k) => k.trim() === line);
-    if (isRecipient) continue;
-    doc.setFont("helvetica", "normal");
-    const wrapped = wrapText(doc, line, contentW);
-    for (const w of wrapped) {
+  for (const para of paragraphs) {
+    const lines = wrapText(doc, para, contentW);
+    const paraH = lines.length * 5;
+    ensureSpace(paraH + 2);
+    for (const line of lines) {
       ensureSpace(5);
-      doc.text(w, marginLeft, y, { align: "justify", maxWidth: contentW } as never);
+      doc.text(line, contentX, y, { align: "justify", maxWidth: contentW } as never);
       y += 5;
     }
-    y += 1;
+    y += 4;
   }
 
-  y += 2;
-  const tglStr = data.tanggalSurat ? fmtDate(data.tanggalSurat) : format(new Date(), "d MMMM yyyy", { locale: localeId });
+  y += 4;
+  const tglStr = data.tanggalSurat ? fmtTgl(data.tanggalSurat) : format(new Date(), "d MMMM yyyy", { locale: localeId });
   doc.setFont("helvetica", "normal");
-  doc.text(`Girimulya, ${tglStr}`, pageW - marginRight, y, { align: "right" });
-  y += 5;
-  doc.text("Hormat Kami,", pageW - marginRight, y, { align: "right" });
-  y += 18;
+  doc.text(`Girimulya, ${tglStr}`, pageW / 2, y, { align: "center" });
+  y += 6;
+  doc.text("Hormat Kami,", pageW / 2, y, { align: "center" });
+  y += 20;
 
-  const sigs = [
+  const sigsTop = [
     { label: "Ketua Pengelola\nBuper Lebak Barat", name: data.signKetua || "(___________________)" },
     { label: "Sekretaris", name: data.signSekretaris || "(___________________)" },
   ];
-  const sigs2 = [
+  const sigsBottom = [
     { label: "Mengetahui,\nKepala Desa Girimulya", name: data.signKades || "(___________________)" },
     { label: "Direktur\nBUMDes Gunung Sembung", name: data.signDirBumdes || "(___________________)" },
   ];
 
-  const sigY = y;
   const colW = contentW / 2;
-  const leftX = marginLeft + colW / 2;
-  const rightX = marginLeft + colW + colW / 2;
+  const leftX = contentX + colW / 2;
+  const rightX = contentX + colW + colW / 2;
 
-  for (let i = 0; i < 2; i++) {
-    const s = sigs[i]!;
-    const x = i === 0 ? leftX : rightX;
-    const labelLines = s.label.split("\n");
-    for (const ll of labelLines) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text(ll, x, y, { align: "center" });
-      y += 4;
-    }
-    doc.setFontSize(10);
-  }
-  y += 12;
-  for (let i = 0; i < 2; i++) {
-    const s = sigs[i]!;
-    const x = i === 0 ? leftX : rightX;
-    doc.setFont("helvetica", "bold");
-    doc.text(s.name, x, y, { align: "center" });
-  }
-  y += 10;
+  ensureSpace(36);
 
-  const sigY2 = y + 4;
-  let yy = sigY2;
+  const yTop = y;
   for (let i = 0; i < 2; i++) {
-    const s = sigs2[i]!;
+    const s = sigsTop[i]!;
     const x = i === 0 ? leftX : rightX;
-    let ty = sigY2;
-    const labelLines = s.label.split("\n");
-    for (const ll of labelLines) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text(ll, x, ty, { align: "center" });
+    const parts = s.label.split("\n");
+    let ty = yTop;
+    for (const p of parts) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+      doc.text(p, x, ty, { align: "center" });
       ty += 4;
     }
-    doc.setFontSize(10);
   }
-  yy = sigY2 + 12 + 12;
+  const yNameTop = yTop + 20;
   for (let i = 0; i < 2; i++) {
-    const s = sigs2[i]!;
+    const s = sigsTop[i]!;
     const x = i === 0 ? leftX : rightX;
-    doc.setFont("helvetica", "bold");
-    doc.text(s.name, x, yy, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text(s.name, x, yNameTop, { align: "center" });
   }
 
-  void sigY;
+  const yBottom = yNameTop + 14;
+  ensureSpace(36);
+  for (let i = 0; i < 2; i++) {
+    const s = sigsBottom[i]!;
+    const x = i === 0 ? leftX : rightX;
+    const parts = s.label.split("\n");
+    let ty = yBottom;
+    for (const p of parts) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+      doc.text(p, x, ty, { align: "center" });
+      ty += 4;
+    }
+  }
+  const yNameBottom = yBottom + 20;
+  for (let i = 0; i < 2; i++) {
+    const s = sigsBottom[i]!;
+    const x = i === 0 ? leftX : rightX;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text(s.name, x, yNameBottom, { align: "center" });
+  }
 
   doc.addPage([pageW, pageH]);
-  drawHeaderFooter(2);
+  drawHeaderFooter();
   y = topY;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("LAMPIRAN", pageW / 2, y, { align: "center" });
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(`Lampiran Surat Nomor: ${nomor}`, pageW / 2, y, { align: "center" });
-  y += 5;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("DAFTAR JADWAL KEGIATAN KEMAH DI BUPER LEBAK BARAT", pageW / 2, y, { align: "center" });
-  y += 8;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+  doc.text("LAMPIRAN", pageW / 2, y, { align: "center" }); y += 6;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+  doc.text(`Lampiran Surat Nomor: ${nomor}`, pageW / 2, y, { align: "center" }); y += 5;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+  doc.text("DAFTAR JADWAL KEGIATAN KEMAH DI BUPER LEBAK BARAT", pageW / 2, y, { align: "center" }); y += 10;
 
   if (data.items.length === 0) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     doc.text("Belum ada jadwal terpilih.", pageW / 2, y, { align: "center" });
   } else {
-    const headers = ["No", "Institusi / Sekolah", "Kegiatan", "Tanggal", "Peserta"];
-    const colWidths = [12, 55, 55, 42, 18];
-    const tableX = marginLeft;
-    const rowH = 8;
-    const headerH2 = 10;
+    const headers = ["No", "Nama Sekolah / Instansi", "Tanggal Pelaksanaan", "Estimasi Jumlah Peserta", "Ket."];
+    const colWArr = [12, 62, 52, 40, 28];
+    const sumW = colWArr.reduce((a, b) => a + b, 0);
+    const scale = contentW / sumW;
+    const cols = colWArr.map((w) => w * scale);
+    const tableX = contentX;
+    const headerH2 = 12;
 
-    function drawTableHeader(atY: number) {
-      doc.setFillColor(20, 48, 28);
-      doc.setDrawColor(180, 180, 180);
+    function drawHeader(atY: number) {
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
+      doc.setFillColor(255, 255, 255);
       doc.rect(tableX, atY, contentW, headerH2, "FD");
       let cx = tableX;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(0, 0, 0);
       for (let i = 0; i < headers.length; i++) {
-        const w = colWidths[i]!;
+        const w = cols[i]!;
         doc.rect(cx, atY, w, headerH2, "D");
-        const txt = headers[i]!;
-        doc.text(txt, cx + w / 2, atY + 6, { align: "center" });
+        const t = headers[i]!;
+        const lines = wrapText(doc, t, w - 4);
+        const lh = 3.5;
+        const startY2 = atY + (headerH2 - lines.length * lh) / 2 + 3;
+        for (let li = 0; li < lines.length; li++) {
+          doc.text(lines[li]!, cx + w / 2, startY2 + li * lh, { align: "center" });
+        }
         cx += w;
       }
-      doc.setTextColor(0, 0, 0);
       return headerH2;
     }
 
-    doc.setDrawColor(180, 180, 180);
     let tableY = y;
-    tableY += drawTableHeader(tableY);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    tableY += drawHeader(tableY);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2);
 
     for (let idx = 0; idx < data.items.length; idx++) {
-      const item = data.items[idx]!;
+      const it = data.items[idx]!;
       const rowData = [
-        String(item.no),
-        item.institution,
-        item.eventName,
-        `${fmtDate(item.startDate)} — ${fmtDate(item.endDate)}`,
-        String(item.participantCount),
+        String(it.no),
+        it.institution,
+        fmtRange(it.startDate, it.endDate),
+        String(it.participantCount) + " orang",
+        it.keterangan?.trim() || "-",
       ];
-
-      const cellLines: string[][] = rowData.map((txt, ci) => {
-        const w = colWidths[ci]! - 4;
-        return wrapText(doc, txt, w);
-      });
+      const cellLines: string[][] = rowData.map((txt, ci) => wrapText(doc, txt, cols[ci]! - 4));
       const maxLines = Math.max(...cellLines.map((l) => l.length));
-      const neededH = Math.max(rowH, maxLines * 4 + 4);
-
+      const neededH = Math.max(8, maxLines * 4 + 4);
       if (tableY + neededH > bottomY) {
         doc.addPage([pageW, pageH]);
-        drawHeaderFooter(doc.getNumberOfPages());
+        drawHeaderFooter();
         tableY = topY;
-        tableY += drawTableHeader(tableY);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
+        tableY += drawHeader(tableY);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+        doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2);
       }
-
-      const isEven = idx % 2 === 0;
-      if (isEven) {
-        doc.setFillColor(245, 245, 240);
-        doc.rect(tableX, tableY, contentW, neededH, "F");
-      }
-
       let cx = tableX;
       for (let ci = 0; ci < rowData.length; ci++) {
-        const w = colWidths[ci]!;
-        doc.setDrawColor(180, 180, 180);
+        const w = cols[ci]!;
         doc.rect(cx, tableY, w, neededH, "D");
         const lines = cellLines[ci]!;
-        const align = ci === 0 || ci === 4 ? "center" : "left";
-        const startY = tableY + 4.5;
+        const align = ci === 0 || ci === 3 ? "center" : ci === 4 ? "center" : "left";
+        const startY2 = tableY + 4.5;
         for (let li = 0; li < lines.length; li++) {
-          const ly = startY + li * 4;
+          const ly = startY2 + li * 4;
           const txt = lines[li]!;
           if (align === "center") doc.text(txt, cx + w / 2, ly, { align: "center" });
           else doc.text(txt, cx + 2, ly);
@@ -368,13 +357,19 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       }
       tableY += neededH;
     }
-
     y = tableY + 8;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(`Total: ${data.items.length} kegiatan`, marginLeft, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    doc.text(`Total: ${data.items.length} kegiatan`, contentX, y);
   }
 
-  const dataUri = doc.output("datauristring") as string;
+  let dataUri: string;
+  try {
+    const out = doc.output("datauristring");
+    dataUri = out as unknown as string;
+  } catch (e) {
+    console.error("datauristring fail, fallback bloburi", e);
+    const out2 = doc.output("datauri");
+    dataUri = out2 as unknown as string;
+  }
   return { doc, dataUri };
 }
