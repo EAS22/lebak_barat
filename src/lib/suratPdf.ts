@@ -163,7 +163,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   y += 2;
 
   doc.setFont("helvetica", "normal");
-  doc.text("Kepada Yth.,", contentX, y); y += 6;
+  doc.text("Kepada Yth.,", contentX, y); y += 5;
   for (let i = 0; i < data.kepada.length; i++) {
     const p = data.kepada[i]!.trim(); if (!p) continue;
     ensureSpace(5);
@@ -176,11 +176,11 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       doc.text(lines[li]!, contentX + 8, y);
       if (li < lines.length - 1) y += 5;
     }
-    y += 6;
+    y += 5;
   }
   doc.text("di", contentX, y); y += 5;
-  doc.text("Tempat", contentX, y); y += 8;
-  doc.text("Dengan hormat,", contentX, y); y += 6;
+  doc.text("Tempat", contentX, y); y += 5;
+  doc.text("Dengan hormat,", contentX, y); y += 5;
 
   const bodyRaw = data.redaksiBody.split("\n").map((l) => l.trim()).filter(Boolean);
   const skipSet = new Set([`Nomor: ${nomor}`, `Lampiran: ${data.lampiran}`, `Perihal: ${data.perihal}`, "Kepada Yth.,", "di", "Tempat", "Dengan hormat,", "Hormat Kami,"]);
@@ -195,6 +195,21 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
   }
 
   doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  function drawJustified(line: string, x: number, yy: number, maxW: number) {
+    const words = line.trim().split(/\s+/);
+    if (words.length <= 1) { doc.text(line, x, yy); return; }
+    const lineW = doc.getTextWidth(line);
+    const gaps = words.length - 1;
+    const extra = maxW - lineW;
+    if (extra <= 0) { doc.text(line, x, yy); return; }
+    let curX = x;
+    for (let wi = 0; wi < words.length; wi++) {
+      const w = words[wi]!;
+      doc.text(w, curX, yy);
+      if (wi < words.length - 1) curX += doc.getTextWidth(w + " ") + extra / gaps;
+      else curX += doc.getTextWidth(w);
+    }
+  }
   for (const para of paragraphs) {
     const lines = wrapText(doc, para, contentW);
     const paraH = lines.length * 5 + 3;
@@ -203,7 +218,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       ensureSpace(5);
       const isLast = li === lines.length - 1;
       if (isLast) doc.text(lines[li]!, contentX, y);
-      else doc.text(lines[li]!, contentX, y, { align: "justify", maxWidth: contentW } as never);
+      else drawJustified(lines[li]!, contentX, y, contentW);
       y += 5;
     }
     y += 3;
