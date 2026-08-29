@@ -285,21 +285,6 @@ export default function InvoicesPage() {
               </ul>
             </DialogDescription>
           </DialogHeader>
-      {invoicePreview && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setInvoicePreview(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-              <h3 className="font-bold text-sm">Preview Invoice — {invoicePreview.nomor}</h3>
-              <div className="flex items-center gap-2">
-                <Button size="sm" onClick={() => { invoicePreview.save(); toast.success("Invoice diunduh"); }} className="bg-emerald-600 hover:bg-emerald-700"><Download size={14} className="mr-1" />Download</Button>
-                <Button variant="ghost" size="icon" onClick={() => setInvoicePreview(null)}><X size={18} /></Button>
-              </div>
-            </div>
-            <iframe src={invoicePreview.uri} className="flex-1 w-full border-0" title="Preview Invoice" />
-          </div>
-        </div>
-      )}
-
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setMissingOpen(false)}>
               Tutup
@@ -318,6 +303,21 @@ export default function InvoicesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {invoicePreview && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setInvoicePreview(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+              <h3 className="font-bold text-sm">Preview Invoice — {invoicePreview.nomor}</h3>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => { invoicePreview.save(); toast.success("Invoice diunduh"); }} className="bg-emerald-600 hover:bg-emerald-700"><Download size={14} className="mr-1" />Download</Button>
+                <Button variant="ghost" size="icon" onClick={() => setInvoicePreview(null)}><X size={18} /></Button>
+              </div>
+            </div>
+            <iframe src={invoicePreview.uri} className="flex-1 w-full border-0" title="Preview Invoice" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
