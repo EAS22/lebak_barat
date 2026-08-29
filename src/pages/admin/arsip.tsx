@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Trash2, Archive, FileText, Mail, Download } from "lucide-react";
+import { Search, Trash2, Archive, FileText, Mail, Download, Eye, X } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useAuth } from "@/lib/authContext";
@@ -78,7 +78,9 @@ export default function ArsipPage() {
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal hapus"); } finally { setDeleting(null); }
   }
 
-  async function handleDownload(row: ArsipRow) {
+  const [preview, setPreview] = useState<{ uri: string; nomor: string; save: () => void } | null>(null);
+
+  async function handlePreviewDownload(row: ArsipRow) {
     try {
       if (row.tipe === "invoice") {
         const res = await fetch(`/api/bookings/${row.id}`, { credentials: "include" });
@@ -100,6 +102,7 @@ export default function ArsipPage() {
           buperName: String(s.buper_name || "Bumi Perkemahan Lebak Barat"),
         } as never);
         toast.success("Invoice diunduh");
+        return;
       } else {
         const res = await fetch(`/api/letter-archives/${row.id}`, { credentials: "include" });
         let letterBody = "";
@@ -124,12 +127,10 @@ export default function ArsipPage() {
           if (d.tanggal_surat) tanggal = String(d.tanggal_surat).slice(0, 10);
           if (d.lampiran) lampiran = String(d.lampiran);
           if (d.perihal) perihal = String(d.perihal);
-          if (d.items_json) {
-            try { items = JSON.parse(String(d.items_json)) as never[]; } catch {}
-          }
+          if (d.items_json) { try { items = JSON.parse(String(d.items_json)) as never[]; } catch {} }
         }
         if (kepada.length === 0) kepada = [row.perihal || "Penerima"];
-        const { doc } = await generateSuratPdf({
+        const { blobUrl, doc } = await generateSuratPdf({
           nomor: row.nomor,
           lampiran,
           perihal,
@@ -141,10 +142,9 @@ export default function ArsipPage() {
           signKetua, signSekretaris: signSek, signKades, signDirBumdes: signDir,
           headerBase64: null, footerBase64: null,
         });
-        doc.save(`Surat-${row.nomor.replace(/\//g, "-")}.pdf`);
-        toast.success("Surat diunduh");
+        setPreview({ uri: blobUrl, nomor: row.nomor, save: () => doc.save(`Surat-${row.nomor.replace(/\//g, "-")}.pdf`) });
       }
-    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal download"); }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal preview"); }
   }
 
   if (loading) return <div className="p-8 text-center text-slate-500">Memuat arsip...</div>;
@@ -200,8 +200,8 @@ export default function ArsipPage() {
                       <td className="px-3 py-2 text-xs truncate max-w-[220px]">{row.perihal || "-"}</td>
                       <td className="px-3 py-2 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:bg-emerald-50" onClick={() => handleDownload(row)} title="Download ulang">
-                            <Download size={14} />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:bg-emerald-50" onClick={() => handlePreviewDownload(row)} title="Preview & Download">
+                            <Eye size={14} />
                           </Button>
                           {canDelete ? (
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:bg-red-50" disabled={deleting === row.id} onClick={() => handleDelete(row)}>
@@ -224,6 +224,21 @@ export default function ArsipPage() {
           {isSuper && <p className="px-3 py-2 text-xs text-amber-600 border-t">Hanya nomor terbaru per tipe yang bisa dihapus (berurutan). Nomor terhapus dapat dipergunakan kembali.</p>}
         </CardContent>
       </Card>
+
+      {preview && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPreview(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+              <h3 className="font-bold text-sm">Preview — {preview.nomor}</h3>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => { preview.save(); toast.success("Diunduh"); }} className="bg-emerald-600 hover:bg-emerald-700"><Download size={14} className="mr-1" />Download</Button>
+                <Button variant="ghost" size="icon" onClick={() => setPreview(null)}><X size={18} /></Button>
+              </div>
+            </div>
+            <iframe src={preview.uri} className="flex-1 w-full border-0" title="Preview Arsip" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
