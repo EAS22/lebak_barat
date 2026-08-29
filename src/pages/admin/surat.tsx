@@ -96,6 +96,10 @@ export default function SuratPage() {
   }
 
   async function handlePreview() {
+    if (Object.keys(selected).length === 0 && filtered.length > 0) {
+      toast.error(`Belum ada jadwal terpilih — centang ${filtered.length} jadwal di bawah dulu`);
+      return;
+    }
     const items: SuratItem[] = Object.values(selected)
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
       .map((r, idx) => ({
@@ -105,8 +109,9 @@ export default function SuratPage() {
         startDate: r.start_date,
         endDate: r.end_date,
         participantCount: r.participant_count,
+        keterangan: r.eventName || undefined,
       }));
-    if (items.length === 0) { toast.error("Pilih minimal 1 jadwal untuk lampiran"); return; }
+    if (items.length === 0) { toast.error("Pilih minimal 1 jadwal untuk lampiran — centang checkbox di daftar jadwal"); return; }
     if (!nomor.trim()) { toast.error("Nomor surat wajib diisi"); return; }
 
     const kepadaList = [
@@ -159,6 +164,7 @@ export default function SuratPage() {
           startDate: r.start_date,
           endDate: r.end_date,
           participantCount: r.participant_count,
+          keterangan: r.eventName || undefined,
         }));
       await fetch("/api/letter/archive", {
         method: "POST",
