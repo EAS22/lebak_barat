@@ -344,16 +344,16 @@ export default function BookingsPage() {
                 <TableBody>
                   {bookings.map((b) => (
                     <TableRow key={b.id}>
-                      <TableCell className="font-medium">{b.school_name}</TableCell>
-                      <TableCell>{b.participant_count}</TableCell>
-                      <TableCell>{b.pic_name}</TableCell>
+                      <TableCell className="font-medium text-xs">{b.school_name}</TableCell>
+                      <TableCell className="text-xs">{b.participant_count}</TableCell>
+                      <TableCell className="text-xs">{b.pic_name}</TableCell>
                       <TableCell className="text-xs">{b.pic_wa || "—"}</TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-xs">
                         {format(parseDateOnly(b.start_date), "d MMM yyyy", { locale: localeId })}
                         {" — "}
                         {format(parseDateOnly(b.end_date), "d MMM yyyy", { locale: localeId })}
                       </TableCell>
-                      <TableCell>{b.price != null ? formatIDR(b.price) : "—"}</TableCell>
+                      <TableCell className="text-xs">{b.price != null ? formatIDR(b.price) : "—"}</TableCell>
                       <TableCell>
                         <span
                           className={cn(
