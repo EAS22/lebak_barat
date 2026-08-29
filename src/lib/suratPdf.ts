@@ -210,15 +210,31 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
       else curX += doc.getTextWidth(w);
     }
   }
+  const indent = 10;
   for (const para of paragraphs) {
-    const lines = wrapText(doc, para, contentW);
-    const paraH = lines.length * 5 + 3;
+    const lines = wrapText(doc, para, contentW - indent);
+    const paraLines: string[] = [];
+    if (lines.length > 0) {
+      paraLines.push(lines[0]!);
+      if (lines.length > 1) {
+        const rest = para.slice(lines[0]!.length).trimStart();
+        if (rest) {
+          const restLines = wrapText(doc, rest, contentW);
+          paraLines.push(...restLines);
+        }
+      }
+    }
+    const useLines = paraLines.length > 0 ? paraLines : wrapText(doc, para, contentW);
+    const paraH = useLines.length * 5 + 3;
     ensureSpace(paraH);
-    for (let li = 0; li < lines.length; li++) {
+    for (let li = 0; li < useLines.length; li++) {
       ensureSpace(5);
-      const isLast = li === lines.length - 1;
-      if (isLast) doc.text(lines[li]!, contentX, y);
-      else drawJustified(lines[li]!, contentX, y, contentW);
+      const isLast = li === useLines.length - 1;
+      const x = li === 0 ? contentX + indent : contentX;
+      const w = li === 0 ? contentW - indent : contentW;
+      const txt = useLines[li]!;
+      if (isLast) doc.text(txt, x, y);
+      else drawJustified(txt, x, y, w);
       y += 5;
     }
     y += 3;
@@ -350,7 +366,7 @@ export async function generateSuratPdf(data: SuratData): Promise<{ doc: jsPDF; d
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     const ttdX = contentX + contentW / 2;
     doc.text(`Girimulya, ${tglStr}`, ttdX + contentW / 4, y, { align: "center" }); y += 6;
-    doc.text("Ketua Pengelola Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 15;
+    doc.text("Ketua Pengelola Buper Lebak Barat,", ttdX + contentW / 4, y, { align: "center" }); y += 20;
     doc.setFont("helvetica", "bold");
     doc.text(data.signKetua || "(___________________)", ttdX + contentW / 4, y, { align: "center" });
   }
