@@ -88,7 +88,7 @@ export default function ArsipPage() {
         const b = await res.json() as Record<string, unknown>;
         const sRes = await getSettings();
         const s = sRes as unknown as Record<string, unknown>;
-        await generateInvoicePdf({
+        const result = await generateInvoicePdf({
           invoice_number: String(b.invoice_number || row.nomor),
           school_name: String(b.school_name || ""),
           participant_count: Number(b.participant_count || 0),
@@ -100,8 +100,13 @@ export default function ArsipPage() {
           status: String(b.status || "final"),
           created_at: String(b.created_at || ""),
           buperName: String(s.buper_name || "Bumi Perkemahan Lebak Barat"),
-        } as never);
-        toast.success("Invoice diunduh");
+        } as never, { previewOnly: true } as never);
+        const r = result as unknown as { blobUrl?: string; doc?: { save: (n: string) => void } };
+        if (r.blobUrl) {
+          setPreview({ uri: r.blobUrl, nomor: row.nomor, save: () => r.doc!.save(`Invoice-${row.nomor.replace(/\//g, "-")}.pdf`) });
+          return;
+        }
+        toast.success("Invoice preview siap");
         return;
       } else {
         const res = await fetch(`/api/letter-archives/${row.id}`, { credentials: "include" });

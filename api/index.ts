@@ -1096,6 +1096,24 @@ app.get("/api/letter/next-number-preview", requireAuth, async (c) => {
   }
 });
 
+app.post("/api/letter/reset-seq", requireAuth, requireSuper, async (c) => {
+  try {
+    const sql = getSql();
+    const body = await c.req.json() as { seq?: number };
+    const seq = Number(body.seq);
+    if (!Number.isInteger(seq) || seq < 0 || seq > 9999) return c.json({ error: "seq harus 0-9999" }, 400);
+    await sql`UPDATE settings SET letter_seq = ${seq} WHERE id=1`;
+    const nextSeq = seq + 1;
+    const now = new Date();
+    const roman = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"][now.getMonth()]!;
+    const nomor = `${String(nextSeq).padStart(3, "0")}/BPLB/${roman}/${now.getFullYear()}`;
+    return c.json({ seq: nextSeq, nomor });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return c.json({ error: msg }, 500);
+  }
+});
+
 app.get("/api/arsip", requireAuth, async (c) => {
   try {
     const sql = getSql();

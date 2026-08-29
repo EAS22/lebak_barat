@@ -28,6 +28,20 @@ export default function SettingsPage({ currentUser }: Props) {
   });
   const [recipients, setRecipients] = useState<LetterRecipient[]>([]);
   const [newRecName, setNewRecName] = useState("");
+  const [seqInfo, setSeqInfo] = useState<{ seq: number; nomor: string } | null>(null);
+  const [seqInput, setSeqInput] = useState("");
+  const [seqLoading, setSeqLoading] = useState(false);
+
+  async function loadSeq() {
+    try {
+      const res = await fetch("/api/letter/next-number-preview", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json() as { seq: number; nomor: string };
+        setSeqInfo(data);
+        setSeqInput(String(data.seq));
+      }
+    } catch {}
+  }
 
   useEffect(() => {
     async function load() {
@@ -44,6 +58,7 @@ export default function SettingsPage({ currentUser }: Props) {
           signKades: (data.sign_kades as string) || "",
           signDirBumdes: (data.sign_dirbumdes as string) || "",
         });
+        await loadSeq();
       } catch { toast.error("Gagal memuat pengaturan"); } finally { setLoading(false); }
     }
     load();
@@ -102,6 +117,25 @@ export default function SettingsPage({ currentUser }: Props) {
       await Promise.all(a.map((r, i) => updateLetterRecipient(r.id, { sort_order: i + 1 })));
       toast.success("Urutan disimpan");
     } catch { toast.error("Gagal simpan urutan"); }
+  }
+
+  async function handleResetSeq() {
+    const val = parseInt(seqInput, 10);
+    if (Number.isNaN(val) || val < 0) { toast.error("Nomor harus angka >= 0"); return; }
+    if (!confirm(`Reset nomor surat ke ${val}? Nomor selanjutnya akan jadi ${String(val + 1).padStart(3, "0")}/BPLB/...`)) return;
+    setSeqLoading(true);
+    try {
+      const res = await fetch("/api/letter/reset-seq", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seq: val }),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error((err as { error?: string }).error || "Gagal reset"); }
+      const data = await res.json() as { seq: number; nomor: string };
+      setSeqInfo(data);
+      setSeqInput(String(data.seq));
+      toast.success(`Nomor di-reset: selanjutnya ${data.nomor}`);
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : "Gagal reset"); } finally { setSeqLoading(false); }
   }
 
   if (currentUser?.role !== "super_admin") {
@@ -169,6 +203,25 @@ export default function SettingsPage({ currentUser }: Props) {
             <Input value={newRecName} onChange={(e) => setNewRecName(e.target.value)} placeholder="Tambah penerima (contoh: Kapolres Majalengka)" onKeyDown={(e) => e.key === "Enter" && handleAddRecipient()} />
             <Button onClick={handleAddRecipient}><Plus size={16} className="mr-1" />Tambah</Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Nomor Surat — Auto Increment</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs text-amber-700">Nomor selanjutnya (preview):</p>
+            <p className="text-lg font-mono font-bold">{seqInfo?.nomor ?? "Memuat..."}</p>
+            <p className="text-xs text-slate-500">Seq saat ini: {seqInfo ? seqInfo.seq - 1 : "—"} → selanjutnya {seqInfo?.seq ?? "—"}</p>
+          </div>
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label>Reset / Set Nomor (seq)</Label>
+              <Input type="number" min={0} value={seqInput} onChange={(e) => setSeqInput(e.target.value)} placeholder="12" />
+            </div>
+            <Button onClick={handleResetSeq} disabled={seqLoading} variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">{seqLoading ? "Memproses..." : "Reset Nomor"}</Button>
+          </div>
+          <p className="text-xs text-slate-500">Reset akan set `letter_seq` ke angka input. Nomor selanjutnya = input + 1 (misal set 12 → selanjutnya 013). Hapus arsip terbaru juga auto decrement. Gunakan hati-hati.</p>
         </CardContent>
       </Card>
 

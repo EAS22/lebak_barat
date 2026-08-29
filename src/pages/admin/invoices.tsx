@@ -27,7 +27,7 @@ import {
 import { useAuth } from "@/lib/authContext";
 import { formatIDR, parseDateOnly } from "@/lib/utils";
 import { generateInvoicePdf, type InvoiceBookingData } from "@/lib/invoicePdf";
-import { FileText, Search, QrCode, AlertTriangle, Pencil } from "lucide-react";
+import { FileText, Search, QrCode, AlertTriangle, Pencil, Download, X } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import BookingForm from "@/components/admin/BookingForm";
@@ -48,6 +48,7 @@ export default function InvoicesPage() {
   const [missingOpen, setMissingOpen] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [pendingBooking, setPendingBooking] = useState<BookingRecord | null>(null);
+  const [invoicePreview, setInvoicePreview] = useState<{ uri: string; nomor: string; save: () => void } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,8 +116,14 @@ export default function InvoicesPage() {
         invoice_generated_at: (raw["invoice_generated_at"] ?? new Date().toISOString()) as string,
       };
       const generatedByName = (user as { displayName?: string })?.displayName || user?.username;
-      await generateInvoicePdf(pdfData, { generatedByName });
-      toast.success(`Invoice ${pdfData.invoice_number} berhasil diunduh`);
+      const result = await generateInvoicePdf(pdfData, { generatedByName, previewOnly: true } as never) as unknown as { blobUrl?: string; doc?: { save: (n: string) => void } };
+      if (result.blobUrl) {
+        setInvoicePreview({ uri: result.blobUrl, nomor: pdfData.invoice_number, save: () => result.doc!.save(`Invoice-${pdfData.invoice_number}.pdf`) });
+        toast.success(`Preview invoice ${pdfData.invoice_number} siap`);
+      } else {
+        await generateInvoicePdf(pdfData, { generatedByName } as never);
+        toast.success(`Invoice ${pdfData.invoice_number} berhasil diunduh`);
+      }
       await load();
     } catch (err: unknown) {
       const e = err as { missing?: string[]; message?: string; status?: number };
@@ -278,6 +285,21 @@ export default function InvoicesPage() {
               </ul>
             </DialogDescription>
           </DialogHeader>
+      {invoicePreview && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setInvoicePreview(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+              <h3 className="font-bold text-sm">Preview Invoice — {invoicePreview.nomor}</h3>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => { invoicePreview.save(); toast.success("Invoice diunduh"); }} className="bg-emerald-600 hover:bg-emerald-700"><Download size={14} className="mr-1" />Download</Button>
+                <Button variant="ghost" size="icon" onClick={() => setInvoicePreview(null)}><X size={18} /></Button>
+              </div>
+            </div>
+            <iframe src={invoicePreview.uri} className="flex-1 w-full border-0" title="Preview Invoice" />
+          </div>
+        </div>
+      )}
+
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setMissingOpen(false)}>
               Tutup

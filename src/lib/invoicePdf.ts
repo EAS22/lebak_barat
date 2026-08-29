@@ -74,8 +74,9 @@ export async function generateInvoicePdf(
     taxPercent?: number;
     discount?: number;
     generatedByName?: string;
+    previewOnly?: boolean;
   }
-): Promise<void> {
+): Promise<{ blobUrl?: string; doc?: jsPDF }> {
   const verificationBaseUrl =
     opts?.verificationBaseUrl || `${baseDomain()}/verifikasi?invoice=`;
   const verificationUrl = `${verificationBaseUrl}${encodeURIComponent(
@@ -436,5 +437,11 @@ export async function generateInvoicePdf(
     { align: "center" }
   );
 
+  if (opts?.previewOnly) {
+    const blob = doc.output("blob") as unknown as Blob;
+    const blobUrl = URL.createObjectURL(blob);
+    return { blobUrl, doc };
+  }
   doc.save(`Invoice-${booking.invoice_number}.pdf`);
+  return {};
 }
