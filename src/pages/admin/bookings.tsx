@@ -41,7 +41,7 @@ import { useAuth } from "@/lib/authContext";
 import { formatIDR, parseDateOnly, cn } from "@/lib/utils";
 import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/bookingStatus";
 import { generateInvoicePdf, type InvoiceBookingData } from "@/lib/invoicePdf";
-import { Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, AlertTriangle, X, Eye } from "lucide-react";
+import { Plus, Download, Pencil, Trash2, ChevronLeft, ChevronRight, FileText, AlertTriangle, X } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
