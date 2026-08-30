@@ -963,7 +963,7 @@ app.delete("/api/facilities/:id", requireAuth, requireSuper, async (c) => {
 
 // ─── Settings ────────────────────────────────────────────────────
 
-app.get("/api/settings", requireAuth, requireSuper, async (c) => {
+app.get("/api/settings", requireAuth, async (c) => {
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM settings WHERE id = 1`;
