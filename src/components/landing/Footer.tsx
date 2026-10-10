@@ -126,9 +126,9 @@ export default function Footer({ buperName }: FooterProps) {
         <div className="mt-10 pt-6 border-t border-emerald-900 flex flex-col items-center justify-center gap-2 text-center text-xs text-emerald-200/60">
           <div className="flex flex-col gap-1">
             <span>
-              Dikembangkan bersama Kelompok 10 C3 MK-PM Universitas Terbuka dan Bumi Perkemahan Lebak Barat
+              Dikembangkan oleh Kelompok 10 C3 MK-PM Universitas Terbuka dan Bumi Perkemahan Lebak Barat
             </span>
-            <span>&copy; {year} {buperName}. All rights reserved</span>
+            <span>&copy; {year} {buperName}. Hak cipta dilindungi undang-undang</span>
           </div>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/10 text-[11px] font-mono text-emerald-100/80">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />

@@ -187,6 +187,14 @@ export default function AdminLogin() {
         </div>
         <MountainDivider colors={["#A5D6A7", "#66BB6A", "#2E7D32"]} className="-mt-8 md:-mt-12" />
       </div>
+
+      {/* Footer credit */}
+      <div className="relative z-20 bg-amber-50/70 text-center text-xs text-slate-500 px-4 py-4 space-y-1">
+        <p>
+          Dikembangkan oleh Kelompok 10 C3 MK-PM Universitas Terbuka dan Bumi Perkemahan Lebak Barat
+        </p>
+        <p>&copy; {new Date().getFullYear()} Bumi Perkemahan Lebak Barat. Hak cipta dilindungi undang-undang</p>
+      </div>
     </div>
   );
 }
